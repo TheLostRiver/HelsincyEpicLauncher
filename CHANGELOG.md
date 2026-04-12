@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Task 0.6 - INavigationService 空实现 (2026-04-12)
+- 创建 INavigationService 接口（Presentation/Shell/Navigation — NavigateAsync / GoBackAsync / CanGoBack / CurrentRoute）
+- 创建 StubNavigationService 桩实现（导航历史栈 + Serilog 日志记录）
+- Presentation DI 注册 INavigationService → StubNavigationService
+- 3 个 NSubstitute 导航单元测试（NavigateAsync / GoBackAsync / 默认状态）
+- Tests.Unit 添加 Presentation 项目引用
+- dotnet build 9 个项目零错误零警告，dotnet test 15/15 通过
+
 ### Task 0.5 - SQLite 数据库基础 (2026-04-12)
 - 创建 IDbConnectionFactory / IDatabaseInitializer 接口（Application 层）
 - 创建 SqliteConnectionFactory（WAL 模式，路径 %LOCALAPPDATA%/HelsincyEpicLauncher/Data/launcher.db）

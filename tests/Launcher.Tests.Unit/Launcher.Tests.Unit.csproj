@@ -20,5 +20,6 @@
     <ProjectReference Include="..\..\src\Launcher.Shared\Launcher.Shared.csproj" />
     <ProjectReference Include="..\..\src\Launcher.Domain\Launcher.Domain.csproj" />
     <ProjectReference Include="..\..\src\Launcher.Application\Launcher.Application.csproj" />
+    <ProjectReference Include="..\..\src\Launcher.Presentation\Launcher.Presentation.csproj" />
   </ItemGroup>
 </Project>
