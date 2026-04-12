@@ -57,6 +57,11 @@ public static class Program
 
         try
         {
+            // 执行数据库迁移
+            var dbInitializer = Services.GetRequiredService<Launcher.Application.Persistence.IDatabaseInitializer>();
+            dbInitializer.InitializeAsync().GetAwaiter().GetResult();
+            Log.Information("数据库迁移执行完成");
+
             // Task 0.7 中启动 WinUI 3 应用
         }
         catch (Exception ex)

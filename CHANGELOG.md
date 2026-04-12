@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Task 0.5 - SQLite 数据库基础 (2026-04-12)
+- 创建 IDbConnectionFactory / IDatabaseInitializer 接口（Application 层）
+- 创建 SqliteConnectionFactory（WAL 模式，路径 %LOCALAPPDATA%/HelsincyEpicLauncher/Data/launcher.db）
+- 创建 Migration 框架：IMigration 接口 + MigrationRunner（版本化 SQL 脚本执行，__migration_history 表跟踪）
+- 创建初始迁移 Migration_001_AppSettings（app_settings 键值表）
+- Program.cs 启动时通过 IDatabaseInitializer 执行数据库迁移
+- Infrastructure DI 注册 SqliteConnectionFactory、MigrationRunner
+- dotnet build 9 个项目零错误零警告，dotnet test 12/12 通过
+
 ### Task 0.4 - Shared 层基础类型 (2026-04-12)
 - 创建 Error 结构化错误模型（Code / UserMessage / TechnicalMessage / CanRetry / Severity / InnerException）
 - 创建 ErrorSeverity 枚举（Warning / Error / Critical / Fatal）

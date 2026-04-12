@@ -1,6 +1,9 @@
 // Copyright (c) Helsincy. All rights reserved.
 
+using Launcher.Application.Persistence;
 using Launcher.Infrastructure.Configuration;
+using Launcher.Infrastructure.Persistence.Sqlite;
+using Launcher.Infrastructure.Persistence.Sqlite.Migrations;
 using Launcher.Shared.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,6 +18,11 @@ public static class DependencyInjection
     {
         // 配置
         services.AddSingleton<IAppConfigProvider, AppConfigProvider>();
+
+        // 数据库
+        services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
+        services.AddSingleton<IMigration, Migration_001_AppSettings>();
+        services.AddSingleton<IDatabaseInitializer, MigrationRunner>();
 
         return services;
     }
