@@ -29,5 +29,7 @@
 ## 关键约束提醒
 - 文件名英文，内容中文（代码除外，注释中文）
 - 仅在 Q:\MyEpicLauncher 目录内操作
+- 项目名称为 HelsincyEpicLauncher，解决方案文件 HelsincyEpicLauncher.sln
+- 每个代码文件顶部必须有版权声明：// Copyright (c) Helsincy. All rights reserved.
 - 不含游戏商店、游戏库存模块
 - 包含 Fab 资产库模块

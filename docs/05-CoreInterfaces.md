@@ -743,8 +743,8 @@ public sealed class AppearanceConfig
 public sealed class PathConfig
 {
     public string DefaultInstallPath { get; set; } = @"C:\EpicAssets";
-    public string CachePath { get; set; } = "";      // 默认 %LocalAppData%\MyEpicLauncher\Cache
-    public string LogPath { get; set; } = "";         // 默认 %LocalAppData%\MyEpicLauncher\Logs
+    public string CachePath { get; set; } = "";      // 默认 %LocalAppData%\HelsincyEpicLauncher\Cache
+    public string LogPath { get; set; } = "";         // 默认 %LocalAppData%\HelsincyEpicLauncher\Logs
 }
 
 public sealed class NetworkConfig

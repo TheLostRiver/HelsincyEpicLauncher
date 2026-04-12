@@ -324,7 +324,7 @@ private void OnChunkProgress(ChunkProgressEventArgs e)
 ### 8.1 日志文件布局
 
 ```
-%LOCALAPPDATA%/MyEpicLauncher/Logs/
+%LOCALAPPDATA%/HelsincyEpicLauncher/Logs/
 ├─ app-20241215.log          ← 当天日志
 ├─ app-20241214.log          ← 前一天
 ├─ app-20241213.log          ← ...

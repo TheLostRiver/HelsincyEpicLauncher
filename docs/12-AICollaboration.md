@@ -190,7 +190,19 @@ AI 提交代码前自查：
 
 ## 7. 代码注释规范
 
-为了帮助 AI 理解代码意图，关键位置必须有中文注释：
+为了帮助 AI 理解代码意图，关键位置必须有中文注释。
+
+### 7.1 版权声明（必须）
+
+**每个 `.cs` 文件顶部**必须有版权声明：
+
+```csharp
+// Copyright (c) Helsincy. All rights reserved.
+```
+
+通过 `Directory.Build.props` 或代码模板自动添加。新建文件时 AI 必须主动加上此行。
+
+### 7.2 代码注释示例
 
 ```csharp
 /// <summary>
@@ -396,3 +408,87 @@ AI 思考 + 生成代码          ≈ 80K tokens    （主要工作）
 ```
 
 留出足够的空间给 AI 思考和生成代码，不要把上下文塞满文档。
+
+---
+
+## 12. Git 工作流规则
+
+### 12.1 提交节奏
+
+每完成一个**原子任务**（参见 [13-DevelopmentPhases.md](13-DevelopmentPhases.md)），执行一次 Git commit + push。
+
+### 12.2 提交前检查（必须全部通过才能提交）
+
+```
+1. dotnet build         → 零错误
+2. dotnet test          → 全部通过
+3. 代码无遗留 TODO/HACK → 检查未完成标记
+```
+
+**编译不通过 = 禁止提交**。不允许提交破坏构建的代码。
+
+### 12.3 提交信息规范
+
+使用中文描述，格式：
+
+```
+<任务编号>：<简短描述>
+
+<详细说明（可选）>
+```
+
+示例：
+
+```
+Task 0.1：创建 Solution 和所有项目文件
+
+- 创建 HelsincyEpicLauncher.sln
+- 创建 8 个项目（App/Presentation/Application/Domain/Infrastructure/Background/Shared/Tests）
+- 配置项目引用关系
+- 引入 NuGet 包
+- dotnet build 零错误
+```
+
+### 12.4 Bug 处理规则
+
+当遇到 bug 时：
+
+| 尝试次数 | 操作 |
+|---------|------|
+| 1~3 次 | 正常排查修复 |
+| 4 次 | 换个思路或方法 |
+| **5 次仍未解决** | **立即停止执行**，在 `SESSION_HANDOFF.md` 中详细记录 bug 信息，等待用户决断 |
+
+bug 记录格式：
+
+```markdown
+## ⚠️ 阻塞 Bug
+
+### 症状
+[具体报错信息]
+
+### 复现步骤
+1. ...
+2. ...
+
+### 已尝试的方案
+1. [方案1] → [结果]
+2. [方案2] → [结果]
+3. [方案3] → [结果]
+4. [方案4] → [结果]
+5. [方案5] → [结果]
+
+### 推测原因
+[分析]
+
+### 相关代码
+- [文件路径和行号]
+```
+
+### 12.5 远程仓库
+
+```
+仓库：https://github.com/TheLostRiver/HelsincyEpicLauncher.git
+主分支：main
+推送方式：每个原子任务完成后 git add -A → git commit → git push
+```

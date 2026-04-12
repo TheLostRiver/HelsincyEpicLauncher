@@ -1,4 +1,4 @@
-# MyEpicLauncher — 项目总览
+# HelsincyEpicLauncher — 项目总览
 
 > 版本：v1.0  
 > 最后更新：2026-04-12  
@@ -8,7 +8,7 @@
 
 ## 1. 项目定位
 
-MyEpicLauncher 是一款 **Windows 10/11 原生桌面客户端**，用于替代 Epic Games 官方启动器。
+HelsincyEpicLauncher 是一款 **Windows 10/11 原生桌面客户端**，用于替代 Epic Games 官方启动器。
 
 目标是解决官方启动器长期存在的问题：
 - 冷启动慢

@@ -1,13 +1,13 @@
 # 解决方案结构
 
-> 本文档定义 MyEpicLauncher.sln 的项目拆分、每个项目的职责边界以及完整目录树。
+> 本文档定义 HelsincyEpicLauncher.sln 的项目拆分、每个项目的职责边界以及完整目录树。
 
 ---
 
 ## 1. 解决方案总览
 
 ```
-MyEpicLauncher.sln
+HelsincyEpicLauncher.sln
 │
 ├─ src/
 │  ├─ Launcher.App                  // WinUI 3 启动项目（宿主壳）
@@ -621,7 +621,7 @@ private static Mutex? _mutex;
 
 protected override void OnLaunched(LaunchActivatedEventArgs args)
 {
-    _mutex = new Mutex(true, "MyEpicLauncher_SingleInstance", out bool isNew);
+    _mutex = new Mutex(true, "HelsincyEpicLauncher_SingleInstance", out bool isNew);
     if (!isNew)
     {
         // 通过命名管道通知已有实例

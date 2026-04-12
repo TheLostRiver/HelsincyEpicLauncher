@@ -31,7 +31,7 @@ Epic Games 启动器替代客户端，基于 WinUI 3 + .NET 8 构建。
 ## 项目结构
 
 ```
-MyEpicLauncher.sln
+HelsincyEpicLauncher.sln
 ├─ src/
 │  ├─ Launcher.App              → WinUI 3 入口 + DI 注册
 │  ├─ Launcher.Presentation     → 页面、ViewModel、控件

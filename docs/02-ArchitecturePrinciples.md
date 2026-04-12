@@ -1,6 +1,6 @@
 # 架构原则
 
-> 本文档定义 MyEpicLauncher 项目必须遵守的架构原则。  
+> 本文档定义 HelsincyEpicLauncher 项目必须遵守的架构原则。  
 > 这些原则同时约束人类开发者和 AI 辅助编码。
 
 ---

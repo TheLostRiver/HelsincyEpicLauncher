@@ -35,7 +35,7 @@ Phase 0 ──▶ Phase 1 ──▶ Phase 2 ──┐
 
 **输入**：[03-SolutionStructure.md](03-SolutionStructure.md)、[11-TechStack.md](11-TechStack.md)  
 **产出**：
-- `MyEpicLauncher.sln`
+- `HelsincyEpicLauncher.sln`
 - 所有 .csproj 文件：App / Presentation / Application / Domain / Infrastructure / Background / Shared
 - 测试项目：Tests.Unit / Tests.Integration
 - 项目引用关系（按 [04-ModuleDependencyRules.md](04-ModuleDependencyRules.md)）
@@ -72,7 +72,7 @@ Phase 0 ──▶ Phase 1 ──▶ Phase 2 ──┐
 - 日志文件轮转配置
 - 下载模块独立日志 Sink
 
-**验收**：App 启动后在 `%LOCALAPPDATA%/MyEpicLauncher/Logs/` 生成日志文件
+**验收**：App 启动后在 `%LOCALAPPDATA%/HelsincyEpicLauncher/Logs/` 生成日志文件
 
 ---
 
@@ -95,7 +95,7 @@ Phase 0 ──▶ Phase 1 ──▶ Phase 2 ──┐
 
 **输入**：[08-StateManagement.md](08-StateManagement.md)  
 **产出**：
-- SQLite 数据库文件创建（`%LOCALAPPDATA%/MyEpicLauncher/Data/launcher.db`）
+- SQLite 数据库文件创建（`%LOCALAPPDATA%/HelsincyEpicLauncher/Data/launcher.db`）
 - Dapper 基础配置
 - `IDbConnectionFactory` 接口 + 实现
 - 基础 Migration 框架（版本化 SQL 脚本执行）
