@@ -17,6 +17,10 @@ public static class DependencyInjection
         services.AddSingleton<NavigationService>();
         services.AddSingleton<INavigationService>(sp => sp.GetRequiredService<NavigationService>());
 
+        // Toast 通知（注册具体类型 + 接口，ShellPage 需要具体类型调用 SetHost）
+        services.AddSingleton<NotificationService>();
+        services.AddSingleton<INotificationService>(sp => sp.GetRequiredService<NotificationService>());
+
         // Shell ViewModel
         services.AddSingleton<ShellViewModel>();
 

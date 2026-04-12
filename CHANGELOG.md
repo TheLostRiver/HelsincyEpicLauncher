@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Task 1.3 - Toast 通知服务 (2026-04-13)
+- INotificationService 接口（ShowSuccess / ShowWarning / ShowError / ShowInfo，支持自定义持续时间）
+- NotificationService 实现：基于 WinUI 3 InfoBar 控件，支持 4 种严重级别
+- 自动消失（Info/Success 4s、Warning 6s、Error 8s）+ 手动关闭按钮
+- ShellPage 添加 ToastHost 覆盖层（右上角，MaxWidth 400）
+- DispatcherQueue 线程安全调度，支持后台线程调用
+- DI 注册 NotificationService（具体类型 + 接口）
+- dotnet build 9 个项目零错误，dotnet test 15/15 通过
+
 ### Task 1.2 - ShellPage + NavigationView (2026-04-13)
 - NavigationRoute 路由常量定义（FabLibrary / Downloads / EngineVersions / Settings / Diagnostics）
 - NavigationService 完整实现：Frame 导航 + 路由映射 + 历史栈跟踪 + Serilog 日志

@@ -17,7 +17,7 @@ public sealed partial class ShellPage : UserControl
 
     public ShellViewModel ViewModel { get; }
 
-    public ShellPage(ShellViewModel viewModel, NavigationService navigationService)
+    public ShellPage(ShellViewModel viewModel, NavigationService navigationService, NotificationService notificationService)
     {
         this.InitializeComponent();
 
@@ -26,6 +26,9 @@ public sealed partial class ShellPage : UserControl
 
         // 将 ContentFrame 设置为导航宿主
         _navigationService.SetFrame(ContentFrame);
+
+        // 设置 Toast 通知宿主面板
+        notificationService.SetHost(ToastHost);
 
         Logger.Debug("ShellPage 已创建");
     }
