@@ -1,5 +1,6 @@
 // Copyright (c) Helsincy. All rights reserved.
 
+using Launcher.Presentation.Shell;
 using Launcher.Presentation.Shell.Navigation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -12,10 +13,12 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddPresentation(this IServiceCollection services)
     {
-        // 导航
-        services.AddSingleton<INavigationService, StubNavigationService>();
+        // 导航（注册具体类型 + 接口，ShellPage 需要具体类型调用 SetFrame）
+        services.AddSingleton<NavigationService>();
+        services.AddSingleton<INavigationService>(sp => sp.GetRequiredService<NavigationService>());
 
-        // ViewModel 和 View 注册将在后续任务中添加
+        // Shell ViewModel
+        services.AddSingleton<ShellViewModel>();
 
         return services;
     }

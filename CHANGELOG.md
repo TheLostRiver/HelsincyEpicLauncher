@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Task 1.2 - ShellPage + NavigationView (2026-04-13)
+- NavigationRoute 路由常量定义（FabLibrary / Downloads / EngineVersions / Settings / Diagnostics）
+- NavigationService 完整实现：Frame 导航 + 路由映射 + 历史栈跟踪 + Serilog 日志
+- ShellViewModel 基础版：5 个导航 RelayCommand + 全局状态 ObservableProperty 占位
+- ShellPage UserControl：NavigationView（Left 模式）5 项导航 + ContentFrame
+- 5 个模块占位页：FabLibraryPage / DownloadsPage / EngineVersionsPage / SettingsPage / DiagnosticsPage
+- MainWindow 加载 ShellPage 到内容区域（DI 解析 ShellViewModel + NavigationService）
+- Presentation DI 更新：NavigationService 替换 StubNavigationService + 注册 ShellViewModel
+- dotnet build 9 个项目零错误，dotnet test 15/15 通过
+
 ### Task 1.1 - MainWindow 自定义标题栏 + Mica 背景 (2026-04-13)
 - 自定义标题栏：应用图标占位（品牌色 H 标识） + 标题文字 + 系统最小化/最大化/关闭按钮
 - ExtendsContentIntoTitleBar + SetTitleBar 实现窗口拖拽区域

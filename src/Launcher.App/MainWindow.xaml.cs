@@ -1,5 +1,8 @@
 // Copyright (c) Helsincy. All rights reserved.
 
+using Launcher.Presentation.Shell;
+using Launcher.Presentation.Shell.Navigation;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Serilog;
@@ -7,7 +10,7 @@ using Serilog;
 namespace Launcher.App;
 
 /// <summary>
-/// 主窗口。自定义标题栏 + Mica 背景 + 最小窗口尺寸限制。
+/// 主窗口。自定义标题栏 + Mica 背景 + 最小窗口尺寸限制 + ShellPage 宿主。
 /// </summary>
 public sealed partial class MainWindow : Window
 {
@@ -31,7 +34,10 @@ public sealed partial class MainWindow : Window
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
         ConfigureWindowSize(hwnd);
 
-        Log.Information("MainWindow 创建完成 | 自定义标题栏 + Mica 背景");
+        // 加载 ShellPage
+        LoadShellPage();
+
+        Log.Information("MainWindow 创建完成 | 自定义标题栏 + Mica 背景 + ShellPage");
     }
 
     /// <summary>
@@ -49,5 +55,19 @@ public sealed partial class MainWindow : Window
         PInvoke.SetMinWindowSize(hwnd, 1024, 640);
 
         Log.Debug("窗口尺寸已配置 | 默认 1280x800，最小 1024x640");
+    }
+
+    /// <summary>
+    /// 从 DI 解析依赖，创建并加载 ShellPage 到内容区域
+    /// </summary>
+    private void LoadShellPage()
+    {
+        var viewModel = App.Services.GetRequiredService<ShellViewModel>();
+        var navigationService = App.Services.GetRequiredService<NavigationService>();
+
+        var shellPage = new ShellPage(viewModel, navigationService);
+        ContentArea.Children.Add(shellPage);
+
+        Log.Debug("ShellPage 已加载到 MainWindow");
     }
 }

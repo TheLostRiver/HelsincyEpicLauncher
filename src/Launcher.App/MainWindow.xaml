@@ -45,15 +45,7 @@
                 Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
         </Grid>
 
-        <!-- 内容区域（Task 1.2 将替换为 ShellPage） -->
-        <Grid Grid.Row="1" Background="Transparent">
-            <TextBlock
-                Text="HelsincyEpicLauncher"
-                FontSize="24"
-                FontWeight="SemiBold"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
-        </Grid>
+        <!-- 内容区域：ShellPage 在代码中加载 -->
+        <Grid x:Name="ContentArea" Grid.Row="1" />
     </Grid>
 </Window>
