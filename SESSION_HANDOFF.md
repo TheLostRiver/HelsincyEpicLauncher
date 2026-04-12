@@ -2,29 +2,28 @@
 
 ## 最后更新
 - 时间：2026-04-12
-- 完成任务：Task 0.3（Serilog 日志系统）
+- 完成任务：Task 0.4（Shared 层基础类型）
 
 ## 当前项目状态
 - 最后成功编译：是（dotnet build 9 个项目零错误零警告）
-- 最后测试结果：全部通过（2/2）
+- 最后测试结果：全部通过（12/12）
 - 当前 Phase：Phase 0
-- 下一个任务：Task 0.4（Shared 层基础类型）
+- 下一个任务：Task 0.5（SQLite 数据库基础）
 
 ## 本次会话完成的工作
-1. 创建 OperationContext（Shared/Logging — CorrelationId 全链路追踪）
-2. 创建 OperationTimer（Shared/Logging — using 模式自动计时日志）
-3. 创建 LogSanitizer（Shared/Logging — Token/URL 脱敏工具）
-4. Program.cs 集成 Serilog：主日志 + 错误日志 + 下载专用日志 + 控制台
-5. 日志文件轮转配置（主日志 30 天，错误 90 天，下载 14 天）
-6. Shared 层添加 Serilog NuGet 引用
+1. 创建 Error 结构化错误模型 + ErrorSeverity 枚举（Shared 层）
+2. 创建 Result / Result&lt;T&gt; 统一操作结果（含 Map/Bind 链式操作）
+3. 创建 Entity&lt;TId&gt; 实体基类（Domain 层）
+4. 创建 ValueObject 值对象基类（Domain 层）
+5. 创建 StateMachine&lt;TState&gt; 泛型状态机基类（Domain 层）
+6. 10 个 Result 相关单元测试全部通过
 
 ## 遗留问题
 - 无
 
 ## 下一个任务的输入
-- 读取文档：docs/05-CoreInterfaces.md（核心接口）
-- 读取文档：docs/09-ErrorHandling.md（错误处理）
-- 注意事项：创建 Result/Error/StateMachine 等基础类型
+- 读取文档：docs/03-SolutionStructure.md（SQLite 相关）
+- 注意事项：创建数据库连接管理、Migration 机制
 
 ## 关键约束提醒
 - 文件名英文，内容中文（代码除外，注释中文）
