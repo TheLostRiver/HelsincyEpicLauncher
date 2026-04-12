@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Task 1.5 - 主题切换 + 状态栏 (2026-04-13)
+- ThemeService：Light / Dark / System 三种主题切换，即时生效
+- 主题持久化到 theme.json（%LOCALAPPDATA%/HelsincyEpicLauncher/Data/）
+- ShellPage.Loaded 初始化 ThemeService 并恢复保存的主题
+- 底部状态栏：网络状态图标+文字 + 下载速度占位
+- DI 注册 ThemeService
+- dotnet build 9 个项目零错误零警告，dotnet test 15/15 通过
+
 ### Task 1.4 - Dialog 对话框服务 (2026-04-13)
 - IDialogService 接口（ShowConfirmAsync / ShowInfoAsync / ShowErrorAsync / ShowCustomAsync）
 - DialogService 实现：基于 WinUI 3 ContentDialog + XamlRoot 绑定

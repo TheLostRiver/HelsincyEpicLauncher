@@ -15,16 +15,18 @@ public sealed partial class ShellPage : UserControl
     private static readonly ILogger Logger = Log.ForContext<ShellPage>();
     private readonly NavigationService _navigationService;
     private readonly DialogService _dialogService;
+    private readonly ThemeService _themeService;
 
     public ShellViewModel ViewModel { get; }
 
-    public ShellPage(ShellViewModel viewModel, NavigationService navigationService, NotificationService notificationService, DialogService dialogService)
+    public ShellPage(ShellViewModel viewModel, NavigationService navigationService, NotificationService notificationService, DialogService dialogService, ThemeService themeService)
     {
         this.InitializeComponent();
 
         ViewModel = viewModel;
         _navigationService = navigationService;
         _dialogService = dialogService;
+        _themeService = themeService;
 
         // 将 ContentFrame 设置为导航宿主
         _navigationService.SetFrame(ContentFrame);
@@ -42,6 +44,9 @@ public sealed partial class ShellPage : UserControl
     {
         // 设置 DialogService 的 XamlRoot（Loaded 后 XamlRoot 才有效）
         _dialogService.SetXamlRoot(this.XamlRoot);
+
+        // 初始化主题服务（加载保存的主题并应用）
+        _themeService.Initialize(this);
 
         // 选中第一个导航项，触发 SelectionChanged → 导航到默认页面
         NavView.SelectedItem = NavView.MenuItems[0];

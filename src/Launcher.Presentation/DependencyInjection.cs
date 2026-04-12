@@ -25,6 +25,9 @@ public static class DependencyInjection
         services.AddSingleton<DialogService>();
         services.AddSingleton<IDialogService>(sp => sp.GetRequiredService<DialogService>());
 
+        // 主题切换
+        services.AddSingleton<ThemeService>();
+
         // Shell ViewModel
         services.AddSingleton<ShellViewModel>();
 
