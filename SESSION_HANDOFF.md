@@ -2,15 +2,26 @@
 
 ## 最后更新
 - 时间：2026-04-13
-- 完成任务：Task 6.3（搜索/筛选 + 详情页）
+- 完成任务：Task 7.1（引擎版本管理）
 
 ## 当前项目状态
 - 最后成功编译：是（dotnet build 9 个项目零错误零警告）
 - 最后测试结果：全部通过（158/158）
-- 当前 Phase：Phase 6 完成（Task 6.1 + 6.2 + 6.3 全部完成）
-- 下一个任务：Task 7.1（需确认 Phase 7 内容）
+- 当前 Phase：Phase 7 进行中（Task 7.1 完成，Task 7.2 待开始）
+- 下一个任务：Task 7.2（引擎启动 + 插件管理）
 
 ## 本次会话完成的工作
+
+### Task 7.1 — 引擎版本管理
+- Application 层：EngineVersionSummary / InstalledEngineSummary DTO、IEngineVersionReadService、IEngineVersionCommandService
+- EngineVersionApiClient：Polly 3 次指数退避 + 30s 超时、Bearer 认证、snake_case JSON
+- EngineVersionReadService：5 分钟缓存、远程+本地合并（UE_ 前缀过滤）
+- EngineVersionCommandService：下载委托（IDownloadCommandService 高优先级 10）、卸载委托（IInstallCommandService）、编辑器启动（Process.Start）
+- EngineVersionsViewModel：并发加载可用+已安装、下载/卸载/启动命令、HasError/IsEmpty/IsNotLoading 状态
+- EngineVersionItemViewModel：CanDownload/HasStatus 计算属性联动
+- EngineVersionsPage.xaml：标题栏+刷新、加载/错误/空状态、已安装列表（启动/卸载）、可用版本列表（已安装标签/安装按钮）
+- Infrastructure DI：HttpClient("EngineVersionApi") + 3 个服务
+- Presentation DI：EngineVersionsViewModel（Transient）
 
 ### Task 6.1 — Fab API 客户端
 - PagedResult<T> 泛型分页容器（Shared 层）
@@ -77,7 +88,8 @@
 - Fab API 客户端目前无单元测试（HTTP 客户端需 mock HttpClient，留待集成测试或后续补充）
 
 ## 下一个任务的输入
-- Phase 6 已完成，查看 docs/ 确认 Phase 7 任务列表
+- Task 7.2：引擎启动 + 插件管理（查看 docs/ Phase 7 任务列表详情）
+- 引擎版本模块已完成，可作为启动/插件管理的基础
 - Phase 7 预期为系统整合/优化阶段
 
 ## 关键约束提醒

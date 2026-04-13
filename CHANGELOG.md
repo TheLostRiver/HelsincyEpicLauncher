@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Task 7.1 - 引擎版本管理 (2026-04-13)
+- Application 层契约：EngineVersionSummary / InstalledEngineSummary DTO、IEngineVersionReadService（可用+已安装查询）、IEngineVersionCommandService（下载安装/卸载/启动编辑器）
+- EngineVersionApiClient：Polly 重试 3 次指数退避 + 30s 超时、Bearer 认证、snake_case JSON 反序列化、内部 DTO
+- EngineVersionReadService：5 分钟简单缓存、远程+本地合并（UE_ 前缀过滤）、IsInstalled 字段增强
+- EngineVersionCommandService：下载委托 IDownloadCommandService（高优先级 10）、卸载委托 IInstallCommandService、启动编辑器 Process.Start
+- EngineVersionsViewModel：并发加载可用+已安装列表、下载/卸载/启动 RelayCommand、错误显示、空状态
+- EngineVersionItemViewModel：HasStatus / CanDownload 计算属性、FormatSize 工具、发布日期格式化
+- InstalledEngineItemViewModel：安装路径、磁盘占用、安装时间展示
+- EngineVersionsPage.xaml：标题栏+刷新按钮、ProgressRing 加载指示器、InfoBar 错误提示、已安装版本列表（启动/卸载按钮）、可用版本列表（已安装标签/安装按钮）、空状态
+- Infrastructure DI：HttpClient("EngineVersionApi") + EngineVersionApiClient + 读写服务
+- Presentation DI：EngineVersionsViewModel（Transient）
+- dotnet build 9 项目零错误零警告，dotnet test 158/158 通过
+
 ### Task 6.3 - 搜索/筛选 + 详情页 (2026-04-13)
 - FabAssetDetailViewModel：资产详情加载、截图懒加载、下载按钮、返回导航、FormatSize 工具方法
 - ScreenshotItem：截图项 ObservableObject（URL + BitmapImage 懒加载）

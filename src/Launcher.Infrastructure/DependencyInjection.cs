@@ -3,6 +3,7 @@
 using Launcher.Application.Modules.Auth.Contracts;
 using Launcher.Application.Modules.Diagnostics.Contracts;
 using Launcher.Application.Modules.Downloads.Contracts;
+using Launcher.Application.Modules.EngineVersions.Contracts;
 using Launcher.Application.Modules.FabLibrary.Contracts;
 using Launcher.Application.Modules.Installations.Contracts;
 using Launcher.Application.Modules.Settings.Contracts;
@@ -11,6 +12,7 @@ using Launcher.Infrastructure.Auth;
 using Launcher.Infrastructure.Configuration;
 using Launcher.Infrastructure.Diagnostics;
 using Launcher.Infrastructure.Downloads;
+using Launcher.Infrastructure.EngineVersions;
 using Launcher.Infrastructure.FabLibrary;
 using Launcher.Infrastructure.Installations;
 using Launcher.Infrastructure.Persistence.Sqlite;
@@ -89,6 +91,16 @@ public static class DependencyInjection
         });
         services.AddSingleton<IFabCatalogReadService, FabCatalogReadService>();
         services.AddSingleton<IFabAssetCommandService, FabAssetCommandService>();
+
+        // 引擎版本
+        services.AddHttpClient("EngineVersionApi", client =>
+        {
+            client.BaseAddress = new Uri("https://www.unrealengine.com/api");
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+        });
+        services.AddSingleton<EngineVersionApiClient>();
+        services.AddSingleton<IEngineVersionReadService, EngineVersionReadService>();
+        services.AddSingleton<IEngineVersionCommandService, EngineVersionCommandService>();
 
         return services;
     }

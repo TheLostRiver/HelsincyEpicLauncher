@@ -2,6 +2,7 @@
 
 using Launcher.Presentation.Modules.Diagnostics;
 using Launcher.Presentation.Modules.Downloads;
+using Launcher.Presentation.Modules.EngineVersions;
 using Launcher.Presentation.Modules.FabLibrary;
 using Launcher.Presentation.Modules.Installations;
 using Launcher.Presentation.Modules.Settings;
@@ -51,6 +52,9 @@ public static class DependencyInjection
         // FabLibrary ViewModel（Transient：每次导航刷新列表）
         services.AddTransient<FabLibraryViewModel>();
         services.AddTransient<FabAssetDetailViewModel>();
+
+        // EngineVersions ViewModel（Transient：每次导航刷新列表）
+        services.AddTransient<EngineVersionsViewModel>();
 
         return services;
     }
