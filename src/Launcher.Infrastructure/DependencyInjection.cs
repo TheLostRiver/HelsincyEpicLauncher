@@ -3,12 +3,14 @@
 using Launcher.Application.Modules.Auth.Contracts;
 using Launcher.Application.Modules.Diagnostics.Contracts;
 using Launcher.Application.Modules.Downloads.Contracts;
+using Launcher.Application.Modules.Installations.Contracts;
 using Launcher.Application.Modules.Settings.Contracts;
 using Launcher.Application.Persistence;
 using Launcher.Infrastructure.Auth;
 using Launcher.Infrastructure.Configuration;
 using Launcher.Infrastructure.Diagnostics;
 using Launcher.Infrastructure.Downloads;
+using Launcher.Infrastructure.Installations;
 using Launcher.Infrastructure.Persistence.Sqlite;
 using Launcher.Infrastructure.Persistence.Sqlite.Migrations;
 using Launcher.Infrastructure.Settings;
@@ -61,6 +63,12 @@ public static class DependencyInjection
         services.AddSingleton<IDownloadRuntimeStore>(sp => sp.GetRequiredService<DownloadRuntimeStore>());
         services.AddSingleton<IDownloadCommandService, DownloadCommandService>();
         services.AddSingleton<IDownloadReadService, DownloadReadService>();
+
+        // 安装
+        services.AddSingleton<IInstallationRepository, InstallationRepository>();
+        services.AddSingleton<InstallWorker>();
+        services.AddSingleton<IInstallCommandService, InstallCommandService>();
+        services.AddSingleton<IInstallReadService, InstallReadService>();
 
         return services;
     }
