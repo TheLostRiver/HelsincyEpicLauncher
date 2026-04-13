@@ -1,5 +1,6 @@
 // Copyright (c) Helsincy. All rights reserved.
 
+using Launcher.Presentation.Modules.Diagnostics;
 using Launcher.Presentation.Modules.Settings;
 using Launcher.Presentation.Shell;
 using Launcher.Presentation.Shell.Navigation;
@@ -34,6 +35,9 @@ public static class DependencyInjection
 
         // Settings ViewModel（Transient：每次导航到设置页面刷新最新配置）
         services.AddTransient<SettingsViewModel>();
+
+        // Diagnostics ViewModel（Transient：每次导航刷新）
+        services.AddTransient<DiagnosticsViewModel>();
 
         return services;
     }

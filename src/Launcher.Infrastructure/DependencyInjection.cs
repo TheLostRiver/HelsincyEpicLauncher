@@ -1,8 +1,10 @@
 // Copyright (c) Helsincy. All rights reserved.
 
+using Launcher.Application.Modules.Diagnostics.Contracts;
 using Launcher.Application.Modules.Settings.Contracts;
 using Launcher.Application.Persistence;
 using Launcher.Infrastructure.Configuration;
+using Launcher.Infrastructure.Diagnostics;
 using Launcher.Infrastructure.Persistence.Sqlite;
 using Launcher.Infrastructure.Persistence.Sqlite.Migrations;
 using Launcher.Infrastructure.Settings;
@@ -33,6 +35,9 @@ public static class DependencyInjection
         services.AddSingleton<IMigration, Migration_003_Installations>();
         services.AddSingleton<IMigration, Migration_004_SettingsKv>();
         services.AddSingleton<IDatabaseInitializer, MigrationRunner>();
+
+        // 诊断
+        services.AddSingleton<IDiagnosticsReadService, DiagnosticsService>();
 
         return services;
     }

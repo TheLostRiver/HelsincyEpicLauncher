@@ -3,15 +3,171 @@
     x:Class="Launcher.Presentation.Modules.Diagnostics.DiagnosticsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Background="Transparent">
+    Background="Transparent"
+    Loaded="Page_Loaded">
 
-    <Grid>
-        <TextBlock
-            Text="诊断"
-            FontSize="28"
-            FontWeight="SemiBold"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
-    </Grid>
+    <ScrollViewer Padding="36,24,36,24">
+        <StackPanel Spacing="8" MaxWidth="800">
+
+            <!-- 页面标题 + 刷新按钮 -->
+            <Grid Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    Grid.Column="0"
+                    Text="系统诊断"
+                    Style="{StaticResource TitleTextBlockStyle}" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <TextBlock
+                        Text="{x:Bind ViewModel.LastRefreshed, Mode=OneWay}"
+                        Style="{StaticResource CaptionTextBlockStyle}"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        VerticalAlignment="Center" />
+                    <Button
+                        Content="刷新"
+                        Command="{x:Bind ViewModel.RefreshSystemInfoCommand}" />
+                </StackPanel>
+            </Grid>
+
+            <!-- ====== 系统信息 ====== -->
+            <TextBlock
+                Text="系统信息"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Margin="0,0,0,8" />
+
+            <!-- OS 版本 -->
+            <Grid
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="4"
+                Padding="16,12"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="操作系统" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.OsVersion, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+            </Grid>
+
+            <!-- .NET 版本 -->
+            <Grid
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="4"
+                Padding="16,12"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text=".NET 运行时" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.DotNetVersion, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+            </Grid>
+
+            <!-- 应用版本 -->
+            <Grid
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="4"
+                Padding="16,12"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="应用版本" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.AppVersion, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+            </Grid>
+
+            <!-- 运行时长 -->
+            <Grid
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="4"
+                Padding="16,12"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="运行时长" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.Uptime, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+            </Grid>
+
+            <!-- ====== 磁盘空间 ====== -->
+            <TextBlock
+                Text="磁盘空间"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Margin="0,16,0,8" />
+
+            <Grid
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="4"
+                Padding="16,12"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1">
+                <StackPanel Spacing="8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="数据目录磁盘" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.DiskUsageText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </Grid>
+                    <ProgressBar
+                        Value="{x:Bind ViewModel.DiskUsagePercent, Mode=OneWay}"
+                        Maximum="100"
+                        Height="8"
+                        CornerRadius="4" />
+                </StackPanel>
+            </Grid>
+
+            <!-- ====== 内存使用 ====== -->
+            <TextBlock
+                Text="内存"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Margin="0,16,0,8" />
+
+            <Grid
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="4"
+                Padding="16,12"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="内存使用" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.MemoryUsageText, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+            </Grid>
+
+            <!-- ====== 数据库 ====== -->
+            <TextBlock
+                Text="存储"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Margin="0,16,0,8" />
+
+            <Grid
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="4"
+                Padding="16,12"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="数据库大小" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.DatabaseSizeMb, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+            </Grid>
+
+            <!-- 底部留白 -->
+            <Border Height="24" />
+        </StackPanel>
+    </ScrollViewer>
 </Page>

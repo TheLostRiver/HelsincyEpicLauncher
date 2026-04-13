@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Task 2.4 - Diagnostics 页面 — 系统信息 (2026-04-13)
+- SystemDiagnosticsSummary 模型（OS/内存/磁盘/版本/进程内存/数据库大小）
+- IDiagnosticsReadService 接口（GetSystemSummaryAsync）
+- DiagnosticsService 实现（收集 OS/磁盘/内存/数据库信息）
+- DiagnosticsViewModel：系统信息/磁盘空间/内存使用展示 + 手动刷新
+- DiagnosticsPage.xaml：系统信息、磁盘空间（进度条）、内存、存储四个区域
+- 页面加载时自动采集诊断信息
+- Infrastructure DI 注册 DiagnosticsService
+- Presentation DI 注册 DiagnosticsViewModel
+- dotnet build 9 个项目零错误零警告，dotnet test 21/21 通过
+
 ### Task 2.3 - SQLite 数据层 + Repository 基础 (2026-04-13)
 - Migration_002_Downloads：下载任务表（id/asset_id/status/total_bytes/downloaded_bytes/checkpoint 等）
 - Migration_003_Installations：已安装资产表（id/asset_id/version/install_path/size_bytes 等）
