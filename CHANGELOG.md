@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Task 2.3 - SQLite 数据层 + Repository 基础 (2026-04-13)
+- Migration_002_Downloads：下载任务表（id/asset_id/status/total_bytes/downloaded_bytes/checkpoint 等）
+- Migration_003_Installations：已安装资产表（id/asset_id/version/install_path/size_bytes 等）
+- Migration_004_SettingsKv：键值设置表（key/value/category，与 user.settings.json 互补）
+- RepositoryBase<T> 泛型基类（Dapper CRUD：GetById/GetAll/Query/Insert/Update/Delete/Count/事务）
+- Infrastructure InternalsVisibleTo Tests.Integration
+- 6 个 CRUD 集成测试（内存 SQLite：插入查询/全量查询/删除/不存在删除/计数/更新）
+- Infrastructure DI 注册 3 个新迁移
+- dotnet build 9 个项目零错误零警告，dotnet test 21/21 通过
+
 ### Task 2.2 - Settings 页面 UI (2026-04-13)
 - SettingsViewModel（CommunityToolkit.Mvvm）：下载/外观/路径/网络四组配置双向绑定
 - SettingsPage.xaml 完整 UI：通用、下载、路径、高级四个设置分组

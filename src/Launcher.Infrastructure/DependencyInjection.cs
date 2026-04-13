@@ -29,6 +29,9 @@ public static class DependencyInjection
         // 数据库
         services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();
         services.AddSingleton<IMigration, Migration_001_AppSettings>();
+        services.AddSingleton<IMigration, Migration_002_Downloads>();
+        services.AddSingleton<IMigration, Migration_003_Installations>();
+        services.AddSingleton<IMigration, Migration_004_SettingsKv>();
         services.AddSingleton<IDatabaseInitializer, MigrationRunner>();
 
         return services;
