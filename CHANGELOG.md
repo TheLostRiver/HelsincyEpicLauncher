@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Task 3.1 - OAuth 核心流程 (2026-04-13)
+- IAuthService 接口（LoginAsync/LogoutAsync/GetAccessTokenAsync/TryRestoreSessionAsync/SessionExpired）
+- AuthUserInfo 模型（AccountId/DisplayName/Email）
+- TokenPair 模型（AccessToken/RefreshToken/ExpiresAt/AccountId/DisplayName）
+- ITokenStore 接口（SaveTokensAsync/LoadTokensAsync/ClearAsync）
+- SessionExpiredEvent 事件
+- EpicOAuthHandler：本地 HTTP 监听器接收回调、授权码交换、Token 刷新、账户信息获取、Token 撤销
+- AuthService：完整 OAuth 流程编排、会话恢复、自动刷新（提前5分钟）、登出
+- FileTokenStore：DPAPI 加密文件存储 Token（Task 3.2 将升级为 Credential Locker）
+- Infrastructure DI 注册：ITokenStore/EpicOAuthHandler/IAuthService + 命名 HttpClient
+- dotnet build 9 个项目零错误零警告，dotnet test 21/21 通过
+
 ### Task 2.6 - Diagnostics 页面 — 缓存管理 (2026-04-13)
 - CacheStatistics 模型（缩略图/Manifest/日志各项字节数+文件数+总计）
 - ICacheManager 接口（GetCacheStatisticsAsync / ClearThumbnailCacheAsync / ClearManifestCacheAsync / ClearLogCacheAsync / ClearAllCacheAsync）

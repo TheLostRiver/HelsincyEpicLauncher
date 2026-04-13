@@ -1,8 +1,10 @@
 // Copyright (c) Helsincy. All rights reserved.
 
+using Launcher.Application.Modules.Auth.Contracts;
 using Launcher.Application.Modules.Diagnostics.Contracts;
 using Launcher.Application.Modules.Settings.Contracts;
 using Launcher.Application.Persistence;
+using Launcher.Infrastructure.Auth;
 using Launcher.Infrastructure.Configuration;
 using Launcher.Infrastructure.Diagnostics;
 using Launcher.Infrastructure.Persistence.Sqlite;
@@ -39,6 +41,12 @@ public static class DependencyInjection
         // 诊断
         services.AddSingleton<IDiagnosticsReadService, DiagnosticsService>();
         services.AddSingleton<ICacheManager, CacheManager>();
+
+        // 认证
+        services.AddHttpClient("EpicAuth");
+        services.AddSingleton<ITokenStore, FileTokenStore>();
+        services.AddSingleton<EpicOAuthHandler>();
+        services.AddSingleton<IAuthService, AuthService>();
 
         return services;
     }
