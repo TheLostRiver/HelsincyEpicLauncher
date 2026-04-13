@@ -40,7 +40,7 @@ public sealed partial class ShellPage : UserControl
     /// <summary>
     /// 页面加载完成后，导航到默认页面（Fab 资产库）
     /// </summary>
-    private void ShellPage_Loaded(object sender, RoutedEventArgs e)
+    private async void ShellPage_Loaded(object sender, RoutedEventArgs e)
     {
         // 设置 DialogService 的 XamlRoot（Loaded 后 XamlRoot 才有效）
         _dialogService.SetXamlRoot(this.XamlRoot);
@@ -51,6 +51,9 @@ public sealed partial class ShellPage : UserControl
         // 选中第一个导航项，触发 SelectionChanged → 导航到默认页面
         NavView.SelectedItem = NavView.MenuItems[0];
         Logger.Information("ShellPage 已加载，默认导航到 Fab 资产库");
+
+        // 尝试恢复认证会话
+        await ViewModel.TryRestoreSessionCommand.ExecuteAsync(null);
     }
 
     /// <summary>

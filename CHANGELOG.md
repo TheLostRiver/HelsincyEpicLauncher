@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Task 3.3 - 登录 UI + Shell 集成 (2026-04-13)
+- ShellViewModel 集成 IAuthService：登录/登出/会话恢复命令
+- ShellPage NavigationView PaneHeader 用户信息区域（PersonPicture + 显示名 + 登出按钮）
+- 未登录状态显示“登录 Epic Games”按钮（AccentButtonStyle）
+- IsNotAuthenticated 计算属性供 x:Bind 取反绑定
+- ShellPage 加载时自动尝试恢复认证会话
+- SessionExpired 事件监听自动清理用户状态
+- dotnet build 9 个项目零错误零警告，dotnet test 21/21 通过
+
 ### Task 3.2 - Token 存储 + 自动刷新 (2026-04-13)
 - TokenRefreshBackgroundService：后台定时器每 2 分钟检查 Token 有效性
 - 集成到 App.xaml.cs InitializeCoreServices 启动后台刷新

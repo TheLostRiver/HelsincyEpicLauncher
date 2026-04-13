@@ -20,6 +20,32 @@
             OpenPaneLength="200"
             SelectionChanged="NavView_SelectionChanged">
 
+            <!-- 面板顶部：用户信息区域 -->
+            <NavigationView.PaneHeader>
+                <Grid Padding="12,8" MinHeight="48">
+                    <!-- 已登录状态 -->
+                    <Grid Visibility="{x:Bind ViewModel.IsAuthenticated, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <PersonPicture Grid.Column="0" Width="32" Height="32" DisplayName="{x:Bind ViewModel.DisplayName, Mode=OneWay}" />
+                        <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{x:Bind ViewModel.DisplayName, Mode=OneWay}" Style="{StaticResource CaptionTextBlockStyle}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <Button Grid.Column="2" Content="登出" Command="{x:Bind ViewModel.LogoutCommand}" FontSize="11" Padding="6,2" VerticalAlignment="Center" />
+                    </Grid>
+                    <!-- 未登录状态 -->
+                    <Button
+                        Content="登录 Epic Games"
+                        Command="{x:Bind ViewModel.LoginCommand}"
+                        Style="{StaticResource AccentButtonStyle}"
+                        HorizontalAlignment="Stretch"
+                        Visibility="{x:Bind ViewModel.IsNotAuthenticated, Mode=OneWay}" />
+                </Grid>
+            </NavigationView.PaneHeader>
+
             <!-- 主导航项 -->
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="Fab 资产库" Tag="FabLibrary">
