@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Task 6.2 - Fab 资产浏览页 (2026-04-13)
+- IThumbnailCacheService 接口（Application 层契约：URL → 本地缓存路径，LRU 淘汰）
+- ThumbnailCacheService 实现：SHA-256 URL 哈希文件名、ConcurrentDictionary 内存索引、并发下载锁防重复、7 天过期 + 2000 条 LRU 淘汰、原子临时文件写入
+- FabLibraryViewModel：分页/无限滚动、搜索防抖（300ms）、分类/排序切换、骨架屏状态管理
+- FabAssetCardViewModel：缩略图懒加载（可视区域触发）、价格/评分格式化、已拥有标记
+- FabLibraryPage.xaml：UniformGridLayout 虚拟化网格（ItemsRepeater）、搜索栏 + 分类 ComboBox + 排序 ComboBox、骨架屏加载状态（8 占位卡片）、空状态提示、无限滚动加载更多指示器
+- FabLibraryPage.xaml.cs：ViewModelLocator 模式、搜索/筛选/排序事件路由、ScrollViewer 无限滚动检测、ElementPrepared 缩略图懒加载触发
+- Infrastructure DI 注册 HttpClient("ThumbnailDownload") + IThumbnailCacheService
+- Presentation DI 注册 FabLibraryViewModel（Transient）
+- dotnet build 9 个项目零错误零警告，dotnet test 158/158 通过
+
 ### Task 6.1 - Fab API Client (2026-04-13)
 - PagedResult<T> 泛型分页容器（Shared 层）
 - FabModels：FabAssetType/AssetOwnershipState/FabSortOrder 枚举、FabSearchQuery 查询对象、FabAssetSummary/FabAssetDetail/AssetCategoryInfo/FabDownloadInfo DTO

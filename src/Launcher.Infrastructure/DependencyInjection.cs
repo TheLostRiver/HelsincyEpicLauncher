@@ -80,7 +80,13 @@ public static class DependencyInjection
             client.BaseAddress = new Uri("https://www.fab.com/api");
             client.DefaultRequestHeaders.Add("Accept", "application/json");
         });
+        services.AddHttpClient("ThumbnailDownload");
         services.AddSingleton<FabApiClient>();
+        services.AddSingleton<IThumbnailCacheService>(sp =>
+        {
+            var httpFactory = sp.GetRequiredService<IHttpClientFactory>();
+            return new ThumbnailCacheService(httpFactory.CreateClient("ThumbnailDownload"));
+        });
         services.AddSingleton<IFabCatalogReadService, FabCatalogReadService>();
         services.AddSingleton<IFabAssetCommandService, FabAssetCommandService>();
 
