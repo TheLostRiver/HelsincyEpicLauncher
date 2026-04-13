@@ -6,17 +6,20 @@ namespace Launcher.Tests.Unit;
 
 public class DownloadTaskTests
 {
-    private static DownloadTask CreateDefaultTask(string id = "task-1")
-        => new(id, "asset-001", "Fortnite", @"C:\Games\Fortnite", 10_000_000_000L);
+    private static readonly DownloadTaskId DefaultId = new(Guid.Parse("00000000-0000-0000-0000-000000000001"));
+
+    private static DownloadTask CreateDefaultTask(DownloadTaskId? id = null)
+        => new(id ?? DefaultId, "asset-001", "Fortnite", "https://example.com/download", @"C:\Games\Fortnite", 10_000_000_000L);
 
     [Fact]
     public void Constructor_NewTask_InitializesCorrectly()
     {
         var task = CreateDefaultTask();
 
-        task.Id.Should().Be("task-1");
+        task.Id.Should().Be(DefaultId);
         task.AssetId.Should().Be("asset-001");
         task.DisplayName.Should().Be("Fortnite");
+        task.DownloadUrl.Should().Be("https://example.com/download");
         task.InstallPath.Should().Be(@"C:\Games\Fortnite");
         task.TotalBytes.Should().Be(10_000_000_000L);
         task.DownloadedBytes.Should().Be(0);
@@ -32,16 +35,17 @@ public class DownloadTaskTests
     [Fact]
     public void Constructor_FromPersistence_RestoresState()
     {
+        var id = new DownloadTaskId(Guid.Parse("00000000-0000-0000-0000-000000000002"));
         var created = DateTimeOffset.UtcNow.AddHours(-1);
         var updated = DateTimeOffset.UtcNow;
 
         var task = new DownloadTask(
-            "task-2", "asset-002", "Rocket League", @"D:\Games\RL",
+            id, "asset-002", "Rocket League", "https://example.com/rl", @"D:\Games\RL",
             5_000_000_000L, 2_500_000_000L,
             DownloadState.Paused, priority: 1, retryCount: 2,
             lastError: "网络超时", createdAt: created, updatedAt: updated);
 
-        task.Id.Should().Be("task-2");
+        task.Id.Should().Be(id);
         task.State.Should().Be(DownloadState.Paused);
         task.DownloadedBytes.Should().Be(2_500_000_000L);
         task.ProgressPercent.Should().Be(50);
@@ -98,7 +102,7 @@ public class DownloadTaskTests
     [Fact]
     public void ProgressPercent_ZeroTotalBytes_ReturnsZero()
     {
-        var task = new DownloadTask("t1", "a1", "Test", @"C:\Test", 0);
+        var task = new DownloadTask(DownloadTaskId.New(), "a1", "Test", "https://example.com/test", @"C:\Test", 0);
 
         task.ProgressPercent.Should().Be(0);
     }

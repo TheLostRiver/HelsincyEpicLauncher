@@ -9,7 +9,7 @@ namespace Launcher.Domain.Downloads;
 /// 下载任务聚合根。
 /// 封装状态机、进度与元数据。
 /// </summary>
-public sealed class DownloadTask : Entity<string>
+public sealed class DownloadTask : Entity<DownloadTaskId>
 {
     private readonly DownloadStateMachine _stateMachine;
 
@@ -18,6 +18,9 @@ public sealed class DownloadTask : Entity<string>
 
     /// <summary>游戏显示名称</summary>
     public string DisplayName { get; private set; }
+
+    /// <summary>下载地址</summary>
+    public string DownloadUrl { get; private set; }
 
     /// <summary>目标安装路径</summary>
     public string InstallPath { get; private set; }
@@ -60,11 +63,12 @@ public sealed class DownloadTask : Entity<string>
     /// <summary>
     /// 创建新的下载任务
     /// </summary>
-    public DownloadTask(string id, string assetId, string displayName, string installPath, long totalBytes, int priority = 0)
+    public DownloadTask(DownloadTaskId id, string assetId, string displayName, string downloadUrl, string installPath, long totalBytes, int priority = 0)
     {
-        Id = id ?? throw new ArgumentNullException(nameof(id));
+        Id = id;
         AssetId = assetId ?? throw new ArgumentNullException(nameof(assetId));
         DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
+        DownloadUrl = downloadUrl ?? throw new ArgumentNullException(nameof(downloadUrl));
         InstallPath = installPath ?? throw new ArgumentNullException(nameof(installPath));
         TotalBytes = totalBytes;
         Priority = priority;
@@ -77,9 +81,10 @@ public sealed class DownloadTask : Entity<string>
     /// 从持久化数据恢复下载任务
     /// </summary>
     public DownloadTask(
-        string id,
+        DownloadTaskId id,
         string assetId,
         string displayName,
+        string downloadUrl,
         string installPath,
         long totalBytes,
         long downloadedBytes,
@@ -93,6 +98,7 @@ public sealed class DownloadTask : Entity<string>
         Id = id;
         AssetId = assetId;
         DisplayName = displayName;
+        DownloadUrl = downloadUrl;
         InstallPath = installPath;
         TotalBytes = totalBytes;
         DownloadedBytes = downloadedBytes;
