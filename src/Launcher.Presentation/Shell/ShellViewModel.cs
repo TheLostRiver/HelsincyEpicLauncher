@@ -3,6 +3,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Launcher.Application.Modules.Auth.Contracts;
+using Launcher.Application.Modules.Downloads.Contracts;
 using Launcher.Presentation.Shell.Navigation;
 using Serilog;
 
@@ -16,6 +17,8 @@ public partial class ShellViewModel : ObservableObject
     private static readonly ILogger Logger = Log.ForContext<ShellViewModel>();
     private readonly INavigationService _navigationService;
     private readonly IAuthService _authService;
+    private readonly IDownloadRuntimeStore _runtimeStore;
+    private readonly Microsoft.UI.Dispatching.DispatcherQueue _dispatcherQueue;
 
     // === 导航状态 ===
     [ObservableProperty] private string _currentRoute = string.Empty;
@@ -36,14 +39,23 @@ public partial class ShellViewModel : ObservableObject
     // === 全局状态 ===
     [ObservableProperty] private int _activeDownloadCount;
     [ObservableProperty] private bool _isNetworkAvailable = true;
+    [ObservableProperty] private string _downloadSpeedText = string.Empty;
+    [ObservableProperty] private bool _hasActiveDownloads;
 
-    public ShellViewModel(INavigationService navigationService, IAuthService authService)
+    public ShellViewModel(INavigationService navigationService, IAuthService authService, IDownloadRuntimeStore runtimeStore)
     {
         _navigationService = navigationService;
         _authService = authService;
+        _runtimeStore = runtimeStore;
+        _dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
 
         // 监听会话过期事件
         _authService.SessionExpired += OnSessionExpired;
+
+        // 监听下载进度，更新状态栏
+        _runtimeStore.SnapshotChanged += OnDownloadSnapshotChanged;
+        _runtimeStore.DownloadCompleted += _ => RefreshDownloadStatus();
+        _runtimeStore.DownloadFailed += _ => RefreshDownloadStatus();
 
         Logger.Debug("ShellViewModel 已创建");
     }
@@ -159,5 +171,34 @@ public partial class ShellViewModel : ObservableObject
     {
         CurrentRoute = _navigationService.CurrentRoute;
         CanGoBack = _navigationService.CanGoBack;
+    }
+
+    private void OnDownloadSnapshotChanged(DownloadProgressSnapshot _)
+    {
+        RefreshDownloadStatus();
+    }
+
+    private void RefreshDownloadStatus()
+    {
+        _dispatcherQueue.TryEnqueue(() =>
+        {
+            var snapshots = _runtimeStore.GetAllSnapshots();
+            ActiveDownloadCount = snapshots.Count;
+            HasActiveDownloads = snapshots.Count > 0;
+
+            var totalSpeed = snapshots.Sum(s => s.SpeedBytesPerSecond);
+            DownloadSpeedText = totalSpeed > 0 ? FormatSpeed(totalSpeed) : string.Empty;
+        });
+    }
+
+    private static string FormatSpeed(long bytesPerSecond)
+    {
+        return bytesPerSecond switch
+        {
+            >= 1073741824L => $"{bytesPerSecond / 1073741824.0:F2} GB/s",
+            >= 1048576L => $"{bytesPerSecond / 1048576.0:F1} MB/s",
+            >= 1024L => $"{bytesPerSecond / 1024.0:F1} KB/s",
+            _ => $"{bytesPerSecond} B/s",
+        };
     }
 }

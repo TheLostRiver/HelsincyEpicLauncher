@@ -10,7 +10,7 @@ namespace Launcher.Infrastructure.Downloads;
 /// <summary>
 /// 下载运行时状态存储。内存中维护进度快照，500ms 节流聚合。
 /// </summary>
-public sealed class DownloadRuntimeStore : IDisposable
+public sealed class DownloadRuntimeStore : IDownloadRuntimeStore, IDisposable
 {
     private readonly ConcurrentDictionary<DownloadTaskId, DownloadProgressSnapshot> _snapshots = new();
     private readonly ConcurrentDictionary<DownloadTaskId, SpeedCalculator> _speedCalcs = new();

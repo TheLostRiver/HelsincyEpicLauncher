@@ -167,7 +167,7 @@ internal sealed class DownloadTaskRepository : IDownloadTaskRepository
             TaskId = taskId,
             ManifestJson = (string)header.manifest_json,
             Chunks = chunks,
-            SavedAt = DateTime.Parse((string)header.saved_at),
+            SavedAt = DateTime.Parse((string)header.saved_at, System.Globalization.CultureInfo.InvariantCulture),
         };
     }
 
@@ -200,8 +200,8 @@ internal sealed class DownloadTaskRepository : IDownloadTaskRepository
             priority: 0,
             retryCount: (int)row.retry_count,
             lastError: row.error_message,
-            createdAt: DateTimeOffset.Parse(row.created_at),
-            updatedAt: DateTimeOffset.Parse(row.updated_at));
+            createdAt: DateTimeOffset.Parse(row.created_at, System.Globalization.CultureInfo.InvariantCulture),
+            updatedAt: DateTimeOffset.Parse(row.updated_at, System.Globalization.CultureInfo.InvariantCulture));
     }
 
     private static object MapToRow(DownloadTask task) => new

@@ -108,19 +108,17 @@
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </StackPanel>
 
-            <!-- 下载速度占位 -->
-            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+            <!-- 下载速度迷你面板 -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
+                        Visibility="{x:Bind ViewModel.HasActiveDownloads, Mode=OneWay}">
                 <TextBlock
-                    x:Name="DownloadSpeedText"
-                    Text=""
+                    Text="{x:Bind ViewModel.DownloadSpeedText, Mode=OneWay}"
                     Style="{StaticResource CaptionTextBlockStyle}"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <FontIcon
-                    x:Name="DownloadIcon"
                     Glyph="&#xE896;"
                     FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Visibility="Collapsed" />
+                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
             </StackPanel>
         </Grid>
 

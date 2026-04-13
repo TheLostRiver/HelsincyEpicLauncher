@@ -1,6 +1,7 @@
 // Copyright (c) Helsincy. All rights reserved.
 
 using Launcher.Presentation.Modules.Diagnostics;
+using Launcher.Presentation.Modules.Downloads;
 using Launcher.Presentation.Modules.Settings;
 using Launcher.Presentation.Shell;
 using Launcher.Presentation.Shell.Navigation;
@@ -38,6 +39,9 @@ public static class DependencyInjection
 
         // Diagnostics ViewModel（Transient：每次导航刷新）
         services.AddTransient<DiagnosticsViewModel>();
+
+        // Downloads ViewModel（Transient：每次导航刷新列表）
+        services.AddTransient<DownloadsViewModel>();
 
         return services;
     }
