@@ -1,9 +1,11 @@
 // Copyright (c) Helsincy. All rights reserved.
 
+using Launcher.Application.Modules.Settings.Contracts;
 using Launcher.Application.Persistence;
 using Launcher.Infrastructure.Configuration;
 using Launcher.Infrastructure.Persistence.Sqlite;
 using Launcher.Infrastructure.Persistence.Sqlite.Migrations;
+using Launcher.Infrastructure.Settings;
 using Launcher.Shared.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,6 +20,11 @@ public static class DependencyInjection
     {
         // 配置
         services.AddSingleton<IAppConfigProvider, AppConfigProvider>();
+
+        // 用户设置（注册具体类型 + 双接口）
+        services.AddSingleton<SettingsService>();
+        services.AddSingleton<ISettingsCommandService>(sp => sp.GetRequiredService<SettingsService>());
+        services.AddSingleton<ISettingsReadService>(sp => sp.GetRequiredService<SettingsService>());
 
         // 数据库
         services.AddSingleton<IDbConnectionFactory, SqliteConnectionFactory>();

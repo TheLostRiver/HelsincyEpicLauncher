@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Task 2.1 - 配置系统完整实现 (2026-04-13)
+- 强类型配置类：DownloadConfig / AppearanceConfig / PathConfig / NetworkConfig（Application 层）
+- ConfigChangedEvent 配置变更事件（sealed record，Section + NewConfig）
+- ISettingsCommandService 写接口（UpdateDownload/Appearance/Path/NetworkConfigAsync + ResetToDefaultsAsync）
+- ISettingsReadService 读接口（GetDownload/Appearance/Path/NetworkConfig 同步返回）
+- UserSettings JSON 持久化模型（Infrastructure 层）
+- SettingsService 双接口实现（ISettingsCommandService + ISettingsReadService）
+- user.settings.json 文件读写（DataPath 目录），异步 I/O
+- 线程安全（lock）+ 深拷贝隔离（JSON 序列化/反序列化防止外部修改内部状态）
+- ConfigChanged 事件通知订阅者配置变更
+- Infrastructure DI 注册 SettingsService（Singleton + 双接口映射）
+- dotnet build 9 个项目零错误零警告，dotnet test 15/15 通过
+
 ### Task 1.6 - 系统托盘 (2026-04-13)
 - TrayIconManager（System.Windows.Forms.NotifyIcon via FrameworkReference）
 - 系统托盘图标 + 右键菜单（显示主窗口 / 退出）
