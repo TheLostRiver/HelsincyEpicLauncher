@@ -73,3 +73,30 @@ public sealed class LogEntry
     /// <summary>关联 ID</summary>
     public string? CorrelationId { get; init; }
 }
+
+/// <summary>
+/// 缓存使用统计
+/// </summary>
+public sealed class CacheStatistics
+{
+    /// <summary>缩略图缓存大小（字节）</summary>
+    public long ThumbnailCacheBytes { get; init; }
+
+    /// <summary>缩略图缓存文件数</summary>
+    public int ThumbnailFileCount { get; init; }
+
+    /// <summary>搜索/Manifest 缓存大小（字节）</summary>
+    public long ManifestCacheBytes { get; init; }
+
+    /// <summary>Manifest 缓存文件数</summary>
+    public int ManifestFileCount { get; init; }
+
+    /// <summary>日志文件总大小（字节）</summary>
+    public long LogFileBytes { get; init; }
+
+    /// <summary>日志文件数</summary>
+    public int LogFileCount { get; init; }
+
+    /// <summary>总缓存大小（字节）</summary>
+    public long TotalBytes => ThumbnailCacheBytes + ManifestCacheBytes + LogFileBytes;
+}

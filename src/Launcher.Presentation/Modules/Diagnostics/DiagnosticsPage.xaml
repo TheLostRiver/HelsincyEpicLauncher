@@ -172,5 +172,105 @@
                 </Grid>
             </Grid>
         </PivotItem>
+
+        <!-- ====== Tab 3：缓存管理 ====== -->
+        <PivotItem Header="缓存">
+            <ScrollViewer Padding="0,16,0,16">
+                <StackPanel Spacing="8" MaxWidth="800">
+
+                    <!-- 刷新 + 状态 -->
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{x:Bind ViewModel.CacheStatusMessage, Mode=OneWay}"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Content="刷新" Command="{x:Bind ViewModel.RefreshCacheCommand}" />
+                    </Grid>
+
+                    <!-- 总缓存大小 -->
+                    <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Padding="16,12"
+                          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="总缓存大小" Style="{StaticResource BodyStrongTextBlockStyle}" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.TotalCacheSize, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                    </Grid>
+
+                    <!-- 缩略图缓存 -->
+                    <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Padding="16,12"
+                          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="缩略图缓存" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                                <Run Text="{x:Bind ViewModel.ThumbnailCacheSize, Mode=OneWay}" />
+                                <Run Text=" · " />
+                                <Run Text="{x:Bind ViewModel.ThumbnailFileCount, Mode=OneWay}" />
+                                <Run Text=" 个文件" />
+                            </TextBlock>
+                        </StackPanel>
+                        <Button Grid.Column="2" Content="清理" Command="{x:Bind ViewModel.ClearThumbnailCacheCommand}" Margin="8,0,0,0" />
+                    </Grid>
+
+                    <!-- Manifest 缓存 -->
+                    <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Padding="16,12"
+                          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Manifest / 搜索缓存" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                                <Run Text="{x:Bind ViewModel.ManifestCacheSize, Mode=OneWay}" />
+                                <Run Text=" · " />
+                                <Run Text="{x:Bind ViewModel.ManifestFileCount, Mode=OneWay}" />
+                                <Run Text=" 个文件" />
+                            </TextBlock>
+                        </StackPanel>
+                        <Button Grid.Column="2" Content="清理" Command="{x:Bind ViewModel.ClearManifestCacheCommand}" Margin="8,0,0,0" />
+                    </Grid>
+
+                    <!-- 日志文件 -->
+                    <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="4" Padding="16,12"
+                          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="日志文件" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                                <Run Text="{x:Bind ViewModel.LogCacheSize, Mode=OneWay}" />
+                                <Run Text=" · " />
+                                <Run Text="{x:Bind ViewModel.LogFileCount, Mode=OneWay}" />
+                                <Run Text=" 个文件" />
+                            </TextBlock>
+                        </StackPanel>
+                        <Button Grid.Column="2" Content="清理" Command="{x:Bind ViewModel.ClearLogCacheCommand}" Margin="8,0,0,0" />
+                    </Grid>
+
+                    <!-- 全部清理 -->
+                    <Button
+                        Content="清理全部缓存"
+                        Command="{x:Bind ViewModel.ClearAllCacheCommand}"
+                        Style="{StaticResource AccentButtonStyle}"
+                        HorizontalAlignment="Right"
+                        Margin="0,16,0,0" />
+
+                </StackPanel>
+            </ScrollViewer>
+        </PivotItem>
     </Pivot>
 </Page>

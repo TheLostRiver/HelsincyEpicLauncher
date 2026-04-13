@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Task 2.6 - Diagnostics 页面 — 缓存管理 (2026-04-13)
+- CacheStatistics 模型（缩略图/Manifest/日志各项字节数+文件数+总计）
+- ICacheManager 接口（GetCacheStatisticsAsync / ClearThumbnailCacheAsync / ClearManifestCacheAsync / ClearLogCacheAsync / ClearAllCacheAsync）
+- CacheManager 实现（目录扫描统计、分类清理、日志保留最近1天）
+- DiagnosticsViewModel 缓存管理状态（刷新/分类清理/全部清理命令）
+- DiagnosticsPage.xaml Pivot Tab 3：缓存统计卡片 + 分类清理按钮 + 全部清理
+- Infrastructure DI 注册 ICacheManager → CacheManager
+- dotnet build 9 个项目零错误零警告，dotnet test 21/21 通过
+
 ### Task 2.5 - Diagnostics 页面 — 日志查看器 (2026-04-13)
 - LogEntryLevel 枚举 + LogEntry 模型（Timestamp/Level/Source/Message/Exception/CorrelationId）
 - IDiagnosticsReadService 扩展：GetRecentLogsAsync（数量+级别筛选）/ SearchLogsAsync（关键字+级别）

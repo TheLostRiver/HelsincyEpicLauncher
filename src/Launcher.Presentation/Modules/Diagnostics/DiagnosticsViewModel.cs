@@ -9,12 +9,13 @@ using Serilog;
 namespace Launcher.Presentation.Modules.Diagnostics;
 
 /// <summary>
-/// 诊断页面 ViewModel。管理系统信息采集、日志查看和筛选。
+/// 诊断页面 ViewModel。管理系统信息采集、日志查看和缓存管理。
 /// </summary>
 public partial class DiagnosticsViewModel : ObservableObject
 {
     private static readonly ILogger Logger = Log.ForContext<DiagnosticsViewModel>();
     private readonly IDiagnosticsReadService _diagnosticsService;
+    private readonly ICacheManager _cacheManager;
 
     // === 系统信息 ===
     [ObservableProperty] private string _osVersion = string.Empty;
@@ -44,13 +45,25 @@ public partial class DiagnosticsViewModel : ObservableObject
 
     public ObservableCollection<LogEntryDisplay> LogEntries { get; } = [];
 
+    // === 缓存管理 ===
+    [ObservableProperty] private string _thumbnailCacheSize = "0 B";
+    [ObservableProperty] private int _thumbnailFileCount;
+    [ObservableProperty] private string _manifestCacheSize = "0 B";
+    [ObservableProperty] private int _manifestFileCount;
+    [ObservableProperty] private string _logCacheSize = "0 B";
+    [ObservableProperty] private int _logFileCount;
+    [ObservableProperty] private string _totalCacheSize = "0 B";
+    [ObservableProperty] private bool _isLoadingCache;
+    [ObservableProperty] private string _cacheStatusMessage = string.Empty;
+
     // === 状态 ===
     [ObservableProperty] private bool _isLoading;
     [ObservableProperty] private string _lastRefreshed = string.Empty;
 
-    public DiagnosticsViewModel(IDiagnosticsReadService diagnosticsService)
+    public DiagnosticsViewModel(IDiagnosticsReadService diagnosticsService, ICacheManager cacheManager)
     {
         _diagnosticsService = diagnosticsService;
+        _cacheManager = cacheManager;
         Logger.Debug("DiagnosticsViewModel 已创建");
     }
 
@@ -203,6 +216,98 @@ public partial class DiagnosticsViewModel : ObservableObject
         if (mb >= 1024)
             return $"{mb / 1024.0:F1} GB";
         return $"{mb} MB";
+    }
+
+    /// <summary>
+    /// 刷新缓存统计信息
+    /// </summary>
+    [RelayCommand]
+    private async Task RefreshCacheAsync()
+    {
+        IsLoadingCache = true;
+        CacheStatusMessage = string.Empty;
+
+        try
+        {
+            var stats = await _cacheManager.GetCacheStatisticsAsync();
+
+            ThumbnailCacheSize = FormatBytes(stats.ThumbnailCacheBytes);
+            ThumbnailFileCount = stats.ThumbnailFileCount;
+            ManifestCacheSize = FormatBytes(stats.ManifestCacheBytes);
+            ManifestFileCount = stats.ManifestFileCount;
+            LogCacheSize = FormatBytes(stats.LogFileBytes);
+            LogFileCount = stats.LogFileCount;
+            TotalCacheSize = FormatBytes(stats.TotalBytes);
+
+            Logger.Debug("缓存统计已刷新 | 总计={Total}", TotalCacheSize);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error(ex, "刷新缓存统计失败");
+        }
+        finally
+        {
+            IsLoadingCache = false;
+        }
+    }
+
+    /// <summary>
+    /// 清理缩略图缓存
+    /// </summary>
+    [RelayCommand]
+    private async Task ClearThumbnailCacheAsync()
+    {
+        IsLoadingCache = true;
+        var result = await _cacheManager.ClearThumbnailCacheAsync();
+        CacheStatusMessage = result.IsSuccess ? "缩略图缓存已清理" : "清理失败：" + result.Error?.UserMessage;
+        await RefreshCacheAsync();
+    }
+
+    /// <summary>
+    /// 清理 Manifest 缓存
+    /// </summary>
+    [RelayCommand]
+    private async Task ClearManifestCacheAsync()
+    {
+        IsLoadingCache = true;
+        var result = await _cacheManager.ClearManifestCacheAsync();
+        CacheStatusMessage = result.IsSuccess ? "Manifest 缓存已清理" : "清理失败：" + result.Error?.UserMessage;
+        await RefreshCacheAsync();
+    }
+
+    /// <summary>
+    /// 清理日志缓存
+    /// </summary>
+    [RelayCommand]
+    private async Task ClearLogCacheAsync()
+    {
+        IsLoadingCache = true;
+        var result = await _cacheManager.ClearLogCacheAsync();
+        CacheStatusMessage = result.IsSuccess ? "日志缓存已清理（保留最近 1 天）" : "清理失败：" + result.Error?.UserMessage;
+        await RefreshCacheAsync();
+    }
+
+    /// <summary>
+    /// 清理全部缓存
+    /// </summary>
+    [RelayCommand]
+    private async Task ClearAllCacheAsync()
+    {
+        IsLoadingCache = true;
+        var result = await _cacheManager.ClearAllCacheAsync();
+        CacheStatusMessage = result.IsSuccess ? "全部缓存已清理" : "部分清理失败：" + result.Error?.UserMessage;
+        await RefreshCacheAsync();
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        return bytes switch
+        {
+            >= 1073741824L => $"{bytes / 1073741824.0:F2} GB",
+            >= 1048576L => $"{bytes / 1048576.0:F1} MB",
+            >= 1024L => $"{bytes / 1024.0:F1} KB",
+            _ => $"{bytes} B",
+        };
     }
 }
 

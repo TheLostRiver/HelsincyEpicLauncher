@@ -2,27 +2,27 @@
 
 ## 最后更新
 - 时间：2026-04-13
-- 完成任务：Task 2.5（Diagnostics 页面 — 日志查看器）
+- 完成任务：Task 2.6（Diagnostics 页面 — 缓存管理）
 
 ## 当前项目状态
 - 最后成功编译：是（dotnet build 9 个项目零错误零警告）
 - 最后测试结果：全部通过（21/21）
-- 当前 Phase：Phase 2 进行中
-- 下一个任务：Task 2.6（Phase 2 集成测试）
+- 当前 Phase：Phase 2 完成
+- 下一个任务：Task 3.1（OAuth 核心流程）
 
 ## 本次会话完成的工作
-1. LogEntryLevel 枚举 + LogEntry 模型
-2. IDiagnosticsReadService 扩展（GetRecentLogsAsync / SearchLogsAsync）
-3. DiagnosticsService CompactJSON 日志解析 + 搜索/筛选
-4. DiagnosticsViewModel 日志查看器状态管理（搜索、级别筛选、导出）
-5. DiagnosticsPage.xaml Pivot 双 Tab UI（系统信息 + 日志查看器）
+1. CacheStatistics 模型 + ICacheManager 接口
+2. CacheManager 实现（目录扫描统计、分类清理、日志保留最近1天）
+3. DiagnosticsViewModel 缓存管理命令（刷新、分类清理、全部清理）
+4. DiagnosticsPage.xaml Pivot Tab 3：缓存统计 + 清理按钮
+5. Infrastructure DI 注册
 
 ## 遗留问题
 - 无
 
 ## 下一个任务的输入
-- 读取文档：docs/13-DevelopmentPhases.md Task 2.6（Phase 2 集成测试）
-- 注意事项：Tab 3 缓存统计 + 清理、ICacheManager 等
+- 读取文档：docs/06-ModuleDefinitions/Auth.md + docs/13-DevelopmentPhases.md Task 3.1
+- 注意事项：OAuth 2.0 Authorization Code 流程、本地 HTTP 监听器、Token 兑换
 
 ## 关键约束提醒
 - 文件名英文，内容中文（代码除外，注释中文）

@@ -38,6 +38,7 @@ public static class DependencyInjection
 
         // 诊断
         services.AddSingleton<IDiagnosticsReadService, DiagnosticsService>();
+        services.AddSingleton<ICacheManager, CacheManager>();
 
         return services;
     }
