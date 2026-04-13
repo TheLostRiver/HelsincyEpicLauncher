@@ -1,5 +1,6 @@
 // Copyright (c) Helsincy. All rights reserved.
 
+using Launcher.Background.Auth;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Launcher.Background;
@@ -11,7 +12,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddBackground(this IServiceCollection services)
     {
-        // 后台服务注册将在后续任务中添加
+        // Token 自动刷新
+        services.AddSingleton<TokenRefreshBackgroundService>();
 
         return services;
     }

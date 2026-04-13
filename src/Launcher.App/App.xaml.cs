@@ -247,6 +247,10 @@ public partial class App : Microsoft.UI.Xaml.Application
         {
             Log.Error(ex, "数据库迁移失败");
         }
+
+        // 启动后台服务：Token 自动刷新
+        var tokenRefresh = Services.GetRequiredService<Launcher.Background.Auth.TokenRefreshBackgroundService>();
+        tokenRefresh.Start();
     }
 
     /// <summary>

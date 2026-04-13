@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Task 3.2 - Token 存储 + 自动刷新 (2026-04-13)
+- TokenRefreshBackgroundService：后台定时器每 2 分钟检查 Token 有效性
+- 集成到 App.xaml.cs InitializeCoreServices 启动后台刷新
+- Background 层 DI 注册 TokenRefreshBackgroundService
+- DPAPI 加密存储已在 Task 3.1 完成（FileTokenStore）
+- SessionExpiredEvent 已在 Task 3.1 定义并集成
+- dotnet build 9 个项目零错误零警告，dotnet test 21/21 通过
+
 ### Task 3.1 - OAuth 核心流程 (2026-04-13)
 - IAuthService 接口（LoginAsync/LogoutAsync/GetAccessTokenAsync/TryRestoreSessionAsync/SessionExpired）
 - AuthUserInfo 模型（AccountId/DisplayName/Email）
