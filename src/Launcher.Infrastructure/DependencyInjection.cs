@@ -6,6 +6,7 @@ using Launcher.Application.Modules.Downloads.Contracts;
 using Launcher.Application.Modules.EngineVersions.Contracts;
 using Launcher.Application.Modules.FabLibrary.Contracts;
 using Launcher.Application.Modules.Installations.Contracts;
+using Launcher.Application.Modules.Network.Contracts;
 using Launcher.Application.Modules.Plugins.Contracts;
 using Launcher.Application.Modules.Settings.Contracts;
 using Launcher.Application.Modules.Updates.Contracts;
@@ -17,6 +18,7 @@ using Launcher.Infrastructure.Downloads;
 using Launcher.Infrastructure.EngineVersions;
 using Launcher.Infrastructure.FabLibrary;
 using Launcher.Infrastructure.Installations;
+using Launcher.Infrastructure.Network;
 using Launcher.Infrastructure.Plugins;
 using Launcher.Infrastructure.Persistence.Sqlite;
 using Launcher.Infrastructure.Persistence.Sqlite.Migrations;
@@ -122,6 +124,10 @@ public static class DependencyInjection
         services.AddSingleton<AppUpdateService>();
         services.AddSingleton<IAppUpdateService>(sp => sp.GetRequiredService<AppUpdateService>());
         services.AddSingleton<IInternalUpdateNotifier>(sp => sp.GetRequiredService<AppUpdateService>());
+
+        // 网络监视
+        services.AddSingleton<NetworkMonitor>();
+        services.AddSingleton<INetworkMonitor>(sp => sp.GetRequiredService<NetworkMonitor>());
 
         return services;
     }

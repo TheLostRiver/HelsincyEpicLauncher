@@ -15,4 +15,14 @@ public interface IDownloadCommandService
     Task<Result> ResumeAsync(DownloadTaskId taskId, CancellationToken ct = default);
     Task<Result> CancelAsync(DownloadTaskId taskId, CancellationToken ct = default);
     Task<Result> SetPriorityAsync(DownloadTaskId taskId, int priority, CancellationToken ct = default);
+
+    /// <summary>
+    /// 暂停所有活跃下载（网络断联时调用）。
+    /// </summary>
+    Task<Result> PauseAllAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// 恢复所有已暂停的下载（网络恢复时调用）。
+    /// </summary>
+    Task<Result> ResumeAllAsync(CancellationToken ct = default);
 }

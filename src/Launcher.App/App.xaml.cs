@@ -259,6 +259,10 @@ public partial class App : Microsoft.UI.Xaml.Application
         // 启动后台服务：自动更新检查（延迟 5 分钟首次检查，每 24 小时一次）
         var updateWorker = Services.GetRequiredService<Launcher.Background.Updates.AppUpdateWorker>();
         updateWorker.Start();
+
+        // 启动后台服务：网络监视（断联暂停下载，恢复续传）
+        var networkWorker = Services.GetRequiredService<Launcher.Background.Network.NetworkMonitorWorker>();
+        networkWorker.Start();
     }
 
     /// <summary>

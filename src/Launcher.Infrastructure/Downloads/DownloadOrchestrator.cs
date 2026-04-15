@@ -230,6 +230,30 @@ public sealed class DownloadOrchestrator
     }
 
     /// <summary>
+    /// 获取所有活跃（非 Paused）任务的 ID
+    /// </summary>
+    public async Task<IReadOnlyList<DownloadTaskId>> GetActiveTaskIdsAsync(CancellationToken ct)
+    {
+        var tasks = await _repository.GetActiveTasksAsync(ct);
+        return tasks
+            .Where(t => t.State is not (DownloadState.Paused or DownloadState.Completed or DownloadState.Cancelled or DownloadState.Failed))
+            .Select(t => t.Id)
+            .ToList();
+    }
+
+    /// <summary>
+    /// 获取所有已暂停任务的 ID
+    /// </summary>
+    public async Task<IReadOnlyList<DownloadTaskId>> GetPausedTaskIdsAsync(CancellationToken ct)
+    {
+        var tasks = await _repository.GetActiveTasksAsync(ct);
+        return tasks
+            .Where(t => t.State == DownloadState.Paused)
+            .Select(t => t.Id)
+            .ToList();
+    }
+
+    /// <summary>
     /// 调整任务优先级
     /// </summary>
     public async Task<Result> SetPriorityAsync(DownloadTaskId taskId, int priority, CancellationToken ct)

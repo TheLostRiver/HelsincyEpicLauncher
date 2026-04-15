@@ -48,4 +48,30 @@ public sealed class DownloadCommandService : IDownloadCommandService
     {
         return await _orchestrator.SetPriorityAsync(taskId, priority, ct);
     }
+
+    public async Task<Result> PauseAllAsync(CancellationToken ct)
+    {
+        _logger.Information("暂停所有活跃下载（网络断联触发）");
+        var active = await _orchestrator.GetActiveTaskIdsAsync(ct);
+        foreach (var taskId in active)
+        {
+            var result = await _orchestrator.PauseAsync(taskId, ct);
+            if (!result.IsSuccess)
+                _logger.Warning("暂停任务失败 | TaskId={TaskId} | Error={Error}", taskId, result.Error?.TechnicalMessage);
+        }
+        return Result.Ok();
+    }
+
+    public async Task<Result> ResumeAllAsync(CancellationToken ct)
+    {
+        _logger.Information("恢复所有已暂停下载（网络恢复触发）");
+        var paused = await _orchestrator.GetPausedTaskIdsAsync(ct);
+        foreach (var taskId in paused)
+        {
+            var result = await _orchestrator.ResumeAsync(taskId, ct);
+            if (!result.IsSuccess)
+                _logger.Warning("恢复任务失败 | TaskId={TaskId} | Error={Error}", taskId, result.Error?.TechnicalMessage);
+        }
+        return Result.Ok();
+    }
 }

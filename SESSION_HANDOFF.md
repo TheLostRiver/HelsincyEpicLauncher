@@ -2,37 +2,32 @@
 
 ## 最后更新
 - 时间：2026-04-16
-- 完成任务：Task 8.1（自动更新）
+- 完成任务：Task 8.2（网络韧性增强）
 
 ## 当前项目状态
 - 最后成功编译：是（dotnet build 9 个项目零错误零警告）
 - 最后测试结果：全部通过（176/176）
-- 当前 Phase：Phase 8 进行中（Task 8.1 完成）
-- 下一个任务：Task 8.2（网络韧性增强）
+- 当前 Phase：Phase 8 进行中（Task 8.1 + 8.2 完成）
+- 下一个任务：Task 8.3（性能优化）
 
 ## 本次会话完成的工作
 
-### 遗留问题 1 — RepairAsync 完整修复
-- IRepairDownloadUrlProvider 接口（Installations.Contracts）+ RepairDownloadInfo DTO
-- RepairDownloadUrlProvider 实现（Infrastructure，调用 FabApiClient 获取新鲜 CDN URL）
-- RepairFileDownloader：HTTP 下载完整包 → ZIP 局部解压 → SHA-256 校验 → 原子替换 → 临时文件清理
-- InstallManifest 新增 DownloadUrl 可选字段
-- InstallWorker.ExecuteAsync 接受 downloadUrl 参数
-- RepairAsync 完整流程：校验 → 获取 URL → 下载修复 → 二次校验 → 成功/NeedsRepair
-- InstallStateMachine 新增 Installed→Repairing 和 Repairing→NeedsRepair 转换
-- DI 注册 IRepairDownloadUrlProvider + RepairFileDownloader
+### Task 8.2 — 网络韧性增强
+- Application 契约：INetworkMonitor（IsNetworkAvailable + NetworkStatusChanged 事件），IDownloadCommandService 新增 PauseAllAsync/ResumeAllAsync
+- Infrastructure：NetworkMonitor（NetworkChange.NetworkAvailabilityChanged 驱动，Singleton + IDisposable），DI 注册
+- DownloadOrchestrator：GetActiveTaskIdsAsync（非 Paused 活跃任务 ID）+ GetPausedTaskIdsAsync（Paused 状态任务 ID）
+- DownloadCommandService：PauseAllAsync（批量暂停）+ ResumeAllAsync（批量恢复），逐任务记录失败日志
+- Background：NetworkMonitorWorker（订阅 NetworkStatusChanged → 断联暂停/恢复续传，async void 内部 try/catch），DI 注册
+- App.xaml.cs：NetworkMonitorWorker.Start() 在启动阶段
+- ShellViewModel：注入 INetworkMonitor，构造时同步初始化 IsNetworkAvailable，订阅 NetworkStatusChanged（DispatcherQueue 切换线程）
+- 遵循 AI-03：Background 仅依赖 Application 契约，不引用 Infrastructure
 
-### 遗留问题 2 — 下载完成后自动安装
-- AutoInstallWorker（Background 层）：订阅 DownloadCompleted → 检查 AutoInstall → InstallAsync
-- Background DI 注册 + App.xaml.cs 启动
-- 纯事件驱动，通过 Contracts 接口通信，零模块内部耦合
-
-### 遗留问题 3 — FabApiClient 单元测试
-- InternalsVisibleTo("Launcher.Tests.Unit") 添加到 Infrastructure
-- MockHttpMessageHandler 测试辅助类
-- FabApiClientTests：8 个测试覆盖正常/401/500 重试/Token 失败/取消等场景
-- RepairAsyncTests：6 个测试覆盖全部修复场景
-- AutoInstallWorkerTests：3 个测试覆盖开关开启/关闭/安装失败
+### Task 8.1 — 自动更新
+- Application 层契约：UpdateInfo DTO、UpdateAvailableEvent、IAppUpdateService、IInternalUpdateNotifier（避免 Background→Infrastructure 跨层耦合）
+- AppUpdateService：GitHub Releases API、版本比较、跳过版本持久化、流式下载+进度、PS 更新脚本、Environment.Exit(0)
+- AppUpdateWorker：24h 定时检查、5min 启动延迟、IInternalUpdateNotifier 触发事件
+- ShellViewModel：订阅 UpdateAvailable、HasPendingUpdate/IsNotDownloadingUpdate/CanSkipUpdate 状态
+- ShellPage.xaml：InfoBar 更新通知条
 
 ### Task 7.2 — 引擎启动 + 插件管理
 - Application 层：PluginSummary / CompatibilityReport DTO、IPluginReadService、IPluginCommandService

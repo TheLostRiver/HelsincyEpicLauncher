@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Launcher.Application.Modules.Auth.Contracts;
 using Launcher.Application.Modules.Downloads.Contracts;
+using Launcher.Application.Modules.Network.Contracts;
 using Launcher.Application.Modules.Updates.Contracts;
 using Launcher.Presentation.Shell.Navigation;
 using Microsoft.UI.Xaml;
@@ -21,6 +22,7 @@ public partial class ShellViewModel : ObservableObject
     private readonly IAuthService _authService;
     private readonly IDownloadRuntimeStore _runtimeStore;
     private readonly IAppUpdateService _appUpdateService;
+    private readonly INetworkMonitor _networkMonitor;
     private readonly Microsoft.UI.Dispatching.DispatcherQueue _dispatcherQueue;
 
     // === 导航状态 ===
@@ -69,13 +71,18 @@ public partial class ShellViewModel : ObservableObject
         INavigationService navigationService,
         IAuthService authService,
         IDownloadRuntimeStore runtimeStore,
-        IAppUpdateService appUpdateService)
+        IAppUpdateService appUpdateService,
+        INetworkMonitor networkMonitor)
     {
         _navigationService = navigationService;
         _authService = authService;
         _runtimeStore = runtimeStore;
         _appUpdateService = appUpdateService;
+        _networkMonitor = networkMonitor;
         _dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+
+        // 同步初始网络状态
+        _isNetworkAvailable = _networkMonitor.IsNetworkAvailable;
 
         // 监听会话过期事件
         _authService.SessionExpired += OnSessionExpired;
@@ -85,8 +92,11 @@ public partial class ShellViewModel : ObservableObject
         _runtimeStore.DownloadCompleted += _ => RefreshDownloadStatus();
         _runtimeStore.DownloadFailed += _ => RefreshDownloadStatus();
 
-        // 监听更新通知（仅依赖 Application 廷约接口，不耦合 Background 层）
+        // 监听更新通知（仅依赖 Application 契约接口，不耦合 Background 层）
         _appUpdateService.UpdateAvailable += OnUpdateAvailable;
+
+        // 监听网络状态变化
+        _networkMonitor.NetworkStatusChanged += OnNetworkStatusChanged;
 
         Logger.Debug("ShellViewModel 已创建");
     }
@@ -178,6 +188,15 @@ public partial class ShellViewModel : ObservableObject
             PendingUpdateIsMandatory = evt.IsMandatory;
             HasPendingUpdate = true;
             Logger.Information("UI 收到更新通知 | 版本={Version}", evt.Version);
+        });
+    }
+
+    private void OnNetworkStatusChanged(bool isAvailable)
+    {
+        _dispatcherQueue.TryEnqueue(() =>
+        {
+            IsNetworkAvailable = isAvailable;
+            Logger.Information("网络状态更新 | IsAvailable={IsAvailable}", isAvailable);
         });
     }
 

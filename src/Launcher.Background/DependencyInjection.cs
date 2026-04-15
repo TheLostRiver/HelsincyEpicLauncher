@@ -2,6 +2,7 @@
 
 using Launcher.Background.Auth;
 using Launcher.Background.Installations;
+using Launcher.Background.Network;
 using Launcher.Background.Updates;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +23,9 @@ public static class DependencyInjection
 
         // 自动更新检查
         services.AddSingleton<AppUpdateWorker>();
+
+        // 网络监视
+        services.AddSingleton<NetworkMonitorWorker>();
 
         return services;
     }

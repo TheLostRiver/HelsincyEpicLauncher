@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Task 8.2 - 网络韧性增强 (2026-04-16)
+- Application 层契约：INetworkMonitor（IsNetworkAvailable 属性 + NetworkStatusChanged 事件）、IDownloadCommandService 新增 PauseAllAsync/ResumeAllAsync 方法
+- Infrastructure：NetworkMonitor（System.Net.NetworkInformation.NetworkChange 事件驱动，Singleton + IDisposable，DI 注册 NetworkMonitor + INetworkMonitor）
+- DownloadOrchestrator 新增 GetActiveTaskIdsAsync（过滤非 Paused 活跃任务）+ GetPausedTaskIdsAsync（仅 Paused 状态任务）
+- DownloadCommandService 实现 PauseAllAsync（批量暂停活跃任务）+ ResumeAllAsync（批量恢复已暂停任务），批量失败逐个警告日志
+- Background：NetworkMonitorWorker（订阅 INetworkMonitor.NetworkStatusChanged → 断联暂停下载、恢复续传，async void 事件回调内部 try/catch），DI 注册
+- App.xaml.cs 启动时调用 NetworkMonitorWorker.Start()
+- ShellViewModel：注入 INetworkMonitor，构造时同步初始状态，订阅 NetworkStatusChanged 在 DispatcherQueue 更新 IsNetworkAvailable，状态栏实时显示网络状态
+- 遵循 AI-03（Background 不引用 Infrastructure，仅依赖 Application 契约）
+- dotnet build 9 项目零错误零警告，dotnet test 176/176 通过
+
 ### Task 8.1 - 自动更新 (2026-04-16)
 - Application 层契约：UpdateInfo DTO（Version/DownloadUrl/DownloadSize/ReleaseNotes/ReleaseDate/IsMandatory）、UpdateAvailableEvent record、IAppUpdateService（CheckForUpdate/DownloadUpdate/ApplyUpdate/SkipVersion）、IInternalUpdateNotifier（避免 Background→Infrastructure 跨层耦合）
 - AppUpdateService：GitHub Releases API 检查最新版本（Bearer + User-Agent + snake_case JSON）、版本比较、跳过版本本地持久化（skipped_versions.json）、下载包流式写入（带进度）、PowerShell 更新脚本生成（等待进程退出+解压+重启）、Environment.Exit(0) 退出（不引用 WinUI API）
