@@ -12,6 +12,7 @@
 | 2026-04-16 | 第1遍 | ✅ 完成 | 6 | 架构与分层合规性审查：1🔴 4🟡 1🟢 |
 | 2026-04-16 | 第2遍 | ✅ 完成 | 7 | 模块耦合与依赖审查：1🔴 4🟡 2🟢 |
 | 2026-04-16 | 第3遍 | ✅ 完成 | 12 | 文档契约vs实际实现：1🔴 8🟡 3🟢 |
+| 2026-04-16 | 第4遍 | ✅ 完成 | 26 | Bug与边界条件：3🔴 19🟡 4🟢 |
 
 ---
 
@@ -54,3 +55,16 @@
 - 关键发现：Phase 0-3 启动流程多处不完整（无骨架屏、Phase 2 未独立、Phase 3 仅 1/6 完成）
 - 确认：状态机、错误处理模型完全匹配；日志策略合规；结构化模板无违规
 - 输出文档：`03-Review-ContractCompliance.md`
+
+### 2026-04-16 — 第4遍审查
+
+- 审查范围：空引用、资源泄漏、线程安全、异常吞噬、CancellationToken传递、async/await陷阱、DB操作、路径安全、并发竞态
+- 逐文件审查 Infrastructure/Downloads(7文件)、Infrastructure/Auth(4文件)、Infrastructure/Installations(4文件)、Background Workers(3文件)、Persistence/Sqlite(3文件)、Shell层
+- 关键发现：DownloadScheduler fire-and-forget 调度异常静默丢失（🔴）
+- 关键发现：ShellViewModel.OnSessionExpired 在非UI线程修改 ObservableProperty 导致崩溃（🔴）
+- 关键发现：App.xaml.cs GetAwaiter().GetResult() UI线程死锁风险（🔴）
+- 关键发现：AuthService Token刷新 TOCTOU 竞态条件（🟡）
+- 关键发现：ChunkDownloadClient Polly 误重试用户取消，暂停响应延迟31秒（🟡）
+- 关键发现：InstallationRepository assetId 路径遍历风险（🟡）
+- 累计发现（4轮）：6🔴 + 35🟡 + 10🟢 = 51 项
+- 输出文档：`04-Review-BugsAndEdgeCases.md`
