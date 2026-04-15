@@ -19,7 +19,7 @@ public sealed partial class MainWindow : Window
         this.InitializeComponent();
 
         // 设置窗口标题
-        Title = "HelsincyEpicLauncher";
+        Title = Launcher.Shared.AppConstants.AppName;
 
         // 启用自定义标题栏（系统自动保留最小化/最大化/关闭按钮）
         ExtendsContentIntoTitleBar = true;

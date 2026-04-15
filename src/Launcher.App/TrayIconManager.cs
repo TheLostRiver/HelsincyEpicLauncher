@@ -1,6 +1,7 @@
 // Copyright (c) Helsincy. All rights reserved.
 
 using System.Drawing;
+using Launcher.Shared;
 using Serilog;
 using WinForms = System.Windows.Forms;
 
@@ -27,7 +28,7 @@ internal sealed class TrayIconManager : IDisposable
     {
         _notifyIcon = new WinForms.NotifyIcon
         {
-            Text = "HelsincyEpicLauncher",
+            Text = AppConstants.AppName,
             Icon = SystemIcons.Application,
             Visible = true,
         };

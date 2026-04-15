@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Launcher.Application.Modules.EngineVersions.Contracts;
+using Launcher.Shared.Configuration;
 using Serilog;
 
 namespace Launcher.Presentation.Modules.EngineVersions;
@@ -17,6 +18,7 @@ public partial class EngineVersionsViewModel : ObservableObject
 
     private readonly IEngineVersionReadService _readService;
     private readonly IEngineVersionCommandService _commandService;
+    private readonly IAppConfigProvider _configProvider;
     private readonly Microsoft.UI.Dispatching.DispatcherQueue _dispatcherQueue;
 
     /// <summary>可用引擎版本</summary>
@@ -45,10 +47,12 @@ public partial class EngineVersionsViewModel : ObservableObject
 
     public EngineVersionsViewModel(
         IEngineVersionReadService readService,
-        IEngineVersionCommandService commandService)
+        IEngineVersionCommandService commandService,
+        IAppConfigProvider configProvider)
     {
         _readService = readService;
         _commandService = commandService;
+        _configProvider = configProvider;
         _dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
 
         Logger.Debug("EngineVersionsViewModel 已创建");
@@ -114,7 +118,7 @@ public partial class EngineVersionsViewModel : ObservableObject
         try
         {
             var installPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                _configProvider.InstallPath,
                 "Epic Games",
                 $"UE_{item.DisplayName}");
 

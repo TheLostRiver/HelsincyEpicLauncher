@@ -7,7 +7,6 @@ using Launcher.Application.Modules.Downloads.Contracts;
 using Launcher.Application.Modules.Network.Contracts;
 using Launcher.Application.Modules.Updates.Contracts;
 using Launcher.Presentation.Shell.Navigation;
-using Microsoft.UI.Xaml;
 using Serilog;
 
 namespace Launcher.Presentation.Shell;
@@ -62,8 +61,8 @@ public partial class ShellViewModel : ObservableObject, IDisposable
         => OnPropertyChanged(nameof(IsNotDownloadingUpdate));
 
     /// <summary>是否可以跳过更新（非强制更新 = 可跳过）</summary>
-    public Visibility CanSkipUpdate
-        => PendingUpdateIsMandatory ? Visibility.Collapsed : Visibility.Visible;
+    public bool CanSkipUpdate
+        => !PendingUpdateIsMandatory;
 
     partial void OnPendingUpdateIsMandatoryChanged(bool value)
         => OnPropertyChanged(nameof(CanSkipUpdate));

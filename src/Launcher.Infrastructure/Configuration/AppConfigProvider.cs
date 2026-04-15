@@ -17,7 +17,7 @@ internal sealed class AppConfigProvider : Shared.Configuration.IAppConfigProvide
         _configuration = configuration;
         _localAppData = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "HelsincyEpicLauncher");
+            Launcher.Shared.AppConstants.AppName);
     }
 
     public string AppVersion =>

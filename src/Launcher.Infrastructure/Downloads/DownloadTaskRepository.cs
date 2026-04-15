@@ -49,6 +49,25 @@ internal sealed class DownloadTaskRepository : IDownloadTaskRepository
         return rows.Select(MapToDomain).ToList();
     }
 
+    public async Task<IReadOnlyList<DownloadTaskId>> GetTaskIdsByStateAsync(DownloadState state, CancellationToken ct)
+    {
+        using var conn = await _connectionFactory.CreateConnectionAsync(ct);
+        var ids = await conn.QueryAsync<string>(
+            "SELECT id FROM downloads WHERE status = @Status",
+            new { Status = state.ToString() });
+        return ids.Select(id => new DownloadTaskId(Guid.Parse(id))).ToList();
+    }
+
+    public async Task<IReadOnlyList<DownloadTaskId>> GetTaskIdsExcludingStatesAsync(IReadOnlyList<DownloadState> excludedStates, CancellationToken ct)
+    {
+        using var conn = await _connectionFactory.CreateConnectionAsync(ct);
+        var excluded = excludedStates.Select(s => s.ToString()).ToList();
+        var ids = await conn.QueryAsync<string>(
+            "SELECT id FROM downloads WHERE status NOT IN @ExcludedStates",
+            new { ExcludedStates = excluded });
+        return ids.Select(id => new DownloadTaskId(Guid.Parse(id))).ToList();
+    }
+
     public async Task<IReadOnlyList<DownloadTask>> GetHistoryAsync(int limit, CancellationToken ct)
     {
         using var conn = await _connectionFactory.CreateConnectionAsync(ct);

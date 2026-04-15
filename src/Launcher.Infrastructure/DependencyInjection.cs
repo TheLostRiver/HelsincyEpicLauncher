@@ -120,7 +120,7 @@ public static class DependencyInjection
         {
             client.BaseAddress = new Uri("https://api.github.com");
             client.DefaultRequestHeaders.Add("Accept", "application/vnd.github+json");
-            client.DefaultRequestHeaders.Add("User-Agent", "HelsincyEpicLauncher");
+            client.DefaultRequestHeaders.Add("User-Agent", Launcher.Shared.AppConstants.AppName);
         });
         services.AddSingleton<AppUpdateService>();
         services.AddSingleton<IAppUpdateService>(sp => sp.GetRequiredService<AppUpdateService>());

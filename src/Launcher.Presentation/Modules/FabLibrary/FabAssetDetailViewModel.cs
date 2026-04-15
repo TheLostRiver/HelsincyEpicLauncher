@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Launcher.Application.Modules.FabLibrary.Contracts;
 using Launcher.Presentation.Shell.Navigation;
+using Launcher.Shared.Configuration;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Serilog;
@@ -22,6 +23,7 @@ public partial class FabAssetDetailViewModel : ObservableObject
     private readonly IFabAssetCommandService _commandService;
     private readonly IThumbnailCacheService _thumbnailCache;
     private readonly INavigationService _navigationService;
+    private readonly IAppConfigProvider _configProvider;
     private readonly DispatcherQueue _dispatcherQueue;
 
     // === 基础信息 ===
@@ -83,12 +85,14 @@ public partial class FabAssetDetailViewModel : ObservableObject
         IFabCatalogReadService catalogService,
         IFabAssetCommandService commandService,
         IThumbnailCacheService thumbnailCache,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IAppConfigProvider configProvider)
     {
         _catalogService = catalogService;
         _commandService = commandService;
         _thumbnailCache = thumbnailCache;
         _navigationService = navigationService;
+        _configProvider = configProvider;
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
         Logger.Debug("FabAssetDetailViewModel 已创建");
@@ -139,8 +143,7 @@ public partial class FabAssetDetailViewModel : ObservableObject
         {
             // 默认安装路径
             var installPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Helsincy", "EpicLauncher", "Assets", AssetId);
+                _configProvider.InstallPath, "Assets", AssetId);
 
             var result = await _commandService.DownloadAssetAsync(AssetId, installPath, CancellationToken.None);
             if (result.IsSuccess)

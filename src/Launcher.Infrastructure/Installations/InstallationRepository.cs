@@ -124,7 +124,7 @@ internal sealed class InstallationRepository : IInstallationRepository
             throw new ArgumentException("assetId 无效", nameof(assetId));
 
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        return Path.Combine(appData, "HelsincyEpicLauncher", "manifests", $"{sanitized}.json");
+        return Path.Combine(appData, Launcher.Shared.AppConstants.AppName, "manifests", $"{sanitized}.json");
     }
 
     // ===== Mapping =====

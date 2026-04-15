@@ -142,7 +142,7 @@ public sealed class AppUpdateService : IAppUpdateService, IInternalUpdateNotifie
         _logger.Information("开始下载更新包 | 版本={Version} | 大小={Size} bytes",
             update.Version, update.DownloadSize);
 
-        var tempDir = Path.Combine(Path.GetTempPath(), "HelsincyEpicLauncher", "updates");
+        var tempDir = Path.Combine(Path.GetTempPath(), Launcher.Shared.AppConstants.AppName, "updates");
         Directory.CreateDirectory(tempDir);
 
         var fileName = $"HelsincyEpicLauncher_{update.Version}.zip";

@@ -262,11 +262,8 @@ public sealed class DownloadOrchestrator
     /// </summary>
     public async Task<IReadOnlyList<DownloadTaskId>> GetActiveTaskIdsAsync(CancellationToken ct)
     {
-        var tasks = await _repository.GetActiveTasksAsync(ct);
-        return tasks
-            .Where(t => t.State is not (DownloadState.Paused or DownloadState.Completed or DownloadState.Cancelled or DownloadState.Failed))
-            .Select(t => t.Id)
-            .ToList();
+        return await _repository.GetTaskIdsExcludingStatesAsync(
+            [DownloadState.Paused, DownloadState.Completed, DownloadState.Cancelled, DownloadState.Failed], ct);
     }
 
     /// <summary>
@@ -274,11 +271,7 @@ public sealed class DownloadOrchestrator
     /// </summary>
     public async Task<IReadOnlyList<DownloadTaskId>> GetPausedTaskIdsAsync(CancellationToken ct)
     {
-        var tasks = await _repository.GetActiveTasksAsync(ct);
-        return tasks
-            .Where(t => t.State == DownloadState.Paused)
-            .Select(t => t.Id)
-            .ToList();
+        return await _repository.GetTaskIdsByStateAsync(DownloadState.Paused, ct);
     }
 
     /// <summary>

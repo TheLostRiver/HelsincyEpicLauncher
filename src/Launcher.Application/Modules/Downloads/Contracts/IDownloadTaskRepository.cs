@@ -12,6 +12,8 @@ public interface IDownloadTaskRepository
     Task<DownloadTask?> GetByIdAsync(DownloadTaskId id, CancellationToken ct = default);
     Task<DownloadTask?> GetByAssetIdAsync(string assetId, CancellationToken ct = default);
     Task<IReadOnlyList<DownloadTask>> GetActiveTasksAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<DownloadTaskId>> GetTaskIdsByStateAsync(DownloadState state, CancellationToken ct = default);
+    Task<IReadOnlyList<DownloadTaskId>> GetTaskIdsExcludingStatesAsync(IReadOnlyList<DownloadState> excludedStates, CancellationToken ct = default);
     Task<IReadOnlyList<DownloadTask>> GetHistoryAsync(int limit, CancellationToken ct = default);
     Task InsertAsync(DownloadTask task, CancellationToken ct = default);
     Task UpdateAsync(DownloadTask task, CancellationToken ct = default);
