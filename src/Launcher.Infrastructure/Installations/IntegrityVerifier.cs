@@ -68,7 +68,7 @@ public sealed class IntegrityVerifier : IIntegrityVerifier
             .Where(f => !missingFiles.Contains(f.RelativePath))
             .ToList();
 
-        var semaphore = new SemaphoreSlim(MaxParallelism);
+        using var semaphore = new SemaphoreSlim(MaxParallelism);
         var tasks = new List<Task>();
         var lockObj = new object();
 

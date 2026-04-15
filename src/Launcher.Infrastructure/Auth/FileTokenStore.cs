@@ -76,7 +76,9 @@ internal sealed class FileTokenStore : ITokenStore, IDisposable
             {
                 AccessToken = data.AccessToken,
                 RefreshToken = data.RefreshToken,
-                ExpiresAt = data.ExpiresAt,
+                ExpiresAt = data.ExpiresAt.Kind == DateTimeKind.Utc
+                    ? data.ExpiresAt
+                    : DateTime.SpecifyKind(data.ExpiresAt, DateTimeKind.Utc),
                 AccountId = data.AccountId,
                 DisplayName = data.DisplayName,
             };

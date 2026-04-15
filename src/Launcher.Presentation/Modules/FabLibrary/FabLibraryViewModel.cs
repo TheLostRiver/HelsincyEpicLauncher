@@ -325,8 +325,9 @@ public partial class FabAssetCardViewModel : ObservableObject
                 IsThumbnailLoading = false;
             });
         }
-        catch
+        catch (Exception ex)
         {
+            Log.Warning(ex, "缩略图加载失败");
             _dispatcherQueue.TryEnqueue(() => IsThumbnailLoading = false);
         }
     }

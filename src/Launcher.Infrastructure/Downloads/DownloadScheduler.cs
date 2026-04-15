@@ -130,7 +130,7 @@ public sealed class DownloadScheduler : IDisposable
                 nextTaskId = next.TaskId;
             }
 
-            var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            var cts = new CancellationTokenSource();
             if (!_activeTasks.TryAdd(nextTaskId, cts))
             {
                 cts.Dispose();

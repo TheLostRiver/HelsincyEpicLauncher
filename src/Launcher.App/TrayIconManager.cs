@@ -49,6 +49,7 @@ internal sealed class TrayIconManager : IDisposable
     {
         if (_notifyIcon is not null)
         {
+            _notifyIcon.ContextMenuStrip?.Dispose();
             _notifyIcon.Visible = false;
             _notifyIcon.Dispose();
             _notifyIcon = null;

@@ -68,7 +68,7 @@ public sealed class HashingService : IHashingService
     {
         var results = new Dictionary<string, string>();
         var completed = 0;
-        var semaphore = new SemaphoreSlim(maxParallelism);
+        using var semaphore = new SemaphoreSlim(maxParallelism);
         var lockObj = new object();
         var tasks = new List<Task>();
 

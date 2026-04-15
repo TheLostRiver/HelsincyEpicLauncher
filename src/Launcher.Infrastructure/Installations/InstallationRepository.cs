@@ -78,7 +78,7 @@ internal sealed class InstallationRepository : IInstallationRepository
 
     // ===== Manifest 持久化 =====
 
-    public Task SaveManifestAsync(string assetId, InstallManifest manifest, CancellationToken ct)
+    public async Task SaveManifestAsync(string assetId, InstallManifest manifest, CancellationToken ct)
     {
         var path = GetManifestPath(assetId);
         var dir = Path.GetDirectoryName(path)!;
@@ -86,20 +86,19 @@ internal sealed class InstallationRepository : IInstallationRepository
             Directory.CreateDirectory(dir);
 
         var json = JsonSerializer.Serialize(manifest, ManifestJsonContext.Default.InstallManifest);
-        File.WriteAllText(path, json);
+        await File.WriteAllTextAsync(path, json, ct);
         _logger.Debug("保存 Manifest {AssetId} → {Path}", assetId, path);
-        return Task.CompletedTask;
     }
 
-    public Task<InstallManifest?> GetManifestAsync(string assetId, CancellationToken ct)
+    public async Task<InstallManifest?> GetManifestAsync(string assetId, CancellationToken ct)
     {
         var path = GetManifestPath(assetId);
         if (!File.Exists(path))
-            return Task.FromResult<InstallManifest?>(null);
+            return null;
 
-        var json = File.ReadAllText(path);
+        var json = await File.ReadAllTextAsync(path, ct);
         var manifest = JsonSerializer.Deserialize(json, ManifestJsonContext.Default.InstallManifest);
-        return Task.FromResult(manifest);
+        return manifest;
     }
 
     public Task DeleteManifestAsync(string assetId, CancellationToken ct)
