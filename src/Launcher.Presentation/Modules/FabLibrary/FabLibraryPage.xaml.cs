@@ -28,6 +28,11 @@ public sealed partial class FabLibraryPage : Page
         await ViewModel.LoadCommand.ExecuteAsync(null);
     }
 
+    private void Page_Unloaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.Dispose();
+    }
+
     private async void RefreshButton_Click(object sender, RoutedEventArgs e)
     {
         await ViewModel.RefreshCommand.ExecuteAsync(null);

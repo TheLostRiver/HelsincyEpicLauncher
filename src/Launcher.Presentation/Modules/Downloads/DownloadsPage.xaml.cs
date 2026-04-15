@@ -30,6 +30,11 @@ public sealed partial class DownloadsPage : Page
         await ViewModel.LoadCommand.ExecuteAsync(null);
     }
 
+    private void Page_Unloaded(object sender, RoutedEventArgs e)
+    {
+        ViewModel.Dispose();
+    }
+
     private async void PauseButton_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: DownloadTaskId taskId })

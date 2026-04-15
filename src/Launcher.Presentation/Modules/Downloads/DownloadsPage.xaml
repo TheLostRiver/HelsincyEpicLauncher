@@ -5,7 +5,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Launcher.Presentation.Modules.Downloads"
     Background="Transparent"
-    Loaded="Page_Loaded">
+    Loaded="Page_Loaded"
+    Unloaded="Page_Unloaded">
 
     <ScrollViewer Padding="36,24,36,24">
         <StackPanel Spacing="8" MaxWidth="960">

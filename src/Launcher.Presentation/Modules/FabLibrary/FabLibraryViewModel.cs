@@ -293,7 +293,12 @@ public partial class FabAssetCardViewModel : ObservableObject
 
             _dispatcherQueue.TryEnqueue(() =>
             {
-                Thumbnail = new BitmapImage(new Uri(localPath));
+                // DecodePixelWidth 限制解码尺寸，减少内存占用 + 提升滚动帧率
+                Thumbnail = new BitmapImage(new Uri(localPath))
+                {
+                    DecodePixelWidth = 220,
+                    DecodePixelType = DecodePixelType.Logical
+                };
                 IsThumbnailLoading = false;
             });
         }

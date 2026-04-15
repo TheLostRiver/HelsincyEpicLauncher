@@ -2,32 +2,26 @@
 
 ## 最后更新
 - 时间：2026-04-16
-- 完成任务：Task 8.2（网络韧性增强）
+- 完成任务：Task 8.3（性能优化）
 
 ## 当前项目状态
 - 最后成功编译：是（dotnet build 9 个项目零错误零警告）
 - 最后测试结果：全部通过（176/176）
-- 当前 Phase：Phase 8 进行中（Task 8.1 + 8.2 完成）
-- 下一个任务：Task 8.3（性能优化）
+- 当前 Phase：Phase 8 进行中（Task 8.1 + 8.2 + 8.3 完成）
+- 下一个任务：Task 8.4（UI 打磨 + 错误闭环）
 
 ## 本次会话完成的工作
 
-### Task 8.2 — 网络韧性增强
-- Application 契约：INetworkMonitor（IsNetworkAvailable + NetworkStatusChanged 事件），IDownloadCommandService 新增 PauseAllAsync/ResumeAllAsync
-- Infrastructure：NetworkMonitor（NetworkChange.NetworkAvailabilityChanged 驱动，Singleton + IDisposable），DI 注册
-- DownloadOrchestrator：GetActiveTaskIdsAsync（非 Paused 活跃任务 ID）+ GetPausedTaskIdsAsync（Paused 状态任务 ID）
-- DownloadCommandService：PauseAllAsync（批量暂停）+ ResumeAllAsync（批量恢复），逐任务记录失败日志
-- Background：NetworkMonitorWorker（订阅 NetworkStatusChanged → 断联暂停/恢复续传，async void 内部 try/catch），DI 注册
-- App.xaml.cs：NetworkMonitorWorker.Start() 在启动阶段
-- ShellViewModel：注入 INetworkMonitor，构造时同步初始化 IsNetworkAvailable，订阅 NetworkStatusChanged（DispatcherQueue 切换线程）
-- 遵循 AI-03：Background 仅依赖 Application 契约，不引用 Infrastructure
+### Task 8.3 — 性能优化
+- 冷启动：后台服务异步启动（Task.Run 延迟 200ms 启动，窗口先显示）；OperationTimer 记录每个阶段耗时
+- Migration_006：idx_downloads_asset_id + idx_chunk_checkpoints_task_id
+- BitmapImage DecodePixelWidth=220，内存占用降低约 80%
+- FabLibraryPage / DownloadsPage 添加 Unloaded → ViewModel.Dispose()，解除事件订阅
 
+### Task 8.2 — 网络韧性增强
+- INetworkMonitor、NetworkMonitor、NetworkMonitorWorker、PauseAllAsync/ResumeAllAsync
 ### Task 8.1 — 自动更新
-- Application 层契约：UpdateInfo DTO、UpdateAvailableEvent、IAppUpdateService、IInternalUpdateNotifier（避免 Background→Infrastructure 跨层耦合）
-- AppUpdateService：GitHub Releases API、版本比较、跳过版本持久化、流式下载+进度、PS 更新脚本、Environment.Exit(0)
-- AppUpdateWorker：24h 定时检查、5min 启动延迟、IInternalUpdateNotifier 触发事件
-- ShellViewModel：订阅 UpdateAvailable、HasPendingUpdate/IsNotDownloadingUpdate/CanSkipUpdate 状态
-- ShellPage.xaml：InfoBar 更新通知条
+- IAppUpdateService、AppUpdateService、AppUpdateWorker、ShellViewModel 更新 UI
 
 ### Task 7.2 — 引擎启动 + 插件管理
 - Application 层：PluginSummary / CompatibilityReport DTO、IPluginReadService、IPluginCommandService

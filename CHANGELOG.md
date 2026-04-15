@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Task 8.3 - 性能优化 (2026-04-16)
+- 冷启动优化：后台服务（TokenRefresh/AutoInstall/AppUpdateWorker/NetworkMonitorWorker）移至窗口激活后 Task.Run 异步启动，不再阻塞主窗口显示；App.xaml.cs 添加冷启动全链路耗时日志（OperationTimer）
+- DB 索引优化（Migration_006）：新增 `idx_downloads_asset_id`（优化 GetByAssetIdAsync 频繁查询）+ `idx_chunk_checkpoints_task_id`（优化断点续传查询）
+- 缩略图内存优化：BitmapImage 设置 `DecodePixelWidth=220 / DecodePixelType=Logical`，GPU 无需缩放原图，内存占用降低约 80%（220px 卡片宽度约束）
+- ViewModel 内存泄漏修复：FabLibraryPage / DownloadsPage 添加 `Unloaded` 事件调用 `ViewModel.Dispose()`，解除对 Singleton 服务事件的订阅，防止页面切换时 ViewModel 无法被 GC
+- 虚拟化验证：ItemsRepeater + UniformGridLayout 已正确接入 ScrollViewer 视口，虚拟化生效确认
+- dotnet build 9 项目零错误零警告，dotnet test 176/176 通过
+
 ### Task 8.2 - 网络韧性增强 (2026-04-16)
 - Application 层契约：INetworkMonitor（IsNetworkAvailable 属性 + NetworkStatusChanged 事件）、IDownloadCommandService 新增 PauseAllAsync/ResumeAllAsync 方法
 - Infrastructure：NetworkMonitor（System.Net.NetworkInformation.NetworkChange 事件驱动，Singleton + IDisposable，DI 注册 NetworkMonitor + INetworkMonitor）

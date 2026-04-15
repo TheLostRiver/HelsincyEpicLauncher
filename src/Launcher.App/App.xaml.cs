@@ -9,6 +9,7 @@ using Launcher.Domain;
 using Launcher.Infrastructure;
 using Launcher.Presentation;
 using Launcher.Shared.Configuration;
+using Launcher.Shared.Logging;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Compact;
@@ -46,6 +47,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     /// </summary>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        var appStartSw = System.Diagnostics.Stopwatch.StartNew();
+
         // === Phase 0：单实例检查 + 最小可显示 ===
         if (!EnsureSingleInstance())
         {
@@ -71,7 +74,44 @@ public partial class App : Microsoft.UI.Xaml.Application
 
         _mainWindow.Activate();
 
-        Log.Information("主窗口已显示 | 系统托盘图标已就绪");
+        appStartSw.Stop();
+        Log.Information("主窗口已显示 | 冷启动耗时 {ElapsedMs}ms | 系统托盘图标已就绪",
+            appStartSw.ElapsedMilliseconds);
+
+        // === Phase 3（延迟）：后台服务启动（不阻塞窗口显示） ===
+        _ = Task.Run(StartBackgroundServicesAsync);
+    }
+
+    /// <summary>
+    /// 在后台线程启动所有后台 Worker，避免阻塞主窗口显示
+    /// </summary>
+    private static async Task StartBackgroundServicesAsync()
+    {
+        // 短暂等待 UI 线程完成首帧渲染，再启动后台服务
+        await Task.Delay(200).ConfigureAwait(false);
+
+        try
+        {
+            using var _ = new OperationTimer(Log.Logger, "后台服务启动");
+
+            var tokenRefresh = Services.GetRequiredService<Launcher.Background.Auth.TokenRefreshBackgroundService>();
+            tokenRefresh.Start();
+
+            var autoInstall = Services.GetRequiredService<Launcher.Background.Installations.AutoInstallWorker>();
+            autoInstall.Start();
+
+            var updateWorker = Services.GetRequiredService<Launcher.Background.Updates.AppUpdateWorker>();
+            updateWorker.Start();
+
+            var networkWorker = Services.GetRequiredService<Launcher.Background.Network.NetworkMonitorWorker>();
+            networkWorker.Start();
+
+            Log.Information("所有后台服务已启动");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "后台服务启动失败");
+        }
     }
 
     /// <summary>
@@ -207,6 +247,8 @@ public partial class App : Microsoft.UI.Xaml.Application
     /// </summary>
     private static void InitializeCoreServices()
     {
+        using var timer = new OperationTimer(Log.ForContext<App>(), "核心服务初始化");
+
         // 构建配置
         IConfiguration configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
@@ -236,33 +278,17 @@ public partial class App : Microsoft.UI.Xaml.Application
         Log.Information("应用启动 | 版本 {AppVersion}", configProvider.AppVersion);
         Log.Information("DI 容器初始化完成");
 
-        // 执行数据库迁移
+        // 执行数据库迁移（仅在有待应用迁移时耗时，已迁移库几乎无延迟）
         try
         {
+            using var dbTimer = new OperationTimer(Log.ForContext<App>(), "数据库迁移");
             var dbInitializer = Services.GetRequiredService<Launcher.Application.Persistence.IDatabaseInitializer>();
             dbInitializer.InitializeAsync().GetAwaiter().GetResult();
-            Log.Information("数据库迁移执行完成");
         }
         catch (Exception ex)
         {
             Log.Error(ex, "数据库迁移失败");
         }
-
-        // 启动后台服务：Token 自动刷新
-        var tokenRefresh = Services.GetRequiredService<Launcher.Background.Auth.TokenRefreshBackgroundService>();
-        tokenRefresh.Start();
-
-        // 启动后台服务：下载完成后自动安装
-        var autoInstall = Services.GetRequiredService<Launcher.Background.Installations.AutoInstallWorker>();
-        autoInstall.Start();
-
-        // 启动后台服务：自动更新检查（延迟 5 分钟首次检查，每 24 小时一次）
-        var updateWorker = Services.GetRequiredService<Launcher.Background.Updates.AppUpdateWorker>();
-        updateWorker.Start();
-
-        // 启动后台服务：网络监视（断联暂停下载，恢复续传）
-        var networkWorker = Services.GetRequiredService<Launcher.Background.Network.NetworkMonitorWorker>();
-        networkWorker.Start();
     }
 
     /// <summary>

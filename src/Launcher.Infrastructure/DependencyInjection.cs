@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddSingleton<IMigration, Migration_003_Installations>();
         services.AddSingleton<IMigration, Migration_004_SettingsKv>();
         services.AddSingleton<IMigration, Migration_005_DownloadCheckpoints>();
+        services.AddSingleton<IMigration, Migration_006_Indexes>();
         services.AddSingleton<IDatabaseInitializer, MigrationRunner>();
 
         // 诊断
