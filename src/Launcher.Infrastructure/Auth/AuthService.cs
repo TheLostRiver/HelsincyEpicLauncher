@@ -9,12 +9,13 @@ namespace Launcher.Infrastructure.Auth;
 /// <summary>
 /// 认证服务实现。协调 OAuth 流程、Token 存储和会话管理。
 /// </summary>
-internal sealed class AuthService : IAuthService
+internal sealed class AuthService : IAuthService, IDisposable
 {
     private readonly ILogger _logger = Log.ForContext<AuthService>();
     private readonly EpicOAuthHandler _oauthHandler;
     private readonly ITokenStore _tokenStore;
     private readonly object _lock = new();
+    private readonly SemaphoreSlim _refreshLock = new(1, 1);
 
     private TokenPair? _currentTokens;
     private AuthUserInfo? _currentUser;
@@ -154,34 +155,81 @@ internal sealed class AuthService : IAuthService
             return Result.Ok(tokens.AccessToken);
         }
 
-        // 需要刷新
-        _logger.Debug("Access Token 即将过期，主动刷新");
-        var refreshResult = await _oauthHandler.RefreshTokenAsync(tokens.RefreshToken, ct);
-
-        if (!refreshResult.IsSuccess)
+        // 需要刷新 — 用 SemaphoreSlim 防止并发刷新竞态
+        await _refreshLock.WaitAsync(ct);
+        try
         {
-            // 刷新失败 → 会话过期
+            // Double-check: 另一个线程可能已经刷新完成
             lock (_lock)
             {
-                _currentTokens = null;
-                _currentUser = null;
+                tokens = _currentTokens;
             }
 
-            await _tokenStore.ClearAsync(ct);
-            SessionExpired?.Invoke(new SessionExpiredEvent("Token 刷新失败"));
+            if (tokens is null)
+            {
+                return Result.Fail<string>(new Error
+                {
+                    Code = "AUTH_NOT_AUTHENTICATED",
+                    UserMessage = "未登录，请先登录",
+                    TechnicalMessage = "Session cleared during refresh",
+                    CanRetry = false,
+                    Severity = ErrorSeverity.Warning,
+                });
+            }
 
-            return Result.Fail<string>(refreshResult.Error!);
+            if (tokens.ExpiresAt > DateTime.UtcNow.AddMinutes(5))
+            {
+                return Result.Ok(tokens.AccessToken);
+            }
+
+            _logger.Debug("Access Token 即将过期，主动刷新");
+            var refreshResult = await _oauthHandler.RefreshTokenAsync(tokens.RefreshToken, ct);
+
+            if (!refreshResult.IsSuccess)
+            {
+                // 刷新失败 → 会话过期
+                lock (_lock)
+                {
+                    _currentTokens = null;
+                    _currentUser = null;
+                }
+
+                await _tokenStore.ClearAsync(ct);
+                SessionExpired?.Invoke(new SessionExpiredEvent("Token 刷新失败"));
+
+                return Result.Fail<string>(refreshResult.Error!);
+            }
+
+            var newTokens = refreshResult.Value!;
+            await _tokenStore.SaveTokensAsync(newTokens, ct);
+
+            // 写回前检查：如果 Logout 已介入清空了 token，则不写回
+            lock (_lock)
+            {
+                if (_currentTokens is not null)
+                {
+                    _currentTokens = newTokens;
+                }
+                else
+                {
+                    _logger.Warning("刷新期间检测到登出操作，丢弃刷新结果");
+                    return Result.Fail<string>(new Error
+                    {
+                        Code = "AUTH_LOGGED_OUT_DURING_REFRESH",
+                        UserMessage = "操作期间已登出",
+                        TechnicalMessage = "Logout occurred during token refresh",
+                        CanRetry = false,
+                        Severity = ErrorSeverity.Warning,
+                    });
+                }
+            }
+
+            return Result.Ok(newTokens.AccessToken);
         }
-
-        var newTokens = refreshResult.Value!;
-        await _tokenStore.SaveTokensAsync(newTokens, ct);
-
-        lock (_lock)
+        finally
         {
-            _currentTokens = newTokens;
+            _refreshLock.Release();
         }
-
-        return Result.Ok(newTokens.AccessToken);
     }
 
     public async Task<Result<AuthUserInfo>> TryRestoreSessionAsync(CancellationToken ct = default)
@@ -276,5 +324,10 @@ internal sealed class AuthService : IAuthService
         _logger.Information("会话已恢复 | AccountId={AccountId} | DisplayName={Name}",
             userInfo.AccountId, userInfo.DisplayName);
         return Result.Ok(userInfo);
+    }
+
+    public void Dispose()
+    {
+        _refreshLock.Dispose();
     }
 }

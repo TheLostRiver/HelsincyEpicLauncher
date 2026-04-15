@@ -117,6 +117,8 @@ public sealed class DownloadScheduler : IDisposable
 
     private async Task TryScheduleNextAsync(CancellationToken ct)
     {
+        try
+        {
         while (_activeTasks.Count < MaxConcurrency)
         {
             DownloadTaskId nextTaskId;
@@ -151,6 +153,11 @@ public sealed class DownloadScheduler : IDisposable
                     cts.Dispose();
                 }
             }
+        }
+        }
+        catch (Exception ex)
+        {
+            _logger.Error(ex, "调度器异常，调度循环中断");
         }
     }
 

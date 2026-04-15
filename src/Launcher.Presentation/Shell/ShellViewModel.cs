@@ -15,8 +15,9 @@ namespace Launcher.Presentation.Shell;
 /// <summary>
 /// Shell 壳层 ViewModel。管理导航状态、认证状态和全局 UI 状态。
 /// </summary>
-public partial class ShellViewModel : ObservableObject
+public partial class ShellViewModel : ObservableObject, IDisposable
 {
+    private bool _disposed;
     private static readonly ILogger Logger = Log.ForContext<ShellViewModel>();
     private readonly INavigationService _navigationService;
     private readonly IAuthService _authService;
@@ -89,8 +90,8 @@ public partial class ShellViewModel : ObservableObject
 
         // 监听下载进度，更新状态栏
         _runtimeStore.SnapshotChanged += OnDownloadSnapshotChanged;
-        _runtimeStore.DownloadCompleted += _ => RefreshDownloadStatus();
-        _runtimeStore.DownloadFailed += _ => RefreshDownloadStatus();
+        _runtimeStore.DownloadCompleted += OnDownloadCompleted;
+        _runtimeStore.DownloadFailed += OnDownloadFailed;
 
         // 监听更新通知（仅依赖 Application 契约接口，不耦合 Background 层）
         _appUpdateService.UpdateAvailable += OnUpdateAvailable;
@@ -176,7 +177,7 @@ public partial class ShellViewModel : ObservableObject
 
     private void OnSessionExpired(SessionExpiredEvent evt)
     {
-        ClearUserInfo();
+        _dispatcherQueue.TryEnqueue(() => ClearUserInfo());
         Logger.Warning("会话已过期 | 原因={Reason}", evt.Reason);
     }
 
@@ -317,5 +318,23 @@ public partial class ShellViewModel : ObservableObject
             >= 1024L => $"{bytesPerSecond / 1024.0:F1} KB/s",
             _ => $"{bytesPerSecond} B/s",
         };
+    }
+
+    private void OnDownloadCompleted(DownloadCompletedEvent _) => RefreshDownloadStatus();
+    private void OnDownloadFailed(DownloadFailedEvent _) => RefreshDownloadStatus();
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        _authService.SessionExpired -= OnSessionExpired;
+        _runtimeStore.SnapshotChanged -= OnDownloadSnapshotChanged;
+        _runtimeStore.DownloadCompleted -= OnDownloadCompleted;
+        _runtimeStore.DownloadFailed -= OnDownloadFailed;
+        _appUpdateService.UpdateAvailable -= OnUpdateAvailable;
+        _networkMonitor.NetworkStatusChanged -= OnNetworkStatusChanged;
+
+        GC.SuppressFinalize(this);
     }
 }

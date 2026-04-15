@@ -55,8 +55,6 @@ public sealed class ChunkDownloadClient
             }
 
             using var httpClient = _httpClientFactory.CreateClient("ChunkDownload");
-            var httpRequest = new HttpRequestMessage(HttpMethod.Get, request.Url);
-            httpRequest.Headers.Range = new RangeHeaderValue(actualRangeStart, request.RangeEnd);
 
             var response = await _resiliencePipeline.ExecuteAsync(
                 async token =>
@@ -188,7 +186,7 @@ public sealed class ChunkDownloadClient
                 },
                 ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
                     .Handle<HttpRequestException>()
-                    .Handle<TaskCanceledException>()
+                    .Handle<TaskCanceledException>(ex => ex.CancellationToken == default || !ex.CancellationToken.IsCancellationRequested)
                     .HandleResult(r => r.StatusCode == System.Net.HttpStatusCode.TooManyRequests
                                     || r.StatusCode >= System.Net.HttpStatusCode.InternalServerError),
             })

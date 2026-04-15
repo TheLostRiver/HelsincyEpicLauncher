@@ -283,7 +283,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         {
             using var dbTimer = new OperationTimer(Log.ForContext<App>(), "数据库迁移");
             var dbInitializer = Services.GetRequiredService<Launcher.Application.Persistence.IDatabaseInitializer>();
-            dbInitializer.InitializeAsync().GetAwaiter().GetResult();
+            Task.Run(() => dbInitializer.InitializeAsync()).GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {

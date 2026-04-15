@@ -48,11 +48,14 @@ public sealed class TokenRefreshBackgroundService : IDisposable
 
     private async void OnTimerTick(object? state)
     {
-        if (!_authService.IsAuthenticated)
-            return;
+        // 防止并发重叠：回调期间停止定时器
+        _timer?.Change(Timeout.Infinite, Timeout.Infinite);
 
         try
         {
+            if (!_authService.IsAuthenticated)
+                return;
+
             // GetAccessTokenAsync 内部已有过期前 5 分钟主动刷新的逻辑
             var result = await _authService.GetAccessTokenAsync();
             if (!result.IsSuccess)
@@ -67,6 +70,12 @@ public sealed class TokenRefreshBackgroundService : IDisposable
         catch (Exception ex)
         {
             _logger.Error(ex, "Token 自动刷新定时器异常");
+        }
+        finally
+        {
+            // 回调完成后重启定时器
+            if (!_disposed)
+                _timer?.Change(CheckInterval, CheckInterval);
         }
     }
 
