@@ -15,6 +15,7 @@ internal sealed class SqliteConnectionFactory : IDbConnectionFactory
 {
     private static readonly ILogger Logger = Log.ForContext<SqliteConnectionFactory>();
     private readonly string _connectionString;
+    private volatile bool _walInitialized;
 
     public SqliteConnectionFactory(IAppConfigProvider configProvider)
     {
@@ -34,10 +35,14 @@ internal sealed class SqliteConnectionFactory : IDbConnectionFactory
         var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync(ct);
 
-        // 启用 WAL 模式（提升并发读写性能）
-        await using var cmd = connection.CreateCommand();
-        cmd.CommandText = "PRAGMA journal_mode=WAL;";
-        await cmd.ExecuteNonQueryAsync(ct);
+        // WAL 模式是数据库级持久设置，只需执行一次
+        if (!_walInitialized)
+        {
+            await using var cmd = connection.CreateCommand();
+            cmd.CommandText = "PRAGMA journal_mode=WAL;";
+            await cmd.ExecuteNonQueryAsync(ct);
+            _walInitialized = true;
+        }
 
         return connection;
     }

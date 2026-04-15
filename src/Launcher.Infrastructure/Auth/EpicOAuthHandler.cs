@@ -5,6 +5,7 @@ using System.Net;
 using System.Text.Json;
 using Launcher.Application.Modules.Auth.Contracts;
 using Launcher.Shared;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 
 namespace Launcher.Infrastructure.Auth;
@@ -28,13 +29,15 @@ internal sealed class EpicOAuthHandler
     private const string RedirectPath = "/callback";
     private const string LoopbackHost = "http://localhost";
 
-    // 客户端凭据（Epic Games Launcher 公开 Client ID）
-    private const string ClientId = "34a02cf8f4414e29b15921876da36f9a";
-    private const string ClientSecret = "daafbccc737745039dffe53d94fc76cf";
+    // 客户端凭据（从配置文件加载）
+    private readonly string _clientId;
+    private readonly string _clientSecret;
 
-    public EpicOAuthHandler(IHttpClientFactory httpClientFactory)
+    public EpicOAuthHandler(IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
         _httpClientFactory = httpClientFactory;
+        _clientId = configuration["EpicOAuth:ClientId"] ?? throw new InvalidOperationException("EpicOAuth:ClientId not configured");
+        _clientSecret = configuration["EpicOAuth:ClientSecret"] ?? throw new InvalidOperationException("EpicOAuth:ClientSecret not configured");
     }
 
     /// <summary>
@@ -49,7 +52,7 @@ internal sealed class EpicOAuthHandler
         try
         {
             // 2. 构建授权 URL 并打开浏览器
-            var authUrl = $"{AuthorizeUrl}?client_id={ClientId}&response_type=code&redirect_uri={Uri.EscapeDataString(redirectUri)}";
+            var authUrl = $"{AuthorizeUrl}?client_id={_clientId}&response_type=code&redirect_uri={Uri.EscapeDataString(redirectUri)}";
             OpenBrowser(authUrl);
             _logger.Debug("已打开浏览器进行 OAuth 授权");
 
@@ -336,7 +339,7 @@ internal sealed class EpicOAuthHandler
             var responseBytes = System.Text.Encoding.UTF8.GetBytes(responseHtml);
             context.Response.ContentType = "text/html; charset=utf-8";
             context.Response.ContentLength64 = responseBytes.Length;
-            await context.Response.OutputStream.WriteAsync(responseBytes, ct);
+            await context.Response.OutputStream.WriteAsync(responseBytes, cts.Token);
             context.Response.Close();
 
             return code;
@@ -356,10 +359,10 @@ internal sealed class EpicOAuthHandler
         });
     }
 
-    private static void AddClientAuth(HttpRequestMessage request)
+    private void AddClientAuth(HttpRequestMessage request)
     {
         var credentials = Convert.ToBase64String(
-            System.Text.Encoding.ASCII.GetBytes($"{ClientId}:{ClientSecret}"));
+            System.Text.Encoding.ASCII.GetBytes($"{_clientId}:{_clientSecret}"));
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
     }
 }

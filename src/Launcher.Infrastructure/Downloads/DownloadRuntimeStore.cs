@@ -131,11 +131,13 @@ public sealed class DownloadRuntimeStore : IDownloadRuntimeStore, IDisposable
         private readonly TimeSpan _windowSize = TimeSpan.FromSeconds(5);
         private readonly TimeSpan _notifyInterval = TimeSpan.FromMilliseconds(500);
         private DateTimeOffset _lastNotifyTime = DateTimeOffset.MinValue;
+        private (DateTimeOffset Time, long Bytes) _newestSample;
 
         public void AddSample(long totalBytesDownloaded)
         {
             var now = DateTimeOffset.UtcNow;
-            _samples.Enqueue((now, totalBytesDownloaded));
+            _newestSample = (now, totalBytesDownloaded);
+            _samples.Enqueue(_newestSample);
 
             // 移除窗口外的样本
             while (_samples.Count > 0 && now - _samples.Peek().Time > _windowSize)
@@ -147,7 +149,7 @@ public sealed class DownloadRuntimeStore : IDownloadRuntimeStore, IDisposable
             if (_samples.Count < 2) return 0;
 
             var oldest = _samples.Peek();
-            var newest = _samples.Last();
+            var newest = _newestSample;
             var duration = (newest.Time - oldest.Time).TotalSeconds;
 
             if (duration <= 0) return 0;

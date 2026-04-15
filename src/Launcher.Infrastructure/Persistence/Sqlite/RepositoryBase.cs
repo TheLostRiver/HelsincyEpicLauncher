@@ -14,16 +14,30 @@ namespace Launcher.Infrastructure.Persistence.Sqlite;
 /// <typeparam name="T">实体映射类型</typeparam>
 internal abstract class RepositoryBase<T> where T : class
 {
+    private static readonly System.Text.RegularExpressions.Regex SafeTableNameRegex =
+        new(@"^[a-zA-Z_][a-zA-Z0-9_]*$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
     private readonly ILogger _logger;
     private readonly IDbConnectionFactory _connectionFactory;
+    private string? _validatedTableName;
 
-    /// <summary>数据库表�?/summary>
+    /// <summary>数据库表名</summary>
     protected abstract string TableName { get; }
+
+    /// <summary>经过验证的安全表名</summary>
+    private string SafeTableName => _validatedTableName ??= ValidateTableName(TableName);
 
     protected RepositoryBase(IDbConnectionFactory connectionFactory)
     {
         _connectionFactory = connectionFactory;
         _logger = Log.ForContext(GetType());
+    }
+
+    private static string ValidateTableName(string name)
+    {
+        if (string.IsNullOrEmpty(name) || !SafeTableNameRegex.IsMatch(name))
+            throw new InvalidOperationException($"Invalid table name: '{name}'");
+        return name;
     }
 
     /// <summary>
@@ -41,7 +55,7 @@ internal abstract class RepositoryBase<T> where T : class
     {
         using var connection = await OpenConnectionAsync(ct);
         var result = await connection.QueryFirstOrDefaultAsync<T>(
-            $"SELECT * FROM {TableName} WHERE id = @Id",
+            $"SELECT * FROM {SafeTableName} WHERE id = @Id",
             new { Id = id });
 
         _logger.Debug("查询 {Table} | Id={Id} | 找到={Found}", TableName, id, result is not null);
@@ -55,7 +69,7 @@ internal abstract class RepositoryBase<T> where T : class
     {
         using var connection = await OpenConnectionAsync(ct);
         var result = (await connection.QueryAsync<T>(
-            $"SELECT * FROM {TableName}")).ToList();
+            $"SELECT * FROM {SafeTableName}")).ToList();
 
         _logger.Debug("查询所�?{Table} | 总计={Count}", TableName, result.Count);
         return result;
@@ -104,7 +118,7 @@ internal abstract class RepositoryBase<T> where T : class
     {
         using var connection = await OpenConnectionAsync(ct);
         var affected = await connection.ExecuteAsync(
-            $"DELETE FROM {TableName} WHERE id = @Id",
+            $"DELETE FROM {SafeTableName} WHERE id = @Id",
             new { Id = id });
 
         _logger.Debug("删除 {Table} | Id={Id} | 已删�?{Deleted}", TableName, id, affected > 0);
@@ -118,7 +132,7 @@ internal abstract class RepositoryBase<T> where T : class
     {
         using var connection = await OpenConnectionAsync(ct);
         return await connection.ExecuteScalarAsync<int>(
-            $"SELECT COUNT(*) FROM {TableName}");
+            $"SELECT COUNT(*) FROM {SafeTableName}");
     }
 
     /// <summary>
