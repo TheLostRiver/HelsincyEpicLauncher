@@ -164,6 +164,19 @@
 | R5-01 | 提取 DownloadErrors 静态错误工厂（消除 10 处重复） |
 | R5-03 | 提取 JsonDefaults 到 Shared 层（替换 3 处重复定义） |
 
+### 2026-04-16 — 启动修复（Windows App Runtime + WinUI 启动链）
+
+**分支**: `fix/windows-app-runtime-startup` | **修复提交**: `11ce2b9` | **合并提交**: `d8a1b15` | **测试**: 211/211 通过
+
+| 类别 | 详细内容 |
+|------|----------|
+| 问题定位 | 原始症状是启动弹出“需要 Windows App Runtime 1.6”；排查后确认本机 1.6 Framework 包存在，但 1.6 对应的 Main / DDLM / Singleton 配套不完整，Bootstrapper 无法匹配完整 1.6 运行时集合 |
+| 修复策略 | 仓库依赖从 `Microsoft.WindowsAppSDK 1.6.250205002` 升级到 `1.8.260317003`，与开发机上已完整安装的 1.8 运行时对齐 |
+| 启动骨架修复 | `Program.cs` 补 `XamlCheckProcessRequirements()`；`App.xaml.cs` 补标准 `App()` 构造并调用 `InitializeComponent()`；`app.manifest` 补 `maxversiontested` |
+| 根因修复 | `AppConfigProvider` 之前把 `appsettings.json` 里的空字符串路径当成有效路径，导致 `Paths:Logs = ""` 在启动期触发 `Directory.CreateDirectory("")` 异常，表面现象被包装成 WinUI/XAML 启动崩溃 |
+| 文档同步 | `docs/16-WindowsAppRuntimeRepair.md` 更新为当前 1.8 目标版本与正式修复方案 |
+| 验证结果 | `dotnet build HelsincyEpicLauncher.slnx` 通过；`runTests` 211/211 通过；应用窗口成功拉起，进程存活，主窗口标题为 `HelsincyEpicLauncher`，日志目录已创建 |
+
 ---
 
 ## 修复统计
@@ -192,6 +205,6 @@
 | P6 | CT 改造 | 3 | R4-23, R4-26, R5-11 | ✅ 6472813 (R5-11 deferred) |
 | P7 | 代码质量 | 6 | R5-02,05,08,14,15,16,17 | ✅ 41a4979 (R5-05/08/15/17 deferred) |
 | P8 | Presentation 层 | 5 | R1-01, R2-06, R5-04,07,10 | ✅ a07c62f (R5-04/07/10 deferred) |
-| P9 | 文档同步 | 7 | R2-02,07, R3-01,02,06,07,11,12, R5-06 | ✅ 本次提交 |
-| P10 | 测试覆盖 | 6 | R5-12🔴 | 🔲 |
-| **总计** | | **40** | **39 项（含1重复）** | **P1-P9 完成** |
+| P9 | 文档同步 | 7 | R2-02,07, R3-01,02,06,07,11,12, R5-06 | ✅ ab7b4b4 |
+| P10 | 测试覆盖 | 6 | R5-12🔴 | ✅ db308eb |
+| **总计** | | **40** | **39 项（含1重复）** | **P1-P10 完成** |
