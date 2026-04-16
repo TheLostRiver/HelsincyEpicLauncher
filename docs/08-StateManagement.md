@@ -163,9 +163,11 @@ public partial class FabLibraryViewModel : ObservableObject
 
 ### 5.2 存储方式
 
-通过 Shell 级 State 对象管理：
+通过 Shell 级 ViewModel 直接管理（当前实现未提取独立 ShellState 类，
+全局 UI 状态以 `[ObservableProperty]` 形式存放在 `ShellViewModel` 中）：
 
 ```csharp
+// 概念模型 — 实际分散在 ShellViewModel 的属性中
 public sealed class ShellState : ObservableObject
 {
     [ObservableProperty] private string _theme = "System";

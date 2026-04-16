@@ -54,10 +54,9 @@
 **执行内容**（全部在后台线程）：
 1. 会话恢复：`IAuthService.TryRestoreSessionAsync()`
 2. 下载恢复：`IDownloadOrchestrator.RecoverAsync()`
-3. 已安装资产索引加载
-4. 配置完整性校验
-5. 本地 Fab 资产缓存加载
-6. Shell 状态更新（登录状态、活跃下载数）
+
+> 实际实现中 Phase 2 通过 `InitializePhase2Async` 独立执行，
+> 完成后才进入 Phase 3（`StartBackgroundServicesAsync`）。
 
 **此阶段 UI 已经可用**：用户可以点导航栏、看骨架屏，但数据还在加载。
 
@@ -116,39 +115,50 @@ App.OnLaunched
 ### 4.1 Phase 切换代码结构
 
 ```csharp
-// App.xaml.cs
-protected override async void OnLaunched(LaunchActivatedEventArgs args)
+// App.xaml.cs — 实际实现
+protected override void OnLaunched(LaunchActivatedEventArgs args)
 {
-    // === Phase 0：最小可显示 ===
-    if (!EnsureSingleInstance()) return;
+    // === Phase 0：单实例检查 + 最小可显示 ===
+    if (!EnsureSingleInstance()) { Environment.Exit(0); return; }
+    StartPipeListener();
+
+    // === Phase 1：核心初始化（DI + 配置 + 日志 + 数据库） ===
+    InitializeCoreServices();
     _mainWindow = new MainWindow();
+    InitializeTrayIcon();
+    ConfigureCloseToTray();
     _mainWindow.Activate();
-    _mainWindow.ShowSplash();
+    _mainWindow.HideLoadingIndicator();
 
-    // === Phase 1：核心初始化 ===
-    var host = BuildHost();          // DI + 配置 + 日志
-    await InitializeDatabaseAsync(); // SQLite Migration
-    var shell = host.Services.GetRequiredService<ShellPage>();
-    _mainWindow.SetContent(shell);
-    shell.NavigateToDefault();
+    // === Phase 2 + 3：后台恢复 + 延迟服务 ===
+    _ = Task.Run(() => StartPostLaunchAsync(_appCts.Token));
+}
 
-    // === Phase 2：后台恢复（不阻塞 UI） ===
-    _ = Task.Run(async () =>
-    {
-        await RestoreSessionAsync();
-        await RecoverDownloadsAsync();
-        await LoadAssetIndexAsync();
-    });
+private static async Task StartPostLaunchAsync(CancellationToken ct)
+{
+    await Task.Delay(200, ct).ConfigureAwait(false); // 等首帧渲染
+    await InitializePhase2Async(ct).ConfigureAwait(false);
+    await StartBackgroundServicesAsync(ct).ConfigureAwait(false);
+}
 
-    // === Phase 3：延迟初始化 ===
-    _ = Task.Run(async () =>
-    {
-        await Task.Delay(2000);      // 等 Phase 2 大概完成后再执行
-        await RefreshCatalogAsync();
-        await PreloadThumbnailsAsync();
-        await CheckForUpdatesAsync();
-        await CleanupTempFilesAsync();
-    });
+// Phase 2：会话恢复 + 下载恢复
+private static async Task InitializePhase2Async(CancellationToken ct)
+{
+    var authService = Services.GetRequiredService<IAuthService>();
+    await authService.TryRestoreSessionAsync(ct).ConfigureAwait(false);
+    var orchestrator = Services.GetRequiredService<IDownloadOrchestrator>();
+    await orchestrator.RecoverAsync(ct).ConfigureAwait(false);
+}
+
+// Phase 3：后台 Worker 启动 + 延迟任务 TODO
+private static Task StartBackgroundServicesAsync(CancellationToken ct)
+{
+    Services.GetRequiredService<TokenRefreshBackgroundService>().Start();
+    Services.GetRequiredService<AutoInstallWorker>().Start();
+    Services.GetRequiredService<AppUpdateWorker>().Start();
+    Services.GetRequiredService<NetworkMonitorWorker>().Start();
+    // TODO: 缩略图预热、诊断信息收集、Fab 目录远程同步、临时文件清理
+    return Task.CompletedTask;
 }
 ```
 

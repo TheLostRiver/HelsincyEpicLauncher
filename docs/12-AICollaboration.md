@@ -492,3 +492,12 @@ bug 记录格式：
 主分支：main
 推送方式：每个原子任务完成后 git add -A → git commit → git push
 ```
+
+---
+
+## 13. 已知架构妥协
+
+| 编号 | 妥协点 | 原因 | 替代方案 |
+|------|--------|------|---------|
+| C-01 | `ViewModelLocator` 静态服务定位器 | WinUI 3 的 `Frame.Navigate()` 通过反射创建页面，无法使用构造器注入 ViewModel | 等待 WinUI 3 支持 DI 友好的导航，或引入 MVVM 框架的导航抽象 |
+| C-02 | Auth 依赖通过 `IAuthService` 契约接口跨模块引用 | 提取 `AuthenticatedHttpHandler` (DelegatingHandler) 会改变现有错误处理语义 | 未来如果 Auth 逻辑复杂化可重新评估 DelegatingHandler 方案 |

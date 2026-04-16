@@ -358,6 +358,8 @@ public partial class App : Microsoft.UI.Xaml.Application
         var loggerConfig = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .Enrich.WithThreadId()
+            .Enrich.WithProcessId()
+            .Enrich.WithMachineName()
             .Enrich.WithProperty("AppVersion", appVersion)
             .Enrich.FromLogContext()
             // 主日志文件：Information 及以上，按天轮转，保留 30 天

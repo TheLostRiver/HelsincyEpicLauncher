@@ -55,7 +55,7 @@ Presentation  →  Application  →  Domain  →  Shared
 | Downloads | *(无跨模块依赖)* | 下载是底层服务，不依赖上层模块 |
 | Installations | Downloads.Contracts | 查询下载完成的资产 |
 | EngineVersions | Downloads.Contracts, Installations.Contracts | 复用下载和安装能力 |
-| Plugins | FabLibrary.Contracts, Installations.Contracts | 查询资产和安装状态 |
+| Plugins | FabLibrary.Contracts, Installations.Contracts, EngineVersions.Contracts | 查询资产、安装状态和引擎版本兼容性 |
 | Settings | *(无跨模块依赖)* | 被其他模块通过 Contracts 查询 |
 | Diagnostics | *(无跨模块依赖)* | 读取日志/系统信息 |
 | Updates | *(无跨模块依赖)* | 独立检查/执行更新 |
@@ -293,7 +293,8 @@ FabLibrary 模块只能依赖：
 [Plugins]
   ├─ depends on → [Plugins.Contracts]
   ├─ may query → [FabLibrary.Contracts]
-  └─ may query → [Installations.Contracts]
+  ├─ may query → [Installations.Contracts]
+  └─ may query → [EngineVersions.Contracts]
 
 [Settings]
   └─ depends on → [Settings.Contracts]

@@ -110,6 +110,9 @@ public interface IAuthService
 
     /// <summary>尝试从缓存恢复会话（启动时调用）</summary>
     Task<Result<AuthUserInfo>> TryRestoreSessionAsync(CancellationToken ct);
+
+    /// <summary>会话过期事件（Token 刷新失败或用户登出时触发）</summary>
+    event Action<SessionExpiredEvent>? SessionExpired;
 }
 
 /// <summary>认证用户信息</summary>
@@ -173,6 +176,12 @@ public interface IDownloadCommandService
 
     /// <summary>调整优先级</summary>
     Task<Result> SetPriorityAsync(DownloadTaskId taskId, int priority, CancellationToken ct);
+
+    /// <summary>暂停所有活跃下载（网络断开时由 NetworkMonitorWorker 调用）</summary>
+    Task<Result> PauseAllAsync(CancellationToken ct = default);
+
+    /// <summary>恢复所有已暂停下载（网络恢复时由 NetworkMonitorWorker 调用）</summary>
+    Task<Result> ResumeAllAsync(CancellationToken ct = default);
 }
 ```
 
@@ -564,35 +573,24 @@ public interface IHashingService
 namespace Launcher.Application.Modules.Downloads.Contracts;
 
 /// <summary>
-/// 运行时下载状态存储。
-/// 把"运行时下载进度"和"数据库持久化状态"分离。
-/// UI 通过此接口获取实时下载进度快照。
+/// 下载运行时状态存储接口。提供实时进度快照和事件订阅。
 /// </summary>
 public interface IDownloadRuntimeStore
 {
-    /// <summary>当前所有下载快照</summary>
-    IReadOnlyCollection<DownloadRuntimeSnapshot> Current { get; }
+    /// <summary>进度快照变更事件（500ms 节流后触发）</summary>
+    event Action<DownloadProgressSnapshot>? SnapshotChanged;
 
-    /// <summary>更新或插入快照</summary>
-    void Upsert(DownloadRuntimeSnapshot snapshot);
+    /// <summary>下载完成事件</summary>
+    event Action<DownloadCompletedEvent>? DownloadCompleted;
 
-    /// <summary>移除快照</summary>
-    void Remove(DownloadTaskId taskId);
+    /// <summary>下载失败事件</summary>
+    event Action<DownloadFailedEvent>? DownloadFailed;
 
-    /// <summary>状态变更事件（UI 订阅用于刷新）</summary>
-    event EventHandler<DownloadRuntimeSnapshot>? SnapshotChanged;
-}
+    /// <summary>获取指定任务的最新快照</summary>
+    DownloadProgressSnapshot? GetSnapshot(DownloadTaskId taskId);
 
-public sealed class DownloadRuntimeSnapshot
-{
-    public DownloadTaskId TaskId { get; init; }
-    public string AssetId { get; init; } = default!;
-    public DownloadUiState UiState { get; init; }
-    public double Progress { get; init; }
-    public long DownloadedBytes { get; init; }
-    public long TotalBytes { get; init; }
-    public long BytesPerSecond { get; init; }
-    public DateTime UpdatedAt { get; init; }
+    /// <summary>获取所有活跃快照</summary>
+    IReadOnlyList<DownloadProgressSnapshot> GetAllSnapshots();
 }
 ```
 
