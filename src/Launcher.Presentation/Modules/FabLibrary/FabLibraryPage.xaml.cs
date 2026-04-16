@@ -48,16 +48,9 @@ public sealed partial class FabLibraryPage : Page
 
     private void SortComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is ComboBox combo && combo.SelectedItem is ComboBoxItem item && item.Tag is string tag)
+        if (sender is ComboBox combo)
         {
-            ViewModel.SelectedSortOrder = tag switch
-            {
-                "Newest" => FabSortOrder.Newest,
-                "Rating" => FabSortOrder.Rating,
-                "PriceLowToHigh" => FabSortOrder.PriceLowToHigh,
-                "PriceHighToLow" => FabSortOrder.PriceHighToLow,
-                _ => FabSortOrder.Relevance,
-            };
+            ViewModel.SelectedSortIndex = combo.SelectedIndex;
         }
     }
 

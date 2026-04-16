@@ -46,6 +46,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _searchKeyword = string.Empty;
     [ObservableProperty] private string _selectedCategory = string.Empty;
     [ObservableProperty] private FabSortOrder _selectedSortOrder = FabSortOrder.Relevance;
+    [ObservableProperty] private int _selectedSortIndex;
     [ObservableProperty] private int _currentPage = 1;
     [ObservableProperty] private int _totalPages;
     [ObservableProperty] private bool _hasNextPage;
@@ -111,6 +112,20 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
     partial void OnSelectedCategoryChanged(string value)
     {
         _ = SearchWithDebounceAsync();
+    }
+
+    /// <summary>排序索引切换：映射 ComboBox 索引到 FabSortOrder</summary>
+    partial void OnSelectedSortIndexChanged(int value)
+    {
+        SelectedSortOrder = value switch
+        {
+            0 => FabSortOrder.Relevance,
+            1 => FabSortOrder.Newest,
+            2 => FabSortOrder.Rating,
+            3 => FabSortOrder.PriceLowToHigh,
+            4 => FabSortOrder.PriceHighToLow,
+            _ => FabSortOrder.Relevance,
+        };
     }
 
     /// <summary>排序切换</summary>

@@ -22,6 +22,7 @@ public partial class DownloadsViewModel : ObservableObject, IDisposable
     private readonly IDownloadRuntimeStore _runtimeStore;
     private readonly Microsoft.UI.Dispatching.DispatcherQueue _dispatcherQueue;
     private readonly CancellationTokenSource _disposalCts = new();
+    private readonly System.Diagnostics.Stopwatch _throttleSw = System.Diagnostics.Stopwatch.StartNew();
     private bool _disposed;
 
     /// <summary>
@@ -112,6 +113,11 @@ public partial class DownloadsViewModel : ObservableObject, IDisposable
 
     private void OnSnapshotChanged(DownloadProgressSnapshot snapshot)
     {
+        // 双重节流：源头 500ms + UI 侧 500ms 防御
+        if (_throttleSw.ElapsedMilliseconds < 500)
+            return;
+        _throttleSw.Restart();
+
         _dispatcherQueue.TryEnqueue(() =>
         {
             var existing = FindDownloadItem(snapshot.TaskId);
