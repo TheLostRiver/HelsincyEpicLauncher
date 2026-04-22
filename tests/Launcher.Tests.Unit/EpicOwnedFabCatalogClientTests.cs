@@ -89,7 +89,47 @@ public sealed class EpicOwnedFabCatalogClientTests
         libraryHandler.ReceivedRequests.Should().HaveCount(1);
     }
 
-    private static EpicOwnedFabCatalogClient CreateSut(MockHttpMessageHandler libraryHandler, MockHttpMessageHandler catalogHandler)
+    [Fact]
+    public async Task SearchOwnedAsync_WhenCatalogOmitsImages_ShouldPreservePreviewTraceMetadata()
+    {
+        var libraryHandler = new MockHttpMessageHandler();
+        libraryHandler.EnqueueResponse(
+            HttpStatusCode.OK,
+            FabOwnedFallbackTestData.CreateLibraryResponse(
+            [
+                FabOwnedFallbackTestData.CreateOwnedRecord("asset-empty", 1, productId: "product-empty"),
+            ]));
+
+        var catalogHandler = new MockHttpMessageHandler();
+        catalogHandler.EnqueueResponse(
+            HttpStatusCode.OK,
+            FabOwnedFallbackTestData.CreateCatalogResponse(
+                ["asset-empty"],
+                assetIdsWithoutImages: ["asset-empty"],
+                listingIdentifiers: new Dictionary<string, string>
+                {
+                    ["asset-empty"] = "listing-empty",
+                }));
+
+        var sut = CreateSut(libraryHandler, catalogHandler);
+
+        var result = await sut.SearchOwnedAsync(
+            new FabSearchQuery { Page = 1, PageSize = 20, SortOrder = FabSortOrder.Newest },
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Items.Should().ContainSingle();
+
+        var item = result.Value.Items[0];
+        item.AssetId.Should().Be("asset-empty");
+        item.ThumbnailUrl.Should().BeEmpty();
+        item.PreviewListingId.Should().Be("listing-empty");
+        item.PreviewProductId.Should().Be("product-empty");
+    }
+
+    private static EpicOwnedFabCatalogClient CreateSut(
+        MockHttpMessageHandler libraryHandler,
+        MockHttpMessageHandler catalogHandler)
     {
         var authService = Substitute.For<IAuthService>();
         authService.GetAccessTokenAsync(Arg.Any<CancellationToken>())

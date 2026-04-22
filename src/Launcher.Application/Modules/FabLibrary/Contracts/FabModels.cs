@@ -60,6 +60,8 @@ public sealed class FabAssetSummary
     public required string AssetId { get; init; }
     public required string Title { get; init; }
     public string ThumbnailUrl { get; init; } = string.Empty;
+    public string PreviewListingId { get; init; } = string.Empty;
+    public string PreviewProductId { get; init; } = string.Empty;
     public string Category { get; init; } = string.Empty;
     public string Author { get; init; } = string.Empty;
     public decimal Price { get; init; }

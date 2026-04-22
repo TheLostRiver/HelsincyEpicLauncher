@@ -218,6 +218,39 @@
                                         Stretch="UniformToFill"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center" />
+                                    <Grid
+                                        Visibility="{x:Bind ShowThumbnailPlaceholder, Mode=OneWay, Converter={StaticResource BoolToVis}}"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch">
+                                        <Border
+                                            CornerRadius="8,8,0,0"
+                                            Background="{ThemeResource AccentFillColorSecondaryBrush}"
+                                            Opacity="0.18" />
+                                        <StackPanel
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Spacing="10">
+                                            <Border
+                                                Width="52"
+                                                Height="52"
+                                                CornerRadius="26"
+                                                Background="{ThemeResource AccentFillColorDefaultBrush}">
+                                                <TextBlock
+                                                    Text="{x:Bind ThumbnailMonogram}"
+                                                    Foreground="White"
+                                                    FontSize="24"
+                                                    FontWeight="SemiBold"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    TextAlignment="Center" />
+                                            </Border>
+                                            <TextBlock
+                                                Text="{x:Bind ThumbnailStatusText, Mode=OneWay}"
+                                                Style="{StaticResource CaptionTextBlockStyle}"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                HorizontalAlignment="Center" />
+                                        </StackPanel>
+                                    </Grid>
                                     <!-- 已拥有标记 -->
                                     <Border
                                         Visibility="{x:Bind IsOwned, Converter={StaticResource BoolToVis}}"

@@ -72,8 +72,9 @@ public sealed partial class FabLibraryPage : Page
     private async void AssetGrid_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
 #pragma warning restore CA1822
     {
-        if (args.Element is FrameworkElement fe && fe.DataContext is FabAssetCardViewModel card)
+        if (args.Index >= 0 && args.Index < ViewModel.Assets.Count)
         {
+            var card = ViewModel.Assets[args.Index];
             await card.LoadThumbnailAsync();
         }
     }

@@ -2,13 +2,13 @@
 
 ## 最后更新
 - 时间：2026-04-22
-- 完成任务：Epic 两步式登录验证 + Auth 手动 JSON 输入止血 + Auth 自动回调预研/loopback 清单整理 + Auth 宿主自动回调骨架接入 + Auth 第二实例自动回调转发正式修复并完成运行态验收 + Legendary 参考实现分析与下一阶段 Auth 设计文档定稿 + Auth Phase L1 内部 completion 抽象与结构化日志归一 + EGL refresh token 导入预研 + WebView2 exchange code 预研、默认登录实现与风险加固 + Fab 网页端接口误接入修补 + Fab owned 回退统一到流式详情/分页链路 + WebView2 运行态 loader 缺失修正
+- 完成任务：Epic 两步式登录验证 + Auth 手动 JSON 输入止血 + Auth 自动回调预研/loopback 清单整理 + Auth 宿主自动回调骨架接入 + Auth 第二实例自动回调转发正式修复并完成运行态验收 + Legendary 参考实现分析与下一阶段 Auth 设计文档定稿 + Auth Phase L1 内部 completion 抽象与结构化日志归一 + EGL refresh token 导入预研 + WebView2 exchange code 预研、默认登录实现与风险加固 + Fab 网页端接口误接入修补 + Fab owned 回退统一到流式详情/分页链路 + WebView2 运行态 loader 缺失修正 + Fab 预览追踪锚点保留与无图占位语义细分 + Fab 真实预览运行态修正（隐藏 WebView2 桌面级视口 + preview 成功结果缓存）
 
 ## 当前项目状态
 - 最后成功编译：是（dotnet build 成功）
-- 最后测试结果：全部通过（242/242；仍有 1 条既有 `CA1816` 警告未处理）
-- 当前重点：**2026-04-22 的真实运行态验收已经把 Epic 默认登录主线的三层阻塞全部收口：默认输出目录 loader 缺失、浏览器兜底 JSON 不兼容、以及 `ContentDialog` 宿主导致的人机验证页面裁切。当前代码已补 `TargetDir` loader 复制、JSON 兼容提取，并把嵌入式登录容器改为独立可调整大小的 WebView2 登录窗口。最新真实运行态已明确记录 `exchange_code_webview`、token exchange succeeded 与嵌入式登录成功，默认主线现可闭环登录。**
-- 下一个任务：**如果继续沿 Auth 主线推进，重点不再是登录宿主，而是把这轮最终修复补充提交/推送、同步更新剩余文档，并根据需要继续观察 Epic 页面桥接点是否发生外部漂移。凡是继续做 `src/Launcher.App/*` 运行态验收，仍需显式执行 `dotnet build src/Launcher.App/Launcher.App.csproj`，不能只依赖 `dotnet test`。**
+- 最后测试结果：Fab 预览相关聚焦测试通过（8/8：`FabPreviewUrlReadServiceTests`、`EpicOwnedFabCatalogClientTests`、`FabCatalogReadServiceTests`）；本轮未重新跑全量测试
+- 当前重点：**真实预览恢复已经完成第一轮运行态闭环：当前代码会在卡片进入视口且原始 `ThumbnailUrl` 为空时，通过 `IFabPreviewUrlReadService` 触发按需解析；Presentation 的 `FabListingPageReadService` 会用受控 WebView2 打开 `www.fab.com/listings/{listingId}`，Infrastructure 的 `FabListingHtmlPreviewMetadataResolver` 再从页面 HTML 中提取 `media.fab.com/image_previews/...` 真实图链。运行态修正已确认两点关键约束：隐藏 probe 必须保留 `1366x900` 级别桌面视口，且 resolver 只能缓存成功 URL，不能对首轮空结果做负缓存。**
+- 下一个任务：**当前代码已适合提交推送；提交后优先排查 Fab 页面新的 UI 异常，即截图里出现的“加载失败 / 读取已拥有 Fab 资产失败 / 重试”错误条为何会覆盖在资产网格上。若继续做运行态验收或重新构建 `src/Launcher.App/*`，仍需先关闭正在运行的 `Launcher.App`，否则会因为 DLL/PDB 被锁导致构建失败。**
 
 ## 审查修复进度
 - 已完成：31/71 项（43.7%），6 个 Batch，全部提交推送
@@ -127,6 +127,8 @@
 - Presentation DI 注册 InstallationsViewModel
 
 ## 遗留问题
+- Fab owned fallback 虽已能把 `ListingIdentifier/productId` 保留下来，但真实预览图来源仍未恢复；当前应用运行时直连 `www.fab.com/listings/*` 及多组猜测 media API 仍会被 403 拦截
+- 当前虽然已经接入 WebView2 listing 读取链，但还缺少一次真实应用内运行态证据，尚未证明 Cloudflare challenge 会在这个受控浏览器上下文里自动放行并暴露最终页面 HTML
 - FabLibrary 当前使用的 `https://www.fab.com/api/v1/assets/*` 不是稳定客户端服务接口；运行时会收到 Cloudflare `Just a moment...` 挑战页。当前已修正错误提示，但在线目录本身仍需后续迁移到 Epic 后端服务链路
 - EngineVersions 当前 `https://www.unrealengine.com/api/engine/versions` 同样属于网页端入口；已补网站挑战识别。另已验证 `launcher-public-service-prod06.ol.epicgames.com/launcher/api/public/assets/Windows?label=Live` 可被当前 token 正常访问，可作为后续迁移基础
 - 当前环境下 `Launcher.App` 窗口未暴露可用的 UIA 顶级窗口/控件树，无法自动化点击详情卡片；已改为使用本机真实登录态直接调用 `IFabCatalogReadService` 完成一次 owned 搜索→详情读取，证明详情回退后端链路可用，但 UI 视觉层仍需人工点开做最后验收

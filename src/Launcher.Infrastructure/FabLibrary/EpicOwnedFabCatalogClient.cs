@@ -695,6 +695,7 @@ internal sealed class EpicOwnedFabCatalogClient
                     r.Namespace ?? string.Empty,
                     r.CatalogItemId ?? string.Empty,
                     r.AppName ?? string.Empty,
+                    r.ProductId ?? string.Empty,
                     r.AcquisitionDate)))
             .Where(r => !string.IsNullOrWhiteSpace(r.Namespace) && !string.IsNullOrWhiteSpace(r.CatalogItemId))
             .GroupBy(r => r.CatalogItemId, StringComparer.OrdinalIgnoreCase)
@@ -720,11 +721,14 @@ internal sealed class EpicOwnedFabCatalogClient
         var appName = TryGetStringProperty(element, "appName", out var value)
             ? value
             : string.Empty;
+        var productId = TryGetStringProperty(element, "productId", out var parsedProductId)
+            ? parsedProductId
+            : string.Empty;
         var acquisitionDate = TryGetDateTimeOffsetProperty(element, "acquisitionDate", out var parsed)
             ? parsed
             : DateTimeOffset.MinValue;
 
-        record = new OwnedRecord(recordNamespace, catalogItemId, appName, acquisitionDate);
+        record = new OwnedRecord(recordNamespace, catalogItemId, appName, productId, acquisitionDate);
         return true;
     }
 
@@ -826,7 +830,7 @@ internal sealed class EpicOwnedFabCatalogClient
             try
             {
                 var catalogItem = await GetCatalogItemAsync(record, ct);
-                summaries[index] = MapToSummary(record, catalogItem);
+                summaries[index] = MapToSummary(record, catalogItem, ExtractListingIdentifier(catalogItem), SelectThumbnailUrl(catalogItem));
             }
             finally
             {
@@ -934,13 +938,19 @@ internal sealed class EpicOwnedFabCatalogClient
             || !string.IsNullOrWhiteSpace(query.EngineVersion);
     }
 
-    private static FabAssetSummary MapToSummary(OwnedRecord record, EpicCatalogItem? item)
+    private static FabAssetSummary MapToSummary(
+        OwnedRecord record,
+        EpicCatalogItem? item,
+        string previewListingId,
+        string thumbnailUrl)
     {
         return new FabAssetSummary
         {
             AssetId = record.CatalogItemId,
             Title = item?.Title ?? record.AppName,
-            ThumbnailUrl = SelectThumbnailUrl(item),
+            ThumbnailUrl = thumbnailUrl,
+            PreviewListingId = previewListingId,
+            PreviewProductId = record.ProductId,
             Category = SelectCategory(item),
             Author = item?.Developer ?? string.Empty,
             Price = 0,
@@ -1015,6 +1025,25 @@ internal sealed class EpicOwnedFabCatalogClient
             ?? string.Empty;
     }
 
+    private static string ExtractListingIdentifier(EpicCatalogItem? item)
+    {
+        if (item?.CustomAttributes is null)
+        {
+            return string.Empty;
+        }
+
+        foreach (var pair in item.CustomAttributes)
+        {
+            if (string.Equals(pair.Key, "ListingIdentifier", StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(pair.Value?.Value))
+            {
+                return pair.Value.Value;
+            }
+        }
+
+        return string.Empty;
+    }
+
     private static string SelectCategory(EpicCatalogItem? item)
     {
         if (item?.Categories is null)
@@ -1072,7 +1101,7 @@ internal sealed class EpicOwnedFabCatalogClient
         }
     }
 
-    private sealed record OwnedRecord(string Namespace, string CatalogItemId, string AppName, DateTimeOffset AcquisitionDate);
+    private sealed record OwnedRecord(string Namespace, string CatalogItemId, string AppName, string ProductId, DateTimeOffset AcquisitionDate);
 
     private sealed record OwnedRecordWindow(IReadOnlyList<OwnedRecord> Records, bool HasMore);
 
@@ -1112,6 +1141,8 @@ internal sealed class EpicOwnedFabCatalogClient
 
         public string? AppName { get; init; }
 
+        public string? ProductId { get; init; }
+
         public string? SandboxName { get; init; }
 
         public string? RecordType { get; init; }
@@ -1131,11 +1162,20 @@ internal sealed class EpicOwnedFabCatalogClient
 
         public DateTimeOffset LastModifiedDate { get; init; }
 
+        public Dictionary<string, EpicCatalogCustomAttribute> CustomAttributes { get; init; } = [];
+
         public List<EpicCatalogImage> KeyImages { get; init; } = [];
 
         public List<EpicCatalogCategory> Categories { get; init; } = [];
 
         public List<EpicCatalogReleaseInfo> ReleaseInfo { get; init; } = [];
+    }
+
+    private sealed class EpicCatalogCustomAttribute
+    {
+        public string? Type { get; init; }
+
+        public string? Value { get; init; }
     }
 
     private sealed class EpicCatalogImage

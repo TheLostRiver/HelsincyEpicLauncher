@@ -46,12 +46,13 @@ public sealed class ThumbnailCacheService : IThumbnailCacheService
             return null;
 
         var hash = ComputeUrlHash(imageUrl);
-        var cachedPath = Path.Combine(_cacheDir, hash);
+        var cacheFileName = BuildCacheFileName(hash, imageUrl);
+        var cachedPath = Path.Combine(_cacheDir, cacheFileName);
 
         // 命中缓存
         if (File.Exists(cachedPath))
         {
-            _accessIndex[hash] = DateTime.UtcNow;
+            _accessIndex[cacheFileName] = DateTime.UtcNow;
             return cachedPath;
         }
 
@@ -64,11 +65,12 @@ public sealed class ThumbnailCacheService : IThumbnailCacheService
             // 双重检查：等待锁期间可能已被其他线程下载
             if (File.Exists(cachedPath))
             {
-                _accessIndex[hash] = DateTime.UtcNow;
+                _accessIndex[cacheFileName] = DateTime.UtcNow;
                 return cachedPath;
             }
 
             // 下载
+            Logger.Debug("开始下载缩略图 | Url={Url} | CachePath={Path}", imageUrl, cachedPath);
             using var response = await _httpClient.GetAsync(imageUrl, HttpCompletionOption.ResponseHeadersRead, ct);
             if (!response.IsSuccessStatusCode)
             {
@@ -85,12 +87,14 @@ public sealed class ThumbnailCacheService : IThumbnailCacheService
             }
 
             File.Move(tempPath, cachedPath, overwrite: true);
-            _accessIndex[hash] = DateTime.UtcNow;
+            _accessIndex[cacheFileName] = DateTime.UtcNow;
+            Logger.Debug("缩略图下载完成 | Url={Url} | CachePath={Path}", imageUrl, cachedPath);
 
             return cachedPath;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
+            Logger.Warning(ex, "缩略图下载已取消 {Url}", imageUrl);
             return null;
         }
         catch (Exception ex)
@@ -173,5 +177,29 @@ public sealed class ThumbnailCacheService : IThumbnailCacheService
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(url));
         return Convert.ToHexStringLower(bytes);
+    }
+
+    private static string BuildCacheFileName(string hash, string imageUrl)
+    {
+        var extension = TryGetImageExtension(imageUrl);
+        return string.IsNullOrWhiteSpace(extension)
+            ? hash
+            : hash + extension;
+    }
+
+    private static string TryGetImageExtension(string imageUrl)
+    {
+        if (!Uri.TryCreate(imageUrl, UriKind.Absolute, out var uri))
+        {
+            return string.Empty;
+        }
+
+        var extension = Path.GetExtension(uri.AbsolutePath);
+        if (string.IsNullOrWhiteSpace(extension) || extension.Length > 10)
+        {
+            return string.Empty;
+        }
+
+        return extension.ToLowerInvariant();
     }
 }

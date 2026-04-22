@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Fab 预览追踪锚点保留 (2026-04-22)
+- `FabAssetSummary` 新增 `PreviewListingId` / `PreviewProductId`，用于为后续二级 preview resolver 保留非 UI 预览追踪元数据，不再要求重新打穿 owned fallback 链路
+- `EpicOwnedFabCatalogClient` 现在会从 Epic library owned record 保留 `productId`，并从 catalog `customAttributes` 中大小写不敏感地提取 `ListingIdentifier`；即使 `keyImages=[]`，无图资产也会把后续预览解析所需锚点继续带到列表层
+- `Launcher.Infrastructure.FabLibrary` 新增 `IFabPreviewMetadataResolver` 抽象与默认 `NullFabPreviewMetadataResolver`；owned fallback 现在只在“无 thumbnail 且存在 preview 锚点”时尝试二级解析，后续只需替换 resolver 实现即可恢复真实预览图来源
+- Fab 列表卡片占位文案细分为“暂无预览”和“平台未返回预览”，避免把“图片下载失败”与“上游当前没给图”混为一谈
+- 新增 `EpicOwnedFabCatalogClientTests.SearchOwnedAsync_WhenCatalogOmitsImages_ShouldPreservePreviewTraceMetadata` 与 `SearchOwnedAsync_WhenResolverReturnsPreview_ShouldUseResolvedThumbnailUrl`，回归验证空图 owned fallback 资产既能保留 `ListingIdentifier/productId`，也能在后续接入 resolver 后无缝吃到解析出的预览图
+- 真实预览恢复主链已改为“卡片懒加载时按需解析”，不再在 owned 摘要加载阶段阻塞首屏：`IFabPreviewUrlReadService` 负责对可见卡片按需取图，Presentation 新增 `IFabListingPageReadService` 的 WebView2 实现，在受控浏览器上下文中读取 Fab listing HTML；Infrastructure 通过 `FabListingHtmlPreviewMetadataResolver` 从页面内容提取 `media.fab.com/image_previews/...` 并缓存结果
+- `EpicOwnedFabCatalogClient` 已撤回摘要阶段的真实预览解析尝试，避免首屏 20 个无图资产逐个走浏览器抓页导致列表初始化显著变慢；真实预览解析现在只在卡片进入视口、且原始 `ThumbnailUrl` 为空时才触发
+- 新增 `FabPreviewUrlReadServiceTests`，验证 raw / escaped 两类 listing HTML 都能提取真实 `image_previews` URL，并验证按 listing 级缓存生效
+- 真实运行态验收确认：隐藏 WebView2 probe 不能使用 `1x1` 极小视口；`FabListingPageReadService` 现改为离屏但保持 `1366x900` 桌面级视口，否则 Fab listing 会进入过度收缩/延迟分支，导致页面 HTML 长时间拿不到 `image_previews` 预览信号
+- `FabListingHtmlPreviewMetadataResolver` 现只缓存成功解析出的 preview URL，不再对 `null/empty` 结果做负缓存；这样 listing 首次未水合时，后续可见卡片再次进入视口仍能重试并命中真实预览，而不会被第一次空结果永久压住
+- `FabPreviewUrlReadServiceTests` 追加覆盖 `ListingIdentifier` 缺失时回退 `productId`，以及“首次空结果、再次重试成功”的场景，避免运行态回归成只要第一次没拿到图就长期显示“平台未返回预览”
+
 ### Auth 运行态验收修正 (2026-04-22)
 - 真实运行态验收确认：默认启动目录 `src/Launcher.App/bin/Debug/net9.0-windows10.0.19041.0` 缺少根层 `WebView2Loader.dll`，导致 WebView2 在 `CoreWebView2Environment.CreateWithOptionsAsync(...)` 阶段抛出“找不到指定的模块”，Shell 随后自动回退到系统浏览器登录兜底
 - `src/Launcher.App/Launcher.App.csproj` 现显式引用 `Microsoft.Web.WebView2` 并在 Build / Publish 后把 `runtimes/win-x64/native/WebView2Loader.dll` 复制到真实应用基目录 `TargetDir`，避免默认构建输出只能依赖 `win-x64` 子目录才能初始化 WebView2

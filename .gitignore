@@ -62,6 +62,7 @@ BundleArtifacts/
 
 # Publish
 publish/
+.artifacts/
 
 # Code coverage
 coverage/

@@ -109,14 +109,28 @@ public static class DependencyInjection
             client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("identity");
             EnsureHttps(client.BaseAddress);
         });
-        services.AddHttpClient("ThumbnailDownload");
+        services.AddHttpClient("ThumbnailDownload", client =>
+        {
+            client.DefaultRequestHeaders.AcceptEncoding.Clear();
+            client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("identity");
+        });
         services.AddSingleton<FabApiClient>();
+        services.AddSingleton<IFabPreviewMetadataResolver>(sp =>
+        {
+            var listingPageReadService = sp.GetService<IFabListingPageReadService>();
+            return listingPageReadService is null
+                ? new NullFabPreviewMetadataResolver()
+                : new FabListingHtmlPreviewMetadataResolver(listingPageReadService);
+        });
+        services.AddSingleton<IFabPreviewUrlReadService, FabPreviewUrlReadService>();
         services.AddSingleton<EpicOwnedFabCatalogClient>();
         services.AddSingleton<IFabDownloadInfoProvider, FabDownloadInfoProvider>();
         services.AddSingleton<IThumbnailCacheService>(sp =>
         {
             var httpFactory = sp.GetRequiredService<IHttpClientFactory>();
-            return new ThumbnailCacheService(httpFactory.CreateClient("ThumbnailDownload"));
+            var configProvider = sp.GetRequiredService<IAppConfigProvider>();
+            var cacheDir = Path.Combine(configProvider.CachePath, "Thumbnails");
+            return new ThumbnailCacheService(httpFactory.CreateClient("ThumbnailDownload"), cacheDir);
         });
         services.AddSingleton<IFabCatalogReadService, FabCatalogReadService>();
         services.AddSingleton<IFabAssetCommandService, FabAssetCommandService>();

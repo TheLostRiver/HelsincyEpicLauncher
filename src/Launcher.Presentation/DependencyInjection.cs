@@ -7,6 +7,7 @@ using Launcher.Presentation.Modules.FabLibrary;
 using Launcher.Presentation.Modules.Installations;
 using Launcher.Presentation.Modules.Plugins;
 using Launcher.Presentation.Modules.Settings;
+using Launcher.Application.Modules.FabLibrary.Contracts;
 using Launcher.Presentation.Shell;
 using Launcher.Presentation.Shell.Navigation;
 using Microsoft.Extensions.DependencyInjection;
@@ -54,6 +55,7 @@ public static class DependencyInjection
         services.AddTransient<InstallationsViewModel>();
 
         // FabLibrary ViewModel（Transient：每次导航刷新列表）
+        services.AddSingleton<IFabListingPageReadService, FabListingPageReadService>();
         services.AddTransient<FabLibraryViewModel>();
         services.AddTransient<FabAssetDetailViewModel>();
 

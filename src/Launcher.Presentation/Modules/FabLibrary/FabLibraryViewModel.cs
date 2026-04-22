@@ -21,6 +21,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
 
     private readonly IFabCatalogReadService _catalogService;
     private readonly IThumbnailCacheService _thumbnailCache;
+    private readonly IFabPreviewUrlReadService _previewUrlReadService;
     private readonly INetworkMonitor _networkMonitor;
     private readonly DispatcherQueue _dispatcherQueue;
     private CancellationTokenSource _searchCts = new();
@@ -58,10 +59,12 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
     public FabLibraryViewModel(
         IFabCatalogReadService catalogService,
         IThumbnailCacheService thumbnailCache,
+        IFabPreviewUrlReadService previewUrlReadService,
         INetworkMonitor networkMonitor)
     {
         _catalogService = catalogService;
         _thumbnailCache = thumbnailCache;
+        _previewUrlReadService = previewUrlReadService;
         _networkMonitor = networkMonitor;
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         _isOffline = !networkMonitor.IsNetworkAvailable;
@@ -243,7 +246,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
 
         foreach (var summary in pagedResult.Items)
         {
-            var card = new FabAssetCardViewModel(summary, _thumbnailCache, _dispatcherQueue);
+            var card = new FabAssetCardViewModel(summary, _thumbnailCache, _previewUrlReadService, _dispatcherQueue);
             Assets.Add(card);
         }
 
@@ -303,16 +306,30 @@ public partial class FabAssetCardViewModel : ObservableObject
 
     [ObservableProperty] private BitmapImage? _thumbnail;
     [ObservableProperty] private bool _isThumbnailLoading = true;
+    [ObservableProperty] private bool _showThumbnailPlaceholder;
 
     private readonly string _thumbnailUrl;
+    private readonly string _previewListingId;
+    private readonly string _previewProductId;
     private readonly IThumbnailCacheService _thumbnailCache;
+    private readonly IFabPreviewUrlReadService _previewUrlReadService;
     private readonly DispatcherQueue _dispatcherQueue;
-    private bool _thumbnailLoaded;
+    private bool _thumbnailLoadAttempted;
 
     public string PriceText => Price == 0 ? "免费" : $"${Price:F2}";
     public string RatingText => Rating > 0 ? $"★ {Rating:F1}" : string.Empty;
+    public string ThumbnailMonogram => string.IsNullOrWhiteSpace(Title)
+        ? "?"
+        : Title.Trim()[0].ToString().ToUpperInvariant();
+    public string ThumbnailStatusText => HasPreviewLocator ? "平台未返回预览" : "暂无预览";
 
-    public FabAssetCardViewModel(FabAssetSummary summary, IThumbnailCacheService thumbnailCache, DispatcherQueue dispatcherQueue)
+    private bool HasPreviewLocator => !string.IsNullOrWhiteSpace(_previewListingId) || !string.IsNullOrWhiteSpace(_previewProductId);
+
+    public FabAssetCardViewModel(
+        FabAssetSummary summary,
+        IThumbnailCacheService thumbnailCache,
+        IFabPreviewUrlReadService previewUrlReadService,
+        DispatcherQueue dispatcherQueue)
     {
         AssetId = summary.AssetId;
         Title = summary.Title;
@@ -323,7 +340,10 @@ public partial class FabAssetCardViewModel : ObservableObject
         IsOwned = summary.IsOwned;
         IsInstalled = summary.IsInstalled;
         _thumbnailUrl = summary.ThumbnailUrl;
+        _previewListingId = summary.PreviewListingId;
+        _previewProductId = summary.PreviewProductId;
         _thumbnailCache = thumbnailCache;
+        _previewUrlReadService = previewUrlReadService;
         _dispatcherQueue = dispatcherQueue;
     }
 
@@ -332,19 +352,38 @@ public partial class FabAssetCardViewModel : ObservableObject
     /// </summary>
     public async Task LoadThumbnailAsync()
     {
-        if (_thumbnailLoaded || string.IsNullOrEmpty(_thumbnailUrl)) 
+        if (_thumbnailLoadAttempted)
         {
             IsThumbnailLoading = false;
             return;
         }
 
-        _thumbnailLoaded = true;
+        _thumbnailLoadAttempted = true;
 
         try
         {
-            var localPath = await _thumbnailCache.GetOrDownloadAsync(_thumbnailUrl, CancellationToken.None);
+            var thumbnailUrl = _thumbnailUrl;
+            if (string.IsNullOrWhiteSpace(thumbnailUrl) && HasPreviewLocator)
+            {
+                thumbnailUrl = await _previewUrlReadService.TryResolveThumbnailUrlAsync(
+                        AssetId,
+                        _previewListingId,
+                        _previewProductId,
+                        CancellationToken.None)
+                    ?? string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(thumbnailUrl))
+            {
+                ShowThumbnailPlaceholder = true;
+                IsThumbnailLoading = false;
+                return;
+            }
+
+            var localPath = await _thumbnailCache.GetOrDownloadAsync(thumbnailUrl, CancellationToken.None);
             if (localPath is null)
             {
+                ShowThumbnailPlaceholder = true;
                 IsThumbnailLoading = false;
                 return;
             }
@@ -357,13 +396,18 @@ public partial class FabAssetCardViewModel : ObservableObject
                     DecodePixelWidth = 220,
                     DecodePixelType = DecodePixelType.Logical
                 };
+                ShowThumbnailPlaceholder = false;
                 IsThumbnailLoading = false;
             });
         }
         catch (Exception ex)
         {
             Log.Warning(ex, "缩略图加载失败");
-            _dispatcherQueue.TryEnqueue(() => IsThumbnailLoading = false);
+            _dispatcherQueue.TryEnqueue(() =>
+            {
+                ShowThumbnailPlaceholder = true;
+                IsThumbnailLoading = false;
+            });
         }
     }
 }
