@@ -501,15 +501,15 @@
 
 ### 2026-04-22 — 嵌入式登录页面裁切修正
 
-**状态**: 已完成代码修正并完成页面级运行态复验，待继续做完整登录闭环验收 | **运行态结论**: WebView2 已能显示 Epic 嵌入式登录页，但 WinUI 3 `ContentDialog` 默认宽度上限把固定 920x720 宿主压扁，导致登录页横向裁切、人机验证无法完整显示
+**状态**: 已完成代码修正并完成真实运行态闭环验收 | **运行态结论**: 仅放宽 `ContentDialog` 宽度不足以稳定承载 Epic 的人机验证页面；根因级修复是把嵌入式登录容器改为独立可调整大小的窗口，避免 Arkose/验证码继续被宿主裁切
 
 | 类别 | 详细内容 |
 |------|----------|
-| 运行态证据 | 修复 loader 缺失后，实际运行已能弹出嵌入式 Epic 登录页；但页面只显示中间一截，用户无法看到完整人机验证控件，因此虽然 WebView2 已成功初始化，默认登录主线仍被 UI 宿主尺寸问题阻断 |
-| 根因 | `DialogService` 把登录内容固定为 920x720，但没有覆盖 WinUI 3 `ContentDialog` 模板自带的宽度上限；结果 ContentDialog 仍按默认窄宽度布局，WebView2 宿主被强行裁窄，Epic 登录页横向内容被截断 |
-| UI 修正 | `DialogService` 现按当前 `XamlRoot` 可用空间动态计算嵌入式登录对话框尺寸，降低过高的固定最小高度，并显式设置登录对话框的 `ContentDialogMinWidth` / `ContentDialogMaxWidth` 资源，避免默认模板再次压扁 WebView2 宿主 |
-| 验证结果 | `dotnet build src/Launcher.App/Launcher.App.csproj --no-restore` 重新通过；用户在新一轮运行态复验中确认“页面已完整显示并可操作” |
-| 当前剩余风险 | 本轮仅确认页面显示层已恢复；后续仍需继续验证 Epic 人机验证通过后，`exchange_code` 捕获、token exchange 与登录成功闭环是否全部正常 |
+| 运行态证据 | 修复 loader 缺失后，实际运行已能弹出嵌入式 Epic 登录页；但即使放宽 `ContentDialog` 宽度，用户在继续到人机验证页面时仍反馈“页面还是被裁剪了，导致无法通过验证”，说明问题不只是默认模板宽度，而是 `ContentDialog` 作为宿主本身不适合这一类登录流程 |
+| 根因 | `ContentDialog` 仍然受限于主窗口内部可用区域与自身模板布局，用户也无法像普通窗口一样自由拉伸或最大化；对 Epic 后续的人机验证页来说，这种宿主形式不稳定，仍会出现裁切 |
+| UI 修正 | `DialogService` 现不再使用 `ContentDialog` 承载 Epic 登录，而是创建独立的 WinUI 3 登录窗口，按显示器工作区计算初始大小，允许用户直接调整或最大化窗口，再在其中承载 WebView2 与取消按钮 |
+| 验证结果 | `dotnet build src/Launcher.App/Launcher.App.csproj --no-restore` 重新通过；用户在新一轮运行态复验中确认“已完整可见并可操作”，随后继续登录并确认“登录成功并已进入已登录状态”；日志同时记录了 `exchange_code_webview`、`Auth token exchange succeeded` 与 `嵌入式登录成功` |
+| 当前剩余风险 | 当前默认主线已完成真实闭环；剩余风险主要转回外部 Epic 页面桥接点未来是否漂移，而不是本地宿主尺寸问题 |
 
 ---
 

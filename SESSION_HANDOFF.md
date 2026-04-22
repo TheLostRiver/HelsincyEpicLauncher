@@ -7,8 +7,8 @@
 ## 当前项目状态
 - 最后成功编译：是（dotnet build 成功）
 - 最后测试结果：全部通过（242/242；仍有 1 条既有 `CA1816` 警告未处理）
-- 当前重点：**2026-04-22 的真实运行态验收已经连续收敛出三层问题并完成其中两层修正：第一，默认启动目录缺少根层 `WebView2Loader.dll`，导致 `DialogService` 在 `CoreWebView2Environment.CreateWithOptionsAsync(...)` 阶段抛出“找不到指定的模块”；第二，系统浏览器兜底页会返回 JSON 响应，而应用此前只接受纯 `authorizationCode` / 回调 URL；第三，在 loader 修正后，嵌入式 Epic 登录页虽然已能显示，但 WinUI 3 `ContentDialog` 默认宽度上限又把 WebView2 宿主压扁，导致页面横向裁切、人机验证无法完整显示。当前代码已补 `TargetDir` loader 复制、JSON 兼容提取，以及登录对话框按 `XamlRoot` 动态扩展尺寸并覆盖 `ContentDialogMinWidth` / `ContentDialogMaxWidth` 的 UI 修正。**
-- 下一个任务：**继续做真实运行态闭环验收。当前用户已确认嵌入式 Epic 登录页“页面已完整显示并可操作”，所以下一步不再重复排查初始化或裁切，而是直接验证人机验证通过后 WebView2 是否稳定捕获 `exchange_code`、`CompleteLoginAsync({ Kind = ExchangeCode })` 是否成功，以及登录成功后业务页是否完成刷新。凡是继续做 `src/Launcher.App/*` 运行态验收，仍需显式执行 `dotnet build src/Launcher.App/Launcher.App.csproj`，不能只依赖 `dotnet test`。**
+- 当前重点：**2026-04-22 的真实运行态验收已经把 Epic 默认登录主线的三层阻塞全部收口：默认输出目录 loader 缺失、浏览器兜底 JSON 不兼容、以及 `ContentDialog` 宿主导致的人机验证页面裁切。当前代码已补 `TargetDir` loader 复制、JSON 兼容提取，并把嵌入式登录容器改为独立可调整大小的 WebView2 登录窗口。最新真实运行态已明确记录 `exchange_code_webview`、token exchange succeeded 与嵌入式登录成功，默认主线现可闭环登录。**
+- 下一个任务：**如果继续沿 Auth 主线推进，重点不再是登录宿主，而是把这轮最终修复补充提交/推送、同步更新剩余文档，并根据需要继续观察 Epic 页面桥接点是否发生外部漂移。凡是继续做 `src/Launcher.App/*` 运行态验收，仍需显式执行 `dotnet build src/Launcher.App/Launcher.App.csproj`，不能只依赖 `dotnet test`。**
 
 ## 审查修复进度
 - 已完成：31/71 项（43.7%），6 个 Batch，全部提交推送

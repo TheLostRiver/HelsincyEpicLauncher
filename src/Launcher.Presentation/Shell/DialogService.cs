@@ -20,29 +20,60 @@ namespace Launcher.Presentation.Shell;
 public sealed class DialogService : IDialogService
 {
     private static readonly ILogger Logger = Log.ForContext<DialogService>();
-    private const double EmbeddedLoginDialogHorizontalMargin = 32;
-    private const double EmbeddedLoginDialogVerticalMargin = 32;
-    private const double EmbeddedLoginDialogPreferredMinWidth = 840;
-    private const double EmbeddedLoginDialogPreferredMinHeight = 640;
-    private const double EmbeddedLoginDialogMaxWidth = 1160;
-    private const double EmbeddedLoginDialogMaxHeight = 860;
-    private const double EmbeddedLoginContentHorizontalPadding = 72;
-    private const double EmbeddedLoginContentVerticalPadding = 150;
+    private const int EmbeddedLoginWindowHorizontalMargin = 96;
+    private const int EmbeddedLoginWindowVerticalMargin = 96;
+    private const int EmbeddedLoginWindowPreferredWidth = 1440;
+    private const int EmbeddedLoginWindowPreferredHeight = 960;
+    private const int EmbeddedLoginWindowMinimumWidth = 960;
+    private const int EmbeddedLoginWindowMinimumHeight = 720;
     private XamlRoot? _xamlRoot;
 
-    private static double ResolveEmbeddedLoginDialogExtent(double availableSize, double preferredMinSize, double preferredMaxSize, double fallbackSize)
+    private static int ResolveEmbeddedLoginWindowExtent(int availableSize, int preferredMinimumSize, int preferredSize, int fallbackSize)
     {
         if (availableSize <= 0)
         {
             return fallbackSize;
         }
 
-        if (availableSize >= preferredMinSize)
+        if (availableSize >= preferredMinimumSize)
         {
-            return Math.Min(preferredMaxSize, availableSize);
+            return Math.Min(preferredSize, availableSize);
         }
 
         return availableSize;
+    }
+
+    private static void ConfigureEmbeddedLoginWindow(Window window)
+    {
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
+        var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
+        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(windowId);
+        var displayArea = Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(
+            windowId,
+            Microsoft.UI.Windowing.DisplayAreaFallback.Primary);
+        var workArea = displayArea.WorkArea;
+
+        var windowWidth = ResolveEmbeddedLoginWindowExtent(
+            workArea.Width - EmbeddedLoginWindowHorizontalMargin,
+            EmbeddedLoginWindowMinimumWidth,
+            EmbeddedLoginWindowPreferredWidth,
+            1280);
+        var windowHeight = ResolveEmbeddedLoginWindowExtent(
+            workArea.Height - EmbeddedLoginWindowVerticalMargin,
+            EmbeddedLoginWindowMinimumHeight,
+            EmbeddedLoginWindowPreferredHeight,
+            840);
+
+        var x = workArea.X + Math.Max(0, (workArea.Width - windowWidth) / 2);
+        var y = workArea.Y + Math.Max(0, (workArea.Height - windowHeight) / 2);
+
+        appWindow.MoveAndResize(new Windows.Graphics.RectInt32(x, y, windowWidth, windowHeight));
+
+        if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter)
+        {
+            presenter.IsResizable = true;
+            presenter.IsMaximizable = true;
+        }
     }
 
     /// <summary>
@@ -155,7 +186,7 @@ public sealed class DialogService : IDialogService
 
     public async Task<Result<string>> ShowEpicExchangeCodeLoginAsync(AuthExchangeCodeLoginContext loginContext, CancellationToken ct = default)
     {
-        Logger.Information("显示 Epic 嵌入式登录对话框");
+        Logger.Information("显示 Epic 嵌入式登录窗口");
 
         if (_xamlRoot is null)
         {
@@ -163,24 +194,11 @@ public sealed class DialogService : IDialogService
             {
                 Code = "AUTH_WEBVIEW_XAML_ROOT_MISSING",
                 UserMessage = "登录窗口尚未准备完成，请稍后重试",
-                TechnicalMessage = "DialogService XamlRoot is not set before showing Epic embedded login dialog.",
+                TechnicalMessage = "DialogService XamlRoot is not set before showing Epic embedded login window.",
                 CanRetry = true,
                 Severity = ErrorSeverity.Error,
             });
         }
-
-        var dialogViewportWidth = ResolveEmbeddedLoginDialogExtent(
-            _xamlRoot.Size.Width - EmbeddedLoginDialogHorizontalMargin,
-            EmbeddedLoginDialogPreferredMinWidth,
-            EmbeddedLoginDialogMaxWidth,
-            920);
-        var dialogViewportHeight = ResolveEmbeddedLoginDialogExtent(
-            _xamlRoot.Size.Height - EmbeddedLoginDialogVerticalMargin,
-            EmbeddedLoginDialogPreferredMinHeight,
-            EmbeddedLoginDialogMaxHeight,
-            680);
-        var contentWidth = Math.Max(640, dialogViewportWidth - EmbeddedLoginContentHorizontalPadding);
-        var contentHeight = Math.Max(420, dialogViewportHeight - EmbeddedLoginContentVerticalPadding);
 
         var statusText = new TextBlock
         {
@@ -209,20 +227,48 @@ public sealed class DialogService : IDialogService
         {
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
-            MinWidth = 640,
-            MinHeight = 420,
+            MinWidth = 720,
+            MinHeight = 520,
         };
+
+        var cancelButton = new Button
+        {
+            Content = "取消",
+            MinWidth = 120,
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+
+        var footer = new Grid
+        {
+            Margin = new Thickness(0, 12, 0, 0),
+            ColumnDefinitions =
+            {
+                new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) },
+                new ColumnDefinition { Width = GridLength.Auto },
+            },
+            Children =
+            {
+                new TextBlock
+                {
+                    Text = "若人机验证区域仍紧凑，可直接最大化此窗口后继续。",
+                    TextWrapping = TextWrapping.Wrap,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Foreground = (Brush)Microsoft.UI.Xaml.Application.Current.Resources["TextFillColorSecondaryBrush"],
+                },
+                cancelButton,
+            },
+        };
+
+        Grid.SetColumn(cancelButton, 1);
 
         var content = new Grid
         {
-            Width = contentWidth,
-            Height = contentHeight,
-            MinWidth = 640,
-            MinHeight = 460,
+            Margin = new Thickness(20),
             RowDefinitions =
             {
                 new RowDefinition { Height = GridLength.Auto },
                 new RowDefinition { Height = new GridLength(1, GridUnitType.Star) },
+                new RowDefinition { Height = GridLength.Auto },
             },
         };
 
@@ -252,62 +298,74 @@ public sealed class DialogService : IDialogService
 
         Grid.SetRow(header, 0);
         Grid.SetRow(webView, 1);
+        Grid.SetRow(footer, 2);
         content.Children.Add(header);
         content.Children.Add(webView);
+        content.Children.Add(footer);
 
-        var dialog = new ContentDialog
+        var loginWindow = new Window
         {
             Title = "登录 Epic Games",
             Content = content,
-            CloseButtonText = "取消",
-            DefaultButton = ContentDialogButton.Close,
-            FullSizeDesired = true,
-            XamlRoot = _xamlRoot,
         };
 
-        dialog.Resources["ContentDialogMinWidth"] = dialogViewportWidth;
-        dialog.Resources["ContentDialogMaxWidth"] = dialogViewportWidth;
+        ConfigureEmbeddedLoginWindow(loginWindow);
 
         string? exchangeCode = null;
-        Error? dialogError = null;
-        bool dialogClosed = false;
+        Error? loginError = null;
+        bool windowClosed = false;
+        var completionSource = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
         Uri? currentDocumentUri = Uri.TryCreate(loginContext.LoginUrl, UriKind.Absolute, out var initialUri)
             ? initialUri
             : null;
 
-        void CloseDialog()
+        void CompleteWindowLifetime()
         {
-            if (dialogClosed)
+            completionSource.TrySetResult();
+        }
+
+        void CloseLoginWindow()
+        {
+            if (windowClosed)
             {
                 return;
             }
 
-            dialogClosed = true;
+            windowClosed = true;
             try
             {
-                dialog.Hide();
+                loginWindow.Close();
             }
             catch (InvalidOperationException)
             {
             }
+
+            CompleteWindowLifetime();
         }
 
-        void SetDialogError(Error error)
+        void SetLoginError(Error error)
         {
-            dialogError ??= error;
-            CloseDialog();
+            loginError ??= error;
+            CloseLoginWindow();
         }
+
+        cancelButton.Click += (_, _) => CloseLoginWindow();
+        loginWindow.Closed += (_, _) =>
+        {
+            windowClosed = true;
+            CompleteWindowLifetime();
+        };
 
         using var cancellationRegistration = ct.Register(() =>
         {
             dispatcherQueue.TryEnqueue(() =>
             {
-                SetDialogError(new Error
+                SetLoginError(new Error
                 {
                     Code = "AUTH_WEBVIEW_LOGIN_CANCELLED",
                     UserMessage = "已取消登录",
-                    TechnicalMessage = "Embedded login dialog was cancelled by cancellation token.",
+                    TechnicalMessage = "Embedded login window was cancelled by cancellation token.",
                     CanRetry = true,
                     Severity = ErrorSeverity.Warning,
                 });
@@ -327,7 +385,7 @@ public sealed class DialogService : IDialogService
                 var coreWebView = webView.CoreWebView2;
                 if (coreWebView is null)
                 {
-                    SetDialogError(new Error
+                    SetLoginError(new Error
                     {
                         Code = "AUTH_WEBVIEW_INIT_FAILED",
                         UserMessage = "嵌入式登录初始化失败，请重试",
@@ -392,7 +450,7 @@ public sealed class DialogService : IDialogService
 
                         exchangeCode = message.ExchangeCode.Trim();
                         Logger.Information("嵌入式登录已捕获 exchange code，准备完成登录");
-                        CloseDialog();
+                        CloseLoginWindow();
                         return;
                     }
 
@@ -440,7 +498,7 @@ public sealed class DialogService : IDialogService
 
                     if (!args.IsSuccess)
                     {
-                        SetDialogError(new Error
+                        SetLoginError(new Error
                         {
                             Code = "AUTH_WEBVIEW_NAVIGATION_FAILED",
                             UserMessage = "嵌入式登录页面加载失败，请重试",
@@ -459,7 +517,7 @@ public sealed class DialogService : IDialogService
             catch (Exception ex)
             {
                 Logger.Error(ex, "初始化嵌入式登录 WebView2 失败");
-                SetDialogError(new Error
+                SetLoginError(new Error
                 {
                     Code = "AUTH_WEBVIEW_INIT_EXCEPTION",
                     UserMessage = "嵌入式登录初始化失败，请重试",
@@ -470,41 +528,29 @@ public sealed class DialogService : IDialogService
             }
         }
 
+        loginWindow.Activate();
         _ = InitializeWebViewAsync();
 
-        var result = await dialog.ShowAsync();
+        await completionSource.Task;
         if (!string.IsNullOrWhiteSpace(exchangeCode))
         {
             CleanupEmbeddedLoginUserDataFolder(embeddedLoginUserDataFolder);
             return Result.Ok(exchangeCode);
         }
 
-        if (dialogError is not null)
+        if (loginError is not null)
         {
             CleanupEmbeddedLoginUserDataFolder(embeddedLoginUserDataFolder);
-            return Result.Fail<string>(dialogError);
-        }
-
-        if (result == ContentDialogResult.None)
-        {
-            CleanupEmbeddedLoginUserDataFolder(embeddedLoginUserDataFolder);
-            return Result.Fail<string>(new Error
-            {
-                Code = "AUTH_WEBVIEW_LOGIN_CANCELLED",
-                UserMessage = "已取消登录",
-                TechnicalMessage = "User closed embedded Epic login dialog.",
-                CanRetry = true,
-                Severity = ErrorSeverity.Warning,
-            });
+            return Result.Fail<string>(loginError);
         }
 
         CleanupEmbeddedLoginUserDataFolder(embeddedLoginUserDataFolder);
 
         return Result.Fail<string>(new Error
         {
-            Code = "AUTH_WEBVIEW_LOGIN_FAILED",
-            UserMessage = "嵌入式登录未完成，请重试",
-            TechnicalMessage = "Embedded Epic login dialog completed without exchange code.",
+            Code = "AUTH_WEBVIEW_LOGIN_CANCELLED",
+            UserMessage = "已取消登录",
+            TechnicalMessage = "User closed embedded Epic login window without completing the flow.",
             CanRetry = true,
             Severity = ErrorSeverity.Warning,
         });

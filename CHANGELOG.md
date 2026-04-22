@@ -6,8 +6,8 @@
 - 真实运行态验收确认：默认启动目录 `src/Launcher.App/bin/Debug/net9.0-windows10.0.19041.0` 缺少根层 `WebView2Loader.dll`，导致 WebView2 在 `CoreWebView2Environment.CreateWithOptionsAsync(...)` 阶段抛出“找不到指定的模块”，Shell 随后自动回退到系统浏览器登录兜底
 - `src/Launcher.App/Launcher.App.csproj` 现显式引用 `Microsoft.Web.WebView2` 并在 Build / Publish 后把 `runtimes/win-x64/native/WebView2Loader.dll` 复制到真实应用基目录 `TargetDir`，避免默认构建输出只能依赖 `win-x64` 子目录才能初始化 WebView2
 - 真实运行态还确认了另一处行为偏差：系统浏览器兜底链路的 Epic 页面实际会返回 JSON 响应，而应用此前只接受纯 `authorizationCode` / 回调 URL，导致用户即使完成网页登录也会因为拿到整段 JSON 而卡住；当前 Auth 已恢复从 JSON 中只提取 `authorizationCode` / `redirectUrl` 的能力，并同步更新高级登录入口提示
-- 重新启用嵌入式登录后，运行态又暴露出 WinUI 3 `ContentDialog` 默认宽度上限会把固定 920x720 的 WebView2 宿主压扁，导致 Epic 登录页被横向裁切、人机验证无法完整显示；`DialogService` 现按当前 `XamlRoot` 可用空间动态计算尺寸，并显式放开登录对话框的 `ContentDialogMinWidth` / `ContentDialogMaxWidth` 约束
-- 当前运行态结论已从“WebView2 页面持续加载”收敛为“两段问题叠加”：默认输出目录缺少 loader 导致嵌入式初始化失败，以及浏览器兜底页返回 JSON 时人工继续路径不够兼容；下一步需要在补齐 loader 后重新做一次真实 Epic 登录验收，确认 WebView2 初始化是否恢复、以及兜底链路是否真正可闭环
+- 重新启用嵌入式登录后，运行态又暴露出 WinUI 3 `ContentDialog` 宿主对 Arkose/人机验证页面仍然过于局促；最终修复不再继续挤压 `ContentDialog`，而是把 Epic 登录改为独立可调整大小的窗口，并允许用户直接最大化后完成验证
+- 最新真实运行态已确认默认主线真正闭环：独立 WebView2 登录窗口能够完整显示 Epic 登录页和人机验证，`DialogService` 成功捕获 `exchange_code`，随后 `ExchangeCodeGrantExecutor` token exchange succeeded，应用进入已登录状态
 
 ### Auth/Fab 运行时接入修正 (2026-04-17)
 - 确认 Epic 登录已可建立本地登录态；FabLibrary 失败的根因不是未登录，而是当前 `https://www.fab.com/api/v1/assets/*` 接入命中了 Cloudflare `Just a moment...` 挑战页
