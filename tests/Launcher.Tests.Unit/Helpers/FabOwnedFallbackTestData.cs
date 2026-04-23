@@ -72,7 +72,9 @@ internal static class FabOwnedFallbackTestData
     public static string CreateCatalogResponse(
         IEnumerable<string> assetIds,
         IReadOnlyCollection<string>? assetIdsWithoutImages = null,
-        IReadOnlyDictionary<string, string>? listingIdentifiers = null)
+        IReadOnlyDictionary<string, string>? listingIdentifiers = null,
+        IReadOnlyDictionary<string, IReadOnlyList<string>>? categoryPathsByAsset = null,
+        IReadOnlyDictionary<string, DateTimeOffset>? firstReleaseDatesByAsset = null)
     {
         var noImageSet = assetIdsWithoutImages?.ToHashSet(StringComparer.OrdinalIgnoreCase)
             ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -110,6 +112,14 @@ internal static class FabOwnedFallbackTestData
                         },
                     ];
 
+                var categoryPaths = categoryPathsByAsset is not null && categoryPathsByAsset.TryGetValue(assetId, out var customCategoryPaths)
+                    ? customCategoryPaths
+                    : ["assets/environment"];
+
+                var firstReleaseDate = firstReleaseDatesByAsset is not null && firstReleaseDatesByAsset.TryGetValue(assetId, out var customReleaseDate)
+                    ? customReleaseDate
+                    : new DateTimeOffset(2026, 4, 17, 8, 0, 0, TimeSpan.Zero);
+
                 return new
                 {
                     id = assetId,
@@ -119,18 +129,15 @@ internal static class FabOwnedFallbackTestData
                     lastModifiedDate = new DateTimeOffset(2026, 4, 17, 8, 0, 0, TimeSpan.Zero).ToString("O"),
                     customAttributes,
                     keyImages,
-                    categories = new[]
+                    categories = categoryPaths.Select(path => new
                     {
-                        new
-                        {
-                            path = "assets/environment",
-                        },
-                    },
+                        path,
+                    }).ToArray(),
                     releaseInfo = new[]
                     {
                         new
                         {
-                            dateAdded = new DateTimeOffset(2026, 4, 17, 8, 0, 0, TimeSpan.Zero).ToString("O"),
+                            dateAdded = firstReleaseDate.ToString("O"),
                             versionTitle = "5.4.0",
                             releaseNote = $"Release note {assetId}",
                             compatibleApps = CompatibleApps,

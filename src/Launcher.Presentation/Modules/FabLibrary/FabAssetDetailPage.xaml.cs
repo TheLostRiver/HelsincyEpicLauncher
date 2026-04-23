@@ -43,4 +43,12 @@ public sealed partial class FabAssetDetailPage : Page
     {
         await ViewModel.DownloadCommand.ExecuteAsync(null);
     }
+
+    private async void RelatedAssetCard_Tapped(object sender, Microsoft.UI.Xaml.Input.TappedRoutedEventArgs e)
+    {
+        if (sender is FrameworkElement fe && fe.Tag is string assetId && !string.IsNullOrWhiteSpace(assetId))
+        {
+            await ViewModel.LoadCommand.ExecuteAsync(assetId);
+        }
+    }
 }

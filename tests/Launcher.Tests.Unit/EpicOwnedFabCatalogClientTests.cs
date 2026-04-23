@@ -90,6 +90,79 @@ public sealed class EpicOwnedFabCatalogClientTests
     }
 
     [Fact]
+    public async Task GetDetailAsync_WhenCatalogContainsFormatCategories_ShouldMapFormatsAndPublishedAt()
+    {
+        var libraryHandler = new MockHttpMessageHandler();
+        libraryHandler.EnqueueResponse(
+            HttpStatusCode.OK,
+            FabOwnedFallbackTestData.CreateLibraryResponse(
+            [
+                FabOwnedFallbackTestData.CreateOwnedRecord("asset-format", 1),
+            ]));
+
+        var catalogHandler = new MockHttpMessageHandler();
+        catalogHandler.EnqueueResponse(
+            HttpStatusCode.OK,
+            FabOwnedFallbackTestData.CreateCatalogResponse(
+                ["asset-format"],
+                categoryPathsByAsset: new Dictionary<string, IReadOnlyList<string>>
+                {
+                    ["asset-format"] =
+                    [
+                        "assets/environment",
+                        "assets/asset-format/unreal-engine",
+                        "assets/format-item/fbx",
+                    ],
+                },
+                firstReleaseDatesByAsset: new Dictionary<string, DateTimeOffset>
+                {
+                    ["asset-format"] = new DateTimeOffset(2026, 3, 10, 8, 0, 0, TimeSpan.Zero),
+                }));
+
+        var sut = CreateSut(libraryHandler, catalogHandler);
+
+        var result = await sut.GetDetailAsync("asset-format", CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Formats.Should().Contain(["Unreal Engine", "Fbx"]);
+        result.Value.PublishedAt.Should().Be(new DateTime(2026, 3, 10, 8, 0, 0, DateTimeKind.Utc));
+        result.Value.Tags.Should().Contain("Environment");
+    }
+
+    [Fact]
+    public async Task GetDetailAsync_WhenCatalogOmitsImages_ShouldUseResolvedPreviewAsScreenshot()
+    {
+        var libraryHandler = new MockHttpMessageHandler();
+        libraryHandler.EnqueueResponse(
+            HttpStatusCode.OK,
+            FabOwnedFallbackTestData.CreateLibraryResponse(
+            [
+                FabOwnedFallbackTestData.CreateOwnedRecord("asset-empty", 1, productId: "product-empty"),
+            ]));
+
+        var catalogHandler = new MockHttpMessageHandler();
+        catalogHandler.EnqueueResponse(
+            HttpStatusCode.OK,
+            FabOwnedFallbackTestData.CreateCatalogResponse(
+                ["asset-empty"],
+                assetIdsWithoutImages: ["asset-empty"],
+                listingIdentifiers: new Dictionary<string, string>
+                {
+                    ["asset-empty"] = "listing-empty",
+                }));
+
+        var previewResolver = new StaticPreviewMetadataResolver("https://cdn.example.com/asset-empty/resolved-preview.jpg");
+
+        var sut = CreateSut(libraryHandler, catalogHandler, previewResolver);
+
+        var result = await sut.GetDetailAsync("asset-empty", CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Screenshots.Should().ContainSingle();
+        result.Value.Screenshots[0].Should().Be("https://cdn.example.com/asset-empty/resolved-preview.jpg");
+    }
+
+    [Fact]
     public async Task SearchOwnedAsync_WhenCatalogOmitsImages_ShouldPreservePreviewTraceMetadata()
     {
         var libraryHandler = new MockHttpMessageHandler();
@@ -129,7 +202,8 @@ public sealed class EpicOwnedFabCatalogClientTests
 
     private static EpicOwnedFabCatalogClient CreateSut(
         MockHttpMessageHandler libraryHandler,
-        MockHttpMessageHandler catalogHandler)
+        MockHttpMessageHandler catalogHandler,
+        IFabPreviewMetadataResolver? previewResolver = null)
     {
         var authService = Substitute.For<IAuthService>();
         authService.GetAccessTokenAsync(Arg.Any<CancellationToken>())
@@ -147,6 +221,21 @@ public sealed class EpicOwnedFabCatalogClientTests
                 BaseAddress = new Uri("https://catalog-public-service-prod06.ol.epicgames.com"),
             });
 
-        return new EpicOwnedFabCatalogClient(factory, authService);
+        return new EpicOwnedFabCatalogClient(factory, authService, previewResolver ?? new NullFabPreviewMetadataResolver());
+    }
+
+    private sealed class StaticPreviewMetadataResolver : IFabPreviewMetadataResolver
+    {
+        private readonly string? _url;
+
+        public StaticPreviewMetadataResolver(string? url)
+        {
+            _url = url;
+        }
+
+        public ValueTask<string?> TryResolveThumbnailUrlAsync(FabPreviewResolutionContext context, CancellationToken ct)
+        {
+            return ValueTask.FromResult(_url);
+        }
     }
 }

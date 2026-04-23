@@ -14,6 +14,9 @@
 - 本地资产缓存/索引维护
 - 缩略图懒加载与缓存
 
+> Fab 详情富内容（介绍图、格式信息、详情元数据）的一期设计见 [16-FabDetailRichContentDesign.md](../review/16-FabDetailRichContentDesign.md)。
+> 如需防上下文丢失的细粒度实施拆解，请看 [17-FabDetailImplementationSlices.md](../review/17-FabDetailImplementationSlices.md)。
+
 ### 不负责
 
 - 实际下载执行（由 Downloads 模块处理）

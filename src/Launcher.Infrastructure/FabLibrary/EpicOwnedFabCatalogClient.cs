@@ -26,6 +26,7 @@ internal sealed class EpicOwnedFabCatalogClient
 
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IAuthService _authService;
+    private readonly IFabPreviewMetadataResolver _previewMetadataResolver;
     private readonly ILogger _logger = Log.ForContext<EpicOwnedFabCatalogClient>();
     private readonly SemaphoreSlim _recordsLock = new(1, 1);
     private readonly ConcurrentDictionary<string, CachedCatalogItem> _catalogCache = new();
@@ -41,10 +42,14 @@ internal sealed class EpicOwnedFabCatalogClient
     private const int CurlMaxTimeSeconds = 900;
     private const int PreviewBufferSize = 1024 * 1024;
 
-    public EpicOwnedFabCatalogClient(IHttpClientFactory httpClientFactory, IAuthService authService)
+    public EpicOwnedFabCatalogClient(
+        IHttpClientFactory httpClientFactory,
+        IAuthService authService,
+        IFabPreviewMetadataResolver previewMetadataResolver)
     {
         _httpClientFactory = httpClientFactory;
         _authService = authService;
+        _previewMetadataResolver = previewMetadataResolver;
     }
 
     public async Task<Result<PagedResult<FabAssetSummary>>> SearchOwnedAsync(FabSearchQuery query, CancellationToken ct)
@@ -164,7 +169,8 @@ internal sealed class EpicOwnedFabCatalogClient
         }
 
         var catalogItem = await GetCatalogItemAsync(record, ct);
-        return Result.Ok(MapToDetail(record, catalogItem));
+        var detail = await MapToDetailAsync(record, catalogItem, ct);
+        return Result.Ok(detail);
     }
 
     private async Task<Result<IReadOnlyList<OwnedRecord>>> GetOwnedRecordsAsync(CancellationToken ct)
@@ -964,19 +970,30 @@ internal sealed class EpicOwnedFabCatalogClient
         };
     }
 
-    private static FabAssetDetail MapToDetail(OwnedRecord record, EpicCatalogItem? item)
+    private async Task<FabAssetDetail> MapToDetailAsync(OwnedRecord record, EpicCatalogItem? item, CancellationToken ct)
     {
-        var screenshots = item?.KeyImages?
-            .Select(i => i.Url ?? string.Empty)
-            .Where(url => !string.IsNullOrWhiteSpace(url))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList() ?? [];
+        var screenshots = ExtractScreenshotUrls(item);
+        var previewListingId = ExtractListingIdentifier(item);
+
+        if (screenshots.Count == 0)
+        {
+            var previewUrl = await _previewMetadataResolver.TryResolveThumbnailUrlAsync(
+                new FabPreviewResolutionContext(record.CatalogItemId, previewListingId, record.ProductId),
+                ct);
+
+            if (!string.IsNullOrWhiteSpace(previewUrl))
+            {
+                screenshots = [previewUrl];
+            }
+        }
 
         var tags = item?.Categories?
             .Select(c => NormalizeCategory(c.Path ?? string.Empty))
             .Where(tag => !string.IsNullOrWhiteSpace(tag))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList() ?? [];
+
+        var formats = ExtractFormats(item);
 
         var supportedVersions = item?.ReleaseInfo?
             .SelectMany(r => r.CompatibleApps ?? [])
@@ -986,6 +1003,12 @@ internal sealed class EpicOwnedFabCatalogClient
         var latestRelease = item?.ReleaseInfo?
             .OrderByDescending(r => r.DateAdded)
             .FirstOrDefault();
+
+        DateTime? publishedAt = null;
+        if (item?.ReleaseInfo is { Count: > 0 } releaseInfo)
+        {
+            publishedAt = releaseInfo.Min(r => r.DateAdded.UtcDateTime);
+        }
 
         return new FabAssetDetail
         {
@@ -999,13 +1022,68 @@ internal sealed class EpicOwnedFabCatalogClient
             DownloadSize = 0,
             LatestVersion = latestRelease?.VersionTitle ?? string.Empty,
             UpdatedAt = item?.LastModifiedDate.UtcDateTime ?? record.AcquisitionDate.UtcDateTime,
+            PublishedAt = publishedAt,
             Screenshots = screenshots,
+            Formats = formats,
             SupportedEngineVersions = supportedVersions,
             Tags = tags,
             TechnicalDetails = latestRelease?.ReleaseNote,
             IsOwned = true,
             IsInstalled = false,
         };
+    }
+
+    private static List<string> ExtractScreenshotUrls(EpicCatalogItem? item)
+    {
+        return item?.KeyImages?
+            .Select(i => i.Url ?? string.Empty)
+            .Where(url => !string.IsNullOrWhiteSpace(url))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList() ?? [];
+    }
+
+    private static List<string> ExtractFormats(EpicCatalogItem? item)
+    {
+        if (item?.Categories is null || item.Categories.Count == 0)
+        {
+            return [];
+        }
+
+        return item.Categories
+            .SelectMany(c => ExtractFormatCandidates(c.Path ?? string.Empty))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static IEnumerable<string> ExtractFormatCandidates(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            yield break;
+        }
+
+        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (segments.Length < 2)
+        {
+            yield break;
+        }
+
+        for (var index = 0; index < segments.Length - 1; index++)
+        {
+            if (!string.Equals(segments[index], "asset-format", StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(segments[index], "format-item", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var normalized = NormalizeFacetValue(segments[^1]);
+            if (!string.IsNullOrWhiteSpace(normalized))
+            {
+                yield return normalized;
+            }
+
+            yield break;
+        }
     }
 
     private static string SelectThumbnailUrl(EpicCatalogItem? item)
@@ -1079,7 +1157,18 @@ internal sealed class EpicOwnedFabCatalogClient
             return string.Empty;
         }
 
-        return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(candidate.Replace('-', ' '));
+        return NormalizeFacetValue(candidate);
+    }
+
+    private static string NormalizeFacetValue(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(
+            value.Replace('-', ' ').Replace('_', ' '));
     }
 
     private static string ResolveLocale()

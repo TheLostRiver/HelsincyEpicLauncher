@@ -59,8 +59,8 @@ public sealed class FabCatalogReadServiceTests
             });
 
         var apiClient = new FabApiClient(factory, authService);
-    var fallbackClient = new EpicOwnedFabCatalogClient(factory, authService);
-        var sut = new FabCatalogReadService(apiClient, fallbackClient, installReadService);
+        var fallbackClient = new EpicOwnedFabCatalogClient(factory, authService, new NullFabPreviewMetadataResolver());
+        var sut = new FabCatalogReadService(apiClient, fallbackClient, new NullFabDetailEnrichmentResolver(), installReadService);
 
         var result = await sut.GetDetailAsync("asset-target", CancellationToken.None);
 

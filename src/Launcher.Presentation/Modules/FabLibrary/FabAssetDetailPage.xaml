@@ -76,182 +76,330 @@
             Visibility="{x:Bind ViewModel.IsLoading, Mode=OneWay, Converter={StaticResource BoolNegToVis}}"
             Padding="36,16,36,24">
 
-            <StackPanel Spacing="24" MaxWidth="960">
+            <Grid MaxWidth="1280" ColumnSpacing="24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="320" />
+                </Grid.ColumnDefinitions>
 
-                <!-- === 主视觉区：Hero 图 + 基础信息 === -->
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="320" />
-                    </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Spacing="24">
 
-                    <!-- Hero 图 -->
-                    <Border Grid.Column="0"
-                            CornerRadius="8"
-                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                            MinHeight="300"
-                            Margin="0,0,24,0">
+                    <Border
+                        CornerRadius="8"
+                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                        MinHeight="360">
                         <Image Source="{x:Bind ViewModel.HeroImage, Mode=OneWay}"
                                Stretch="UniformToFill"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center" />
                     </Border>
 
-                    <!-- 右侧信息面板 -->
-                    <StackPanel Grid.Column="1" Spacing="12">
-                        <TextBlock Text="{x:Bind ViewModel.Title, Mode=OneWay}"
-                                   Style="{StaticResource TitleTextBlockStyle}"
-                                   TextWrapping="Wrap" />
-                        <TextBlock Text="{x:Bind ViewModel.Author, Mode=OneWay}"
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="描述" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <TextBlock Text="{x:Bind ViewModel.Description, Mode=OneWay}"
                                    Style="{StaticResource BodyTextBlockStyle}"
-                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-
-                        <!-- 评分 -->
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{x:Bind ViewModel.RatingText, Mode=OneWay}"
-                                       Style="{StaticResource BodyStrongTextBlockStyle}" />
-                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                       VerticalAlignment="Center">
-                                <Run Text="(" /><Run Text="{x:Bind ViewModel.RatingCount, Mode=OneWay}" /><Run Text=" 个评分)" />
-                            </TextBlock>
-                        </StackPanel>
-
-                        <!-- 价格 -->
-                        <TextBlock Text="{x:Bind ViewModel.PriceText, Mode=OneWay}"
-                                   Style="{StaticResource SubtitleTextBlockStyle}" />
-
-                        <!-- 下载按钮 -->
-                        <Button
-                            Content="{x:Bind ViewModel.DownloadButtonText, Mode=OneWay}"
-                            Style="{StaticResource AccentButtonStyle}"
-                            IsEnabled="{x:Bind ViewModel.CanDownload, Mode=OneWay}"
-                            Click="DownloadButton_Click"
-                            HorizontalAlignment="Stretch"
-                            Padding="0,10" />
-
-                        <!-- 元数据 -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="版本" Margin="0,0,16,6"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <TextBlock Grid.Row="0" Grid.Column="1"
-                                       Text="{x:Bind ViewModel.LatestVersion, Mode=OneWay}"
-                                       Style="{StaticResource CaptionTextBlockStyle}" />
-
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="大小" Margin="0,0,16,6"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <TextBlock Grid.Row="1" Grid.Column="1"
-                                       Text="{x:Bind ViewModel.DownloadSizeText, Mode=OneWay}"
-                                       Style="{StaticResource CaptionTextBlockStyle}" />
-
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="更新" Margin="0,0,16,0"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <TextBlock Grid.Row="2" Grid.Column="1"
-                                       Text="{x:Bind ViewModel.UpdatedAtText, Mode=OneWay}"
-                                       Style="{StaticResource CaptionTextBlockStyle}" />
-                        </Grid>
+                                   TextWrapping="Wrap"
+                                   IsTextSelectionEnabled="True" />
                     </StackPanel>
-                </Grid>
 
-                <!-- === 描述 === -->
-                <StackPanel Spacing="8">
-                    <TextBlock Text="描述" Style="{StaticResource SubtitleTextBlockStyle}" />
-                    <TextBlock Text="{x:Bind ViewModel.Description, Mode=OneWay}"
-                               Style="{StaticResource BodyTextBlockStyle}"
-                               TextWrapping="Wrap"
-                               IsTextSelectionEnabled="True" />
-                </StackPanel>
+                    <StackPanel Spacing="8"
+                                Visibility="{x:Bind ViewModel.HasScreenshots, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="介绍图与预览" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.Screenshots, Mode=OneWay}">
+                                <ItemsRepeater.Layout>
+                                    <StackLayout Orientation="Horizontal" Spacing="12" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="local:ScreenshotItem">
+                                        <Border
+                                            CornerRadius="6"
+                                            Width="400"
+                                            Height="225"
+                                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                                            <Image Source="{x:Bind Image, Mode=OneWay}"
+                                                   Stretch="UniformToFill" />
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                        </ScrollViewer>
+                    </StackPanel>
 
-                <!-- === 截图画廊 === -->
-                <StackPanel Spacing="8"
-                            Visibility="{x:Bind ViewModel.HasScreenshots, Mode=OneWay, Converter={StaticResource BoolToVis}}">
-                    <TextBlock Text="截图" Style="{StaticResource SubtitleTextBlockStyle}" />
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Screenshots, Mode=OneWay}">
+                    <StackPanel Spacing="8"
+                                Visibility="{x:Bind ViewModel.HasTechnicalDetails, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="技术详情" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <Border
+                            CornerRadius="8"
+                            Padding="20"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                            <TextBlock Text="{x:Bind ViewModel.TechnicalDetails, Mode=OneWay}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       TextWrapping="Wrap"
+                                       IsTextSelectionEnabled="True"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8"
+                                Visibility="{x:Bind ViewModel.HasSupportedEngineVersions, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="兼容性" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <Border
+                            CornerRadius="8"
+                            Padding="20"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.SupportedEngineVersions, Mode=OneWay}">
+                                <ItemsRepeater.Layout>
+                                    <StackLayout Orientation="Horizontal" Spacing="8" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Border
+                                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="12"
+                                            Padding="10,4">
+                                            <TextBlock Text="{x:Bind}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="8"
+                                Visibility="{x:Bind ViewModel.HasTags, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="标签" Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tags, Mode=OneWay}">
                             <ItemsRepeater.Layout>
-                                <StackLayout Orientation="Horizontal" Spacing="12" />
+                                <StackLayout Orientation="Horizontal" Spacing="6" />
                             </ItemsRepeater.Layout>
                             <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="local:ScreenshotItem">
+                                <DataTemplate x:DataType="x:String">
                                     <Border
-                                        CornerRadius="6"
-                                        Width="400" Height="225"
-                                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
-                                        <Image Source="{x:Bind Image, Mode=OneWay}"
-                                               Stretch="UniformToFill" />
+                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="12"
+                                        Padding="10,4">
+                                        <TextBlock Text="{x:Bind}" Style="{StaticResource CaptionTextBlockStyle}" />
                                     </Border>
                                 </DataTemplate>
                             </ItemsRepeater.ItemTemplate>
                         </ItemsRepeater>
-                    </ScrollViewer>
+                    </StackPanel>
+
+                    <StackPanel Spacing="12"
+                                Visibility="{x:Bind ViewModel.HasRelatedAssets, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{x:Bind ViewModel.MoreFromAuthorTitle, Mode=OneWay}"
+                                   Style="{StaticResource SubtitleTextBlockStyle}" />
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.RelatedAssets, Mode=OneWay}">
+                                <ItemsRepeater.Layout>
+                                    <StackLayout Orientation="Horizontal" Spacing="12" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="local:FabRelatedAssetCardViewModel">
+                                        <Border
+                                            Width="220"
+                                            CornerRadius="8"
+                                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1"
+                                            Tag="{x:Bind AssetId}"
+                                            Tapped="RelatedAssetCard_Tapped">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="132" />
+                                                    <RowDefinition Height="*" />
+                                                </Grid.RowDefinitions>
+
+                                                <Grid Grid.Row="0">
+                                                    <Border CornerRadius="8,8,0,0"
+                                                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}" />
+                                                    <ProgressRing
+                                                        IsActive="{x:Bind IsThumbnailLoading, Mode=OneWay}"
+                                                        Width="20"
+                                                        Height="20"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Visibility="{x:Bind IsThumbnailLoading, Mode=OneWay}" />
+                                                    <Image Source="{x:Bind Thumbnail, Mode=OneWay}"
+                                                           Stretch="UniformToFill" />
+                                                    <Grid Visibility="{x:Bind ShowThumbnailPlaceholder, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                                                        <Border CornerRadius="8,8,0,0"
+                                                                Background="{ThemeResource AccentFillColorSecondaryBrush}"
+                                                                Opacity="0.18" />
+                                                        <Border Width="48"
+                                                                Height="48"
+                                                                CornerRadius="24"
+                                                                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center">
+                                                            <TextBlock Text="{x:Bind ThumbnailMonogram}"
+                                                                       Foreground="White"
+                                                                       FontSize="20"
+                                                                       FontWeight="SemiBold"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       TextAlignment="Center" />
+                                                        </Border>
+                                                    </Grid>
+                                                </Grid>
+
+                                                <StackPanel Grid.Row="1" Padding="12,10,12,12" Spacing="6">
+                                                    <TextBlock Text="{x:Bind Title}"
+                                                               Style="{StaticResource BodyStrongTextBlockStyle}"
+                                                               MaxLines="2"
+                                                               TextWrapping="Wrap"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{x:Bind Author}"
+                                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <TextBlock Text="{x:Bind PriceText}"
+                                                                   Style="{StaticResource CaptionTextBlockStyle}" />
+                                                        <TextBlock Text="{x:Bind RatingText}"
+                                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                        </ScrollViewer>
+                    </StackPanel>
                 </StackPanel>
 
-                <!-- === 兼容引擎版本 === -->
-                <StackPanel Spacing="8">
-                    <TextBlock Text="兼容引擎版本" Style="{StaticResource SubtitleTextBlockStyle}" />
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.SupportedEngineVersions, Mode=OneWay}">
-                        <ItemsRepeater.Layout>
-                            <StackLayout Orientation="Horizontal" Spacing="8" />
-                        </ItemsRepeater.Layout>
-                        <ItemsRepeater.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
-                                <Border
-                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="4"
-                                    Padding="10,4">
-                                    <TextBlock Text="{x:Bind}" Style="{StaticResource CaptionTextBlockStyle}" />
-                                </Border>
-                            </DataTemplate>
-                        </ItemsRepeater.ItemTemplate>
-                    </ItemsRepeater>
-                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="16">
+                    <Border
+                        CornerRadius="8"
+                        Padding="20"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="{x:Bind ViewModel.Title, Mode=OneWay}"
+                                       Style="{StaticResource TitleTextBlockStyle}"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{x:Bind ViewModel.Author, Mode=OneWay}"
+                                       Style="{StaticResource BodyTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
-                <!-- === 标签 === -->
-                <StackPanel Spacing="8">
-                    <TextBlock Text="标签" Style="{StaticResource SubtitleTextBlockStyle}" />
-                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Tags, Mode=OneWay}">
-                        <ItemsRepeater.Layout>
-                            <StackLayout Orientation="Horizontal" Spacing="6" />
-                        </ItemsRepeater.Layout>
-                        <ItemsRepeater.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
-                                <Border
-                                    Background="{ThemeResource AccentFillColorDefaultBrush}"
-                                    CornerRadius="12"
-                                    Padding="10,4">
-                                    <TextBlock Text="{x:Bind}" FontSize="12" Foreground="White" />
-                                </Border>
-                            </DataTemplate>
-                        </ItemsRepeater.ItemTemplate>
-                    </ItemsRepeater>
-                </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{x:Bind ViewModel.RatingText, Mode=OneWay}"
+                                           Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           VerticalAlignment="Center">
+                                    <Run Text="(" /><Run Text="{x:Bind ViewModel.RatingCount, Mode=OneWay}" /><Run Text=" 个评分)" />
+                                </TextBlock>
+                            </StackPanel>
 
-                <!-- === 技术细节 === -->
-                <StackPanel Spacing="8"
-                            Visibility="{x:Bind ViewModel.HasTechnicalDetails, Mode=OneWay, Converter={StaticResource BoolToVis}}">
-                    <TextBlock Text="技术细节" Style="{StaticResource SubtitleTextBlockStyle}" />
-                    <TextBlock Text="{x:Bind ViewModel.TechnicalDetails, Mode=OneWay}"
-                               Style="{StaticResource BodyTextBlockStyle}"
-                               TextWrapping="Wrap"
-                               IsTextSelectionEnabled="True"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="{x:Bind ViewModel.PriceText, Mode=OneWay}"
+                                       Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                            <Button
+                                Content="{x:Bind ViewModel.DownloadButtonText, Mode=OneWay}"
+                                Style="{StaticResource AccentButtonStyle}"
+                                IsEnabled="{x:Bind ViewModel.CanDownload, Mode=OneWay}"
+                                Click="DownloadButton_Click"
+                                HorizontalAlignment="Stretch"
+                                Padding="0,10" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        CornerRadius="8"
+                        Padding="20"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        Visibility="{x:Bind ViewModel.HasFormats, Mode=OneWay, Converter={StaticResource BoolToVis}}">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="包含格式" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <ItemsRepeater ItemsSource="{x:Bind ViewModel.Formats, Mode=OneWay}">
+                                <ItemsRepeater.Layout>
+                                    <StackLayout Orientation="Horizontal" Spacing="8" />
+                                </ItemsRepeater.Layout>
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Border
+                                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="12"
+                                            Padding="10,4">
+                                            <TextBlock Text="{x:Bind}" Style="{StaticResource CaptionTextBlockStyle}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                        </StackPanel>
+                    </Border>
+
+                    <Border
+                        CornerRadius="8"
+                        Padding="20"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="详情" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="最近更新" Margin="0,0,16,8"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                           Text="{x:Bind ViewModel.UpdatedAtText, Mode=OneWay}"
+                                           Style="{StaticResource CaptionTextBlockStyle}" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="已发布" Margin="0,0,16,8"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           Visibility="{x:Bind ViewModel.HasPublishedAt, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+                                <TextBlock Grid.Row="1" Grid.Column="1"
+                                           Text="{x:Bind ViewModel.PublishedAtText, Mode=OneWay}"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Visibility="{x:Bind ViewModel.HasPublishedAt, Mode=OneWay, Converter={StaticResource BoolToVis}}" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="版本" Margin="0,0,16,8"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Grid.Row="2" Grid.Column="1"
+                                           Text="{x:Bind ViewModel.LatestVersion, Mode=OneWay}"
+                                           Style="{StaticResource CaptionTextBlockStyle}" />
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="大小" Margin="0,0,16,0"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Grid.Row="3" Grid.Column="1"
+                                           Text="{x:Bind ViewModel.DownloadSizeText, Mode=OneWay}"
+                                           Style="{StaticResource CaptionTextBlockStyle}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
-            </StackPanel>
+            </Grid>
         </ScrollViewer>
     </Grid>
 </Page>

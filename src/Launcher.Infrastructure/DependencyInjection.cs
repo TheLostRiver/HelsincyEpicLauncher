@@ -123,6 +123,7 @@ public static class DependencyInjection
                 : new FabListingHtmlPreviewMetadataResolver(listingPageReadService);
         });
         services.AddSingleton<IFabPreviewUrlReadService, FabPreviewUrlReadService>();
+        services.AddSingleton<IFabDetailEnrichmentResolver, NullFabDetailEnrichmentResolver>();
         services.AddSingleton<EpicOwnedFabCatalogClient>();
         services.AddSingleton<IFabDownloadInfoProvider, FabDownloadInfoProvider>();
         services.AddSingleton<IThumbnailCacheService>(sp =>

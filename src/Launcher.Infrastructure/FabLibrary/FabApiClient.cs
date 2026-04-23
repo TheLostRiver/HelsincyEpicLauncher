@@ -211,7 +211,9 @@ internal sealed class FabAssetDetailDto
     public long DownloadSize { get; set; }
     public string LatestVersion { get; set; } = string.Empty;
     public DateTime UpdatedAt { get; set; }
+    public DateTime? PublishedAt { get; set; }
     public List<string> Screenshots { get; set; } = [];
+    public List<string> Formats { get; set; } = [];
     public List<string> SupportedEngineVersions { get; set; } = [];
     public List<string> Tags { get; set; } = [];
     public string? TechnicalDetails { get; set; }

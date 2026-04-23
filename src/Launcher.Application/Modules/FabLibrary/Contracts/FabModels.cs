@@ -84,7 +84,9 @@ public sealed class FabAssetDetail
     public long DownloadSize { get; init; }
     public string LatestVersion { get; init; } = string.Empty;
     public DateTime UpdatedAt { get; init; }
+    public DateTime? PublishedAt { get; init; }
     public IReadOnlyList<string> Screenshots { get; init; } = [];
+    public IReadOnlyList<string> Formats { get; init; } = [];
     public IReadOnlyList<string> SupportedEngineVersions { get; init; } = [];
     public IReadOnlyList<string> Tags { get; init; } = [];
     public string? TechnicalDetails { get; init; }

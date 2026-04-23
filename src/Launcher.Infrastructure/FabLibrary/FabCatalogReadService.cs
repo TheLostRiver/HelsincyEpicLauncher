@@ -15,6 +15,7 @@ internal sealed class FabCatalogReadService : IFabCatalogReadService
 {
     private readonly FabApiClient _apiClient;
     private readonly EpicOwnedFabCatalogClient _ownedFallbackClient;
+    private readonly IFabDetailEnrichmentResolver _detailEnrichmentResolver;
     private readonly IInstallReadService _installReadService;
     private readonly ILogger _logger = Log.ForContext<FabCatalogReadService>();
 
@@ -22,10 +23,15 @@ internal sealed class FabCatalogReadService : IFabCatalogReadService
     private readonly ConcurrentDictionary<string, (DateTime CachedAt, object Result)> _cache = new();
     private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
 
-    public FabCatalogReadService(FabApiClient apiClient, EpicOwnedFabCatalogClient ownedFallbackClient, IInstallReadService installReadService)
+    public FabCatalogReadService(
+        FabApiClient apiClient,
+        EpicOwnedFabCatalogClient ownedFallbackClient,
+        IFabDetailEnrichmentResolver detailEnrichmentResolver,
+        IInstallReadService installReadService)
     {
         _apiClient = apiClient;
         _ownedFallbackClient = ownedFallbackClient;
+        _detailEnrichmentResolver = detailEnrichmentResolver;
         _installReadService = installReadService;
     }
 
@@ -111,13 +117,17 @@ internal sealed class FabCatalogReadService : IFabCatalogReadService
             DownloadSize = dto.DownloadSize,
             LatestVersion = dto.LatestVersion,
             UpdatedAt = dto.UpdatedAt,
+            PublishedAt = dto.PublishedAt,
             Screenshots = dto.Screenshots,
+            Formats = dto.Formats,
             SupportedEngineVersions = dto.SupportedEngineVersions,
             Tags = dto.Tags,
             TechnicalDetails = dto.TechnicalDetails,
             IsOwned = dto.IsOwned,
             IsInstalled = installedAssets.Contains(dto.AssetId),
         };
+
+        detail = await EnrichDetailAsync(detail, ct);
 
         SetCache(cacheKey, detail);
         return Result.Ok(detail);
@@ -204,6 +214,87 @@ internal sealed class FabCatalogReadService : IFabCatalogReadService
     {
         var installed = await _installReadService.GetInstalledAsync(ct);
         return installed.Select(i => i.AssetId).ToHashSet();
+    }
+
+    private async Task<FabAssetDetail> EnrichDetailAsync(FabAssetDetail detail, CancellationToken ct)
+    {
+        if (!RequiresDetailEnrichment(detail))
+        {
+            return detail;
+        }
+
+        var enrichment = await _detailEnrichmentResolver.TryEnrichAsync(
+            new FabDetailEnrichmentContext(
+                detail.AssetId,
+                PreviewListingId: string.Empty,
+                PreviewProductId: string.Empty,
+                ExistingMediaUrls: detail.Screenshots,
+                ExistingFormats: detail.Formats,
+                ExistingPublishedAt: detail.PublishedAt),
+            ct);
+
+        if (!enrichment.HasAnyValue)
+        {
+            return detail;
+        }
+
+        return MergeDetail(detail, enrichment);
+    }
+
+    private static bool RequiresDetailEnrichment(FabAssetDetail detail)
+    {
+        return detail.Screenshots.Count == 0
+            || detail.Formats.Count == 0
+            || !detail.PublishedAt.HasValue;
+    }
+
+    private static FabAssetDetail MergeDetail(FabAssetDetail detail, FabDetailEnrichmentResult enrichment)
+    {
+        var mergedScreenshots = MergeDistinct(detail.Screenshots, enrichment.MediaUrls);
+        var mergedFormats = MergeDistinct(detail.Formats, enrichment.Formats);
+
+        return new FabAssetDetail
+        {
+            AssetId = detail.AssetId,
+            Title = detail.Title,
+            Description = detail.Description,
+            Author = detail.Author,
+            Price = detail.Price,
+            Rating = detail.Rating,
+            RatingCount = detail.RatingCount,
+            DownloadSize = detail.DownloadSize,
+            LatestVersion = detail.LatestVersion,
+            UpdatedAt = detail.UpdatedAt,
+            PublishedAt = detail.PublishedAt ?? enrichment.PublishedAt,
+            Screenshots = mergedScreenshots,
+            Formats = mergedFormats,
+            SupportedEngineVersions = detail.SupportedEngineVersions,
+            Tags = detail.Tags,
+            TechnicalDetails = detail.TechnicalDetails,
+            IsOwned = detail.IsOwned,
+            IsInstalled = detail.IsInstalled,
+        };
+    }
+
+    private static IReadOnlyList<string> MergeDistinct(IReadOnlyList<string> primary, IReadOnlyList<string> secondary)
+    {
+        if (primary.Count == 0)
+        {
+            return secondary.Count == 0
+                ? []
+                : secondary.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        if (secondary.Count == 0)
+        {
+            return primary;
+        }
+
+        return primary
+            .Concat(secondary)
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private bool TryGetCached<T>(string key, out T? value) where T : class
