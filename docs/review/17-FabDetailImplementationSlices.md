@@ -62,7 +62,7 @@
 | S0 | 文档与现状对齐 | 已完成 | 建立设计文档与实现拆解文档 |
 | S1 | 详情基础字段落地 | 已完成 | `PublishedAt` / `Formats` 契约与 fallback 落地 |
 | S2 | 详情页结构增强 | 已完成 | 右侧详情栏、格式区、更多内容区落地 |
-| S3 | Fab API 主路径 enrichment | 进行中 | 非 fallback 路径也能补媒体图/格式/发布时间 |
+| S3 | Fab API 主路径 enrichment | 已完成 | 非 fallback 路径也能补媒体图/格式/发布时间 |
 | S4 | 列表页到详情页的上下文透传 | 未开始 | 为 detail enrichment 提供更稳定的 listing 锚点 |
 | S5 | 更多内容的数据质量提升 | 未开始 | 降低“同作者更多内容”误匹配 |
 | S6 | UI 冒烟验证与回归记录 | 已完成 | 把运行态检查流程固化 |
@@ -76,8 +76,8 @@
 |------|------|------|------|
 | S3-A | S3 | 已完成 | 定义主路径 detail enrichment 结果模型与合并入口 |
 | S3-B | S3 | 已完成 | 主路径补 Hero/截图媒体图 |
-| S3-C | S3 | 未开始 | 主路径补 Formats / PublishedAt |
-| S3-D | S3 | 未开始 | 为主路径 enrichment 补单测 |
+| S3-C | S3 | 已完成 | 主路径补 Formats / PublishedAt |
+| S3-D | S3 | 已完成 | 为主路径 enrichment 补单测 |
 | S4-A | S4 | 未开始 | 新增详情导航 payload |
 | S4-B | S4 | 未开始 | 列表页导航切到 payload |
 | S4-C | S4 | 未开始 | 详情页兼容 payload 与旧 assetId |
@@ -133,7 +133,7 @@
 
 ### S3 Fab API 主路径 enrichment
 
-- 状态：`进行中`
+- 状态：`已完成`
 - 目标：当前 fallback 路径已经补强，但 Fab API 直连成功时仍可能只返回窄字段。此切片要补的是“主路径 detail enrichment”。
 - 只允许做这些事：
   - 新增内部 enrichment 抽象
@@ -214,7 +214,7 @@
 
 #### S3-C 主路径补 Formats / PublishedAt
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：在 S3-B 之后，把同一条 enrichment 链继续用于格式和发布时间。
 - 本轮只做：
   - 当 `Formats.Count == 0` 时补格式
@@ -233,9 +233,14 @@
   - 至少 1 个定向单测
   - 执行一次定向 `dotnet test`
 
+- 已完成结果：
+  - 主路径详情会复用同一次 listing 页面读取补齐 `Formats` 与 `PublishedAt`
+  - 当缓存摘要中没有 preview 锚点时，会退化使用 `assetId` 作为 listing 读取目标
+  - 只有主路径缺失对应字段时才触发补全，不覆盖主源已有值
+
 #### S3-D 主路径 enrichment 单测收口
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：把 S3-B / S3-C 的逻辑正式压进测试，而不是只靠运行态观察。
 - 本轮只做：
   - 为主路径空图补图增加测试
@@ -247,6 +252,11 @@
   - 主路径 enrichment 关键规则有测试覆盖
 - 验证动作：
   - 执行定向 `dotnet test`
+
+- 已完成结果：
+  - 已覆盖主路径空图/空格式/空发布时间的单次 listing 补全路径
+  - 已覆盖“主源已有 `Formats` / `PublishedAt` 不被 enrichment 覆盖”的合并规则
+  - `FabCatalogReadServiceTests` 定向回归通过后即可进入 S4
 
 ### S4 列表页到详情页的上下文透传
 

@@ -124,7 +124,9 @@ public static class DependencyInjection
         });
         services.AddSingleton<IFabPreviewUrlReadService, FabPreviewUrlReadService>();
         services.AddSingleton<IFabDetailEnrichmentResolver>(sp =>
-            new FabPreviewBackedDetailEnrichmentResolver(sp.GetRequiredService<IFabPreviewMetadataResolver>()));
+            new FabPreviewBackedDetailEnrichmentResolver(
+                sp.GetRequiredService<IFabPreviewMetadataResolver>(),
+                sp.GetService<IFabListingPageReadService>()));
         services.AddSingleton<EpicOwnedFabCatalogClient>();
         services.AddSingleton<IFabDownloadInfoProvider, FabDownloadInfoProvider>();
         services.AddSingleton<IThumbnailCacheService>(sp =>
