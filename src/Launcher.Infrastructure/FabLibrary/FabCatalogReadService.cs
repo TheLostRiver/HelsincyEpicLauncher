@@ -224,13 +224,7 @@ internal sealed class FabCatalogReadService : IFabCatalogReadService
         }
 
         var enrichment = await _detailEnrichmentResolver.TryEnrichAsync(
-            new FabDetailEnrichmentContext(
-                detail.AssetId,
-                PreviewListingId: string.Empty,
-                PreviewProductId: string.Empty,
-                ExistingMediaUrls: detail.Screenshots,
-                ExistingFormats: detail.Formats,
-                ExistingPublishedAt: detail.PublishedAt),
+            BuildDetailEnrichmentContext(detail),
             ct);
 
         if (!enrichment.HasAnyValue)
@@ -246,6 +240,55 @@ internal sealed class FabCatalogReadService : IFabCatalogReadService
         return detail.Screenshots.Count == 0
             || detail.Formats.Count == 0
             || !detail.PublishedAt.HasValue;
+    }
+
+    private FabDetailEnrichmentContext BuildDetailEnrichmentContext(FabAssetDetail detail)
+    {
+        var cachedSummary = TryFindCachedSummary(detail.AssetId);
+
+        return new FabDetailEnrichmentContext(
+            detail.AssetId,
+            cachedSummary?.PreviewListingId ?? string.Empty,
+            cachedSummary?.PreviewProductId ?? string.Empty,
+            cachedSummary?.ThumbnailUrl ?? string.Empty,
+            detail.Screenshots,
+            detail.Formats,
+            detail.PublishedAt);
+    }
+
+    private FabAssetSummary? TryFindCachedSummary(string assetId)
+    {
+        foreach (var entry in _cache.Values)
+        {
+            if (DateTime.UtcNow - entry.CachedAt >= CacheDuration)
+            {
+                continue;
+            }
+
+            if (entry.Result is PagedResult<FabAssetSummary> pagedResult)
+            {
+                var pagedMatch = pagedResult.Items
+                    .FirstOrDefault(item => string.Equals(item.AssetId, assetId, StringComparison.OrdinalIgnoreCase));
+                if (pagedMatch is not null)
+                {
+                    return pagedMatch;
+                }
+
+                continue;
+            }
+
+            if (entry.Result is IReadOnlyList<FabAssetSummary> summaryList)
+            {
+                var listMatch = summaryList
+                    .FirstOrDefault(item => string.Equals(item.AssetId, assetId, StringComparison.OrdinalIgnoreCase));
+                if (listMatch is not null)
+                {
+                    return listMatch;
+                }
+            }
+        }
+
+        return null;
     }
 
     private static FabAssetDetail MergeDetail(FabAssetDetail detail, FabDetailEnrichmentResult enrichment)

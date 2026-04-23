@@ -75,7 +75,7 @@
 | 子切片 | 所属 Slice | 状态 | 单次目标 |
 |------|------|------|------|
 | S3-A | S3 | 已完成 | 定义主路径 detail enrichment 结果模型与合并入口 |
-| S3-B | S3 | 未开始 | 主路径补 Hero/截图媒体图 |
+| S3-B | S3 | 已完成 | 主路径补 Hero/截图媒体图 |
 | S3-C | S3 | 未开始 | 主路径补 Formats / PublishedAt |
 | S3-D | S3 | 未开始 | 为主路径 enrichment 补单测 |
 | S4-A | S4 | 未开始 | 新增详情导航 payload |
@@ -186,7 +186,7 @@
 
 #### S3-B 主路径补媒体图
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：只解决主路径 `Screenshots` 为空时的 Hero/画廊补图。
 - 本轮只做：
   - 复用现有 listing page 读取能力
@@ -205,6 +205,12 @@
 - 验证动作：
   - 至少 1 个定向单测
   - 执行一次定向 `dotnet test`
+
+- 已完成结果：
+  - 主路径详情在 `Screenshots` 为空时会先尝试使用缓存摘要中的 preview 锚点回填媒体图
+  - 若当前主路径没有 preview 锚点，则会退回使用缓存摘要中的 `ThumbnailUrl`
+  - 回填结果只在主源无截图时生效，不覆盖已有主源媒体图
+  - 定向 `FabCatalogReadServiceTests` 已通过新增空图回填测试
 
 #### S3-C 主路径补 Formats / PublishedAt
 
@@ -634,13 +640,13 @@ Fab detail: add design docs and enrichment scaffolding
 
 如果接下来要继续推进，实现上最合适的下一步不是再改 UI，而是先做 `S3 Fab API 主路径 enrichment`。
 
-更具体地说，下一步建议直接进入 `S3-B`，而不是一口气做完整个 S3。
+更具体地说，下一步建议直接进入 `S3-C`，而不是一口气做完整个 S3。
 
 原因只有一个：
 
 - 现在 fallback 路径已经比主路径更“富”，这会造成不同来源详情数据质量不一致。
 
-先把 S3-B 到 S3-D 做掉，后面的 S4 和 S5 才有稳定基础。
+先把 S3-C 到 S3-D 做掉，后面的 S4 和 S5 才有稳定基础。
 
 ## 9. 文档阶段结论
 
