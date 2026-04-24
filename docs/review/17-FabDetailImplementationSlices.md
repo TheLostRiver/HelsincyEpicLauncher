@@ -80,7 +80,7 @@
 | S3-D | S3 | 已完成 | 为主路径 enrichment 补单测 |
 | S4-A | S4 | 已完成 | 新增详情导航 payload |
 | S4-B | S4 | 已完成 | 列表页导航切到 payload |
-| S4-C | S4 | 未开始 | 详情页兼容 payload 与旧 assetId |
+| S4-C | S4 | 已完成 | 详情页兼容 payload 与旧 assetId |
 | S4-D | S4 | 未开始 | 为导航上下文透传做编译/冒烟验证 |
 | S5-A | S5 | 未开始 | 更多内容去重与排除自身 |
 | S5-B | S5 | 未开始 | 更多内容排序稳定化 |
@@ -328,7 +328,7 @@
 
 #### S4-C 详情页消费 payload 并兼容旧路由
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：让详情页理解 payload，同时不破坏旧调用方。
 - 本轮只做：
   - `FabAssetDetailPage` 支持接收 payload
@@ -342,6 +342,11 @@
 - 验证动作：
   - 编译通过
   - 至少一次本地冒烟
+
+- 已完成结果：
+  - `FabAssetDetailPage` 现在优先支持 `FabAssetDetailNavigationPayload`
+  - 若导航参数仍是字符串 `assetId`，详情页继续按原逻辑加载，兼容旧入口
+  - 主详情 hero 在主路径截图为空时，会优先使用导航透传的 preview 锚点尝试恢复预览图
 
 #### S4-D 导航透传验证收口
 

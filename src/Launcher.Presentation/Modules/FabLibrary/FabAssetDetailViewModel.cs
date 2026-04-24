@@ -26,6 +26,8 @@ public partial class FabAssetDetailViewModel : ObservableObject
     private readonly INavigationService _navigationService;
     private readonly IAppConfigProvider _configProvider;
     private readonly DispatcherQueue _dispatcherQueue;
+    private string _previewListingId = string.Empty;
+    private string _previewProductId = string.Empty;
 
     // === 基础信息 ===
     [ObservableProperty] private string _assetId = string.Empty;
@@ -123,30 +125,38 @@ public partial class FabAssetDetailViewModel : ObservableObject
     [RelayCommand]
     private async Task LoadAsync(string assetId)
     {
-        if (string.IsNullOrEmpty(assetId)) return;
+        await LoadAsync(new FabAssetDetailNavigationPayload(assetId, string.Empty, string.Empty));
+    }
 
-        AssetId = assetId;
+    public async Task LoadAsync(FabAssetDetailNavigationPayload payload)
+    {
+        if (string.IsNullOrEmpty(payload.AssetId)) return;
+
+        AssetId = payload.AssetId;
+        _previewListingId = payload.PreviewListingId;
+        _previewProductId = payload.PreviewProductId;
         IsLoading = true;
         HasError = false;
+        HeroImage = null;
         RelatedAssets.Clear();
         HasRelatedAssets = false;
 
         try
         {
-            var result = await _catalogService.GetDetailAsync(assetId, CancellationToken.None);
+            var result = await _catalogService.GetDetailAsync(payload.AssetId, CancellationToken.None);
             if (!result.IsSuccess)
             {
                 if (string.Equals(result.Error?.Code, "AUTH_NOT_AUTHENTICATED", StringComparison.Ordinal))
                 {
                     HasError = false;
                     ErrorMessage = string.Empty;
-                    Logger.Information("Fab 详情当前尚未完成认证，等待会话恢复后自动重载 | AssetId={AssetId}", assetId);
+                    Logger.Information("Fab 详情当前尚未完成认证，等待会话恢复后自动重载 | AssetId={AssetId}", payload.AssetId);
                     return;
                 }
 
                 HasError = true;
                 ErrorMessage = result.Error?.UserMessage ?? "加载资产详情失败";
-                Logger.Warning("资产详情加载失败 {AssetId}: {Error}", assetId, result.Error?.TechnicalMessage);
+                Logger.Warning("资产详情加载失败 {AssetId}: {Error}", payload.AssetId, result.Error?.TechnicalMessage);
                 return;
             }
 
@@ -156,7 +166,7 @@ public partial class FabAssetDetailViewModel : ObservableObject
             await LoadScreenshotsAsync(detail.Screenshots);
             await LoadRelatedAssetsAsync(detail);
 
-            Logger.Information("资产详情已加载 {AssetId}: {Title}", assetId, detail.Title);
+            Logger.Information("资产详情已加载 {AssetId}: {Title}", payload.AssetId, detail.Title);
         }
         finally
         {
@@ -236,9 +246,13 @@ public partial class FabAssetDetailViewModel : ObservableObject
 
     private async Task LoadHeroImageAsync(IReadOnlyList<string> screenshots)
     {
-        if (screenshots.Count == 0) return;
+        var heroUrl = screenshots.Count > 0
+            ? screenshots[0]
+            : await TryResolveHeroPreviewUrlAsync();
 
-        var localPath = await _thumbnailCache.GetOrDownloadAsync(screenshots[0], CancellationToken.None);
+        if (string.IsNullOrWhiteSpace(heroUrl)) return;
+
+        var localPath = await _thumbnailCache.GetOrDownloadAsync(heroUrl, CancellationToken.None);
         if (localPath is not null)
         {
             _dispatcherQueue.TryEnqueue(() =>
@@ -246,6 +260,21 @@ public partial class FabAssetDetailViewModel : ObservableObject
                 HeroImage = new BitmapImage(new Uri(localPath));
             });
         }
+    }
+
+    private async Task<string?> TryResolveHeroPreviewUrlAsync()
+    {
+        if (string.IsNullOrWhiteSpace(AssetId)
+            || (string.IsNullOrWhiteSpace(_previewListingId) && string.IsNullOrWhiteSpace(_previewProductId)))
+        {
+            return null;
+        }
+
+        return await _previewUrlReadService.TryResolveThumbnailUrlAsync(
+            AssetId,
+            _previewListingId,
+            _previewProductId,
+            CancellationToken.None);
     }
 
     private Task LoadScreenshotsAsync(IReadOnlyList<string> screenshotUrls)

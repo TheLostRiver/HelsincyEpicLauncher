@@ -28,6 +28,13 @@ public sealed partial class FabAssetDetailPage : Page
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+
+        if (e.Parameter is FabAssetDetailNavigationPayload payload)
+        {
+            await ViewModel.LoadAsync(payload);
+            return;
+        }
+
         if (e.Parameter is string assetId && !string.IsNullOrEmpty(assetId))
         {
             await ViewModel.LoadCommand.ExecuteAsync(assetId);
