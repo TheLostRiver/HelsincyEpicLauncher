@@ -82,10 +82,10 @@ public sealed partial class FabLibraryPage : Page
     /// <summary>卡片点击导航到详情页</summary>
     private async void AssetCard_Tapped(object sender, TappedRoutedEventArgs e)
     {
-        if (sender is FrameworkElement fe && fe.Tag is string assetId)
+        if (sender is FrameworkElement fe && fe.DataContext is FabAssetCardViewModel card)
         {
             var nav = ViewModelLocator.Resolve<NavigationService>();
-            await nav.NavigateAsync(NavigationRoute.FabAssetDetail, assetId);
+            await nav.NavigateAsync(NavigationRoute.FabAssetDetail, card.DetailNavigationPayload);
         }
     }
 }

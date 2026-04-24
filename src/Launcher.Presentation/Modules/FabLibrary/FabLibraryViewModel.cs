@@ -341,6 +341,7 @@ public partial class FabAssetCardViewModel : ObservableObject
         ? "?"
         : Title.Trim()[0].ToString().ToUpperInvariant();
     public string ThumbnailStatusText => HasPreviewLocator ? "平台未返回预览" : "暂无预览";
+    public FabAssetDetailNavigationPayload DetailNavigationPayload => new(AssetId, _previewListingId, _previewProductId);
 
     private bool HasPreviewLocator => !string.IsNullOrWhiteSpace(_previewListingId) || !string.IsNullOrWhiteSpace(_previewProductId);
 

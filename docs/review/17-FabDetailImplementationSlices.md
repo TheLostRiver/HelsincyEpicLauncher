@@ -79,7 +79,7 @@
 | S3-C | S3 | 已完成 | 主路径补 Formats / PublishedAt |
 | S3-D | S3 | 已完成 | 为主路径 enrichment 补单测 |
 | S4-A | S4 | 已完成 | 新增详情导航 payload |
-| S4-B | S4 | 未开始 | 列表页导航切到 payload |
+| S4-B | S4 | 已完成 | 列表页导航切到 payload |
 | S4-C | S4 | 未开始 | 详情页兼容 payload 与旧 assetId |
 | S4-D | S4 | 未开始 | 为导航上下文透传做编译/冒烟验证 |
 | S5-A | S5 | 未开始 | 更多内容去重与排除自身 |
@@ -305,7 +305,7 @@
 
 #### S4-B 列表页导航改用 payload
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：只修改列表页点击详情的入口，让它把 preview 锚点带过去。
 - 本轮只做：
   - 从卡片 ViewModel 读取 `AssetId`、`PreviewListingId`、`PreviewProductId`
@@ -320,6 +320,11 @@
   - 列表页到详情页的导航参数不再只有 `assetId`
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - 列表页卡片点击现在会直接传递 `FabAssetDetailNavigationPayload`
+  - payload 取自卡片 ViewModel 已持有的 `AssetId`、`PreviewListingId`、`PreviewProductId`
+  - 详情页消费与旧字符串入口兼容仍留待 S4-C 收口
 
 #### S4-C 详情页消费 payload 并兼容旧路由
 
