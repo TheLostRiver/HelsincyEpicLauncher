@@ -364,13 +364,54 @@ public partial class FabAssetDetailViewModel : ObservableObject
 
     private static List<FabAssetSummary> FilterRelatedItems(IEnumerable<FabAssetSummary> items, FabAssetDetail detail)
     {
-        return items
-            .Where(summary => !string.Equals(summary.AssetId, detail.AssetId, StringComparison.OrdinalIgnoreCase))
-            .Where(summary => string.Equals(summary.Author, detail.Author, StringComparison.OrdinalIgnoreCase))
-            .GroupBy(summary => summary.AssetId, StringComparer.OrdinalIgnoreCase)
-            .Select(group => group.First())
-            .Take(8)
-            .ToList();
+        var seenAssetIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var seenTitles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var filtered = new List<FabAssetSummary>();
+
+        foreach (var summary in items)
+        {
+            if (string.Equals(summary.AssetId, detail.AssetId, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!string.Equals(summary.Author, detail.Author, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (!seenAssetIds.Add(summary.AssetId))
+            {
+                continue;
+            }
+
+            var normalizedTitle = NormalizeRelatedItemTitle(summary.Title);
+            if (!string.IsNullOrWhiteSpace(normalizedTitle)
+                && !seenTitles.Add(normalizedTitle))
+            {
+                continue;
+            }
+
+            filtered.Add(summary);
+            if (filtered.Count == 8)
+            {
+                break;
+            }
+        }
+
+        return filtered;
+    }
+
+    private static string NormalizeRelatedItemTitle(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return string.Empty;
+        }
+
+        return string.Join(
+            ' ',
+            title.Split([' ', '\t', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
     }
 
     private static string FormatSize(long bytes)
