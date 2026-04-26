@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.11 - Fab 热恢复 S3-C 详情导航前固化快照 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)，在点击资产卡片导航到详情页前，先写回当前滚动位置与最新会话快照
+- 至此 `S3` 视口与返回体验切片已完整闭环：离开页面时保存滚动位置、恢复后回滚位置、导航详情前固化最新快照三条路径均已落地
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.10 - Fab 热恢复 S3-B 恢复滚动位置 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，支持暂存一次性消费的恢复滚动偏移量
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)，在 `LoadAsync` 完成后消费恢复偏移量，并调用 `AssetScrollViewer.ChangeView(...)`

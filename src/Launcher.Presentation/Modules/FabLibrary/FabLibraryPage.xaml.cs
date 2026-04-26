@@ -93,6 +93,7 @@ public sealed partial class FabLibraryPage : Page
     {
         if (sender is FrameworkElement fe && fe.DataContext is FabAssetCardViewModel card)
         {
+            ViewModel.SaveCurrentScrollOffset(AssetScrollViewer.VerticalOffset);
             var nav = ViewModelLocator.Resolve<NavigationService>();
             await nav.NavigateAsync(NavigationRoute.FabAssetDetail, card.DetailNavigationPayload);
         }
