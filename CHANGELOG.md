@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.27 - Fab 热恢复 S8-A 补齐 Session Store 与年龄策略单测 (2026-04-27)
+- 新增 [tests/Launcher.Tests.Unit/FabLibrarySessionStateStoreTests.cs](tests/Launcher.Tests.Unit/FabLibrarySessionStateStoreTests.cs)，覆盖 `InMemoryFabLibrarySessionStateStore` 的 `Save / TryGet / Clear / Trim` 以及容量裁剪规范化行为
+- 新增 [tests/Launcher.Tests.Unit/FabLibrarySnapshotAgePolicyTests.cs](tests/Launcher.Tests.Unit/FabLibrarySnapshotAgePolicyTests.cs)，覆盖 `FabLibrarySnapshotAgePolicy` 的 `Fresh / Warm / Stale` 阈值边界与未来时间戳兜底逻辑
+- 已执行 `dotnet test tests/Launcher.Tests.Unit/Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibrarySessionStateStoreTests|FullyQualifiedName~FabLibrarySnapshotAgePolicyTests"`，11 个测试通过；测试项目仍有既有 analyzer 警告，未在本轮处理
+
 ### Task 9.26 - Fab 热恢复 S7-C 预热跳过条件与静默日志收口 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryWarmupCoordinator.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryWarmupCoordinator.cs)，统一收口 `disabled / unauthenticated / offline / fresh_snapshot` 四类启动预热跳过条件，并为当前账号的新鲜快照增加静默短路
 - 当前预热失败与跳过都只写结构化日志，不弹 UI、不干扰启动链；至此 `S7` 启动预热阶段已完整闭环

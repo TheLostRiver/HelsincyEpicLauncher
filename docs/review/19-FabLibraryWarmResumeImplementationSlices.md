@@ -143,7 +143,7 @@
 | S7-A | S7 | 已完成 | 新增 Fab 预热协调器服务 |
 | S7-B | S7 | 已完成 | Phase 3 调用预热协调器 |
 | S7-C | S7 | 已完成 | 预热跳过条件与静默日志收口 |
-| S8-A | S8 | 未开始 | 为 Session Store / 年龄策略补单测 |
+| S8-A | S8 | 已完成 | 为 Session Store / 年龄策略补单测 |
 | S8-B | S8 | 未开始 | 为 ViewModel Restore/SWR 补单测 |
 | S8-C | S8 | 未开始 | 为设置持久化与预热协调器补单测 |
 | S8-D | S8 | 未开始 | 形成手工冒烟清单与提交前检查 |
@@ -747,12 +747,12 @@
 
 ### S8 验证与提交流程
 
-- 状态：`未开始`
+- 状态：`进行中`
 - 目标：在实现前就把验证方式和提交边界写死，防止后面边做边飘。
 
 #### S8-A Session Store / 年龄策略单测
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：给最纯的逻辑先补单测。
 - 建议目标文件：
   - `tests/Launcher.Tests.Unit/FabLibrarySessionStateStoreTests.cs`
@@ -762,6 +762,11 @@
   - 覆盖 `Fresh / Warm / Stale` 边界
 - 验证动作：
   - 定向 `dotnet test`
+
+- 已完成结果：
+  - 已新增 `tests/Launcher.Tests.Unit/FabLibrarySessionStateStoreTests.cs`，当前覆盖 `Save -> TryGet`、容量裁剪规范化、`Clear`、`Trim` 四类基础行为
+  - 已新增 `tests/Launcher.Tests.Unit/FabLibrarySnapshotAgePolicyTests.cs`，当前覆盖未来时间戳兜底、`30s` / `31s`、`300s` / `301s` 等 `Fresh / Warm / Stale` 边界
+  - 已执行定向 `dotnet test tests/Launcher.Tests.Unit/Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibrarySessionStateStoreTests|FullyQualifiedName~FabLibrarySnapshotAgePolicyTests"`，共 `11` 个测试通过
 
 #### S8-B ViewModel Restore/SWR 单测
 
