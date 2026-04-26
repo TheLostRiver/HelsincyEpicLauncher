@@ -119,7 +119,7 @@
 |------|------|------|------|
 | S1-A | S1 | 已完成 | 定义会话快照 DTO |
 | S1-B | S1 | 已完成 | 定义会话 Store 接口 |
-| S1-C | S1 | 未开始 | 实现内存版会话 Store |
+| S1-C | S1 | 已完成 | 实现内存版会话 Store |
 | S1-D | S1 | 未开始 | 在 Presentation DI 注册会话 Store |
 | S2-A | S2 | 未开始 | `FabLibraryViewModel` 注入 Store 与恢复守卫字段 |
 | S2-B | S2 | 未开始 | 把快照 `FabAssetSummary` 恢复成卡片列表 |
@@ -215,7 +215,7 @@
 
 #### S1-C 实现内存版会话 Store
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：先做进程内单槽位实现，不做磁盘持久化。
 - 本轮只做：
   - 实现 `InMemoryFabLibrarySessionStateStore`
@@ -231,6 +231,11 @@
   - 不引入静态全局字段
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - 已新增 `InMemoryFabLibrarySessionStateStore`
+  - 当前实现采用进程内单槽位快照 + `lock` 互斥保护
+  - `Trim()` 当前保留为扩展点，不提前引入多快照或容量策略
 
 #### S1-D 在 Presentation DI 注册 Store
 
@@ -727,13 +732,13 @@
 
 如果下一轮开始实现，默认从以下最小闭环启动：
 
-1. `S1-C` 实现 `InMemoryFabLibrarySessionStateStore`
-2. `S1-D` 注册到 Presentation DI
-3. 再进入 `S2-A`，把 Store 接到 `FabLibraryViewModel`
-4. 然后推进 `S2-B`，补卡片列表恢复辅助方法
+1. `S1-D` 注册到 Presentation DI
+2. 再进入 `S2-A`，把 Store 接到 `FabLibraryViewModel`
+3. 然后推进 `S2-B`，补卡片列表恢复辅助方法
+4. 最后补 `S2-C`，把恢复入口插进 `LoadAsync`
 
 原因：
 
-1. `S1-A` 与 `S1-B` 已经完成，继续补 Store 实现即可收口第一层基础设施。
+1. `S1-A`、`S1-B`、`S1-C` 已经完成，接上 DI 就能结束第一层基础设施。
 2. 这一批仍然不碰 UI 行为，不容易引入运行态抖动。
 3. 完成后就能进入 `FabLibraryViewModel` 的 Restore/Save 接入。

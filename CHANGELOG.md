@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.3 - Fab 热恢复 S1-C 内存会话 Store (2026-04-26)
+- 新增 [src/Launcher.Presentation/Modules/FabLibrary/InMemoryFabLibrarySessionStateStore.cs](src/Launcher.Presentation/Modules/FabLibrary/InMemoryFabLibrarySessionStateStore.cs)，为 Fab 列表页热恢复提供进程内单槽位的会话快照存储实现
+- 当前实现使用单槽位快照字段加 `lock` 互斥保护，先完成 `Save`、`TryGet`、`Clear`、`Trim` 的最小闭环，不引入多快照、磁盘持久化或容量裁剪策略
+- `Trim()` 当前保留为后续扩展点，尚未引入分页上限或账号作用域裁剪逻辑
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.2 - Fab 热恢复 S1-B 会话 Store 接口 (2026-04-26)
 - 新增 [src/Launcher.Presentation/Modules/FabLibrary/IFabLibrarySessionStateStore.cs](src/Launcher.Presentation/Modules/FabLibrary/IFabLibrarySessionStateStore.cs)，为 Fab 列表页热恢复建立 Presentation 内部的会话快照存储接口
 - 当前接口保持最小职责面，只暴露 `Save`、`TryGet`、`Clear`、`Trim` 四个方法，避免演化为通用缓存中心
