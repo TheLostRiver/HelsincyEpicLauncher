@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.24 - Fab 热恢复 S7-A 新增预热协调器服务 (2026-04-26)
+- 新增 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryWarmupCoordinator.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryWarmupCoordinator.cs)，把“读取预热设置 -> 检查认证态 -> 拉默认第一页 -> 写会话快照”的启动预热主路径收敛到独立协调器中
+- 更新 [src/Launcher.Presentation/DependencyInjection.cs](src/Launcher.Presentation/DependencyInjection.cs)，将 `FabLibraryWarmupCoordinator` 注册到 Presentation DI，供后续 `S7-B` 在启动 Phase 3 中后台调用
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.23 - Fab 热恢复 S6-D 设置页预热开关 UI (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/Settings/SettingsPage.xaml](src/Launcher.Presentation/Modules/Settings/SettingsPage.xaml) 与 [src/Launcher.Presentation/Modules/Settings/SettingsPage.xaml.cs](src/Launcher.Presentation/Modules/Settings/SettingsPage.xaml.cs)，在“通用”区块增加“启动后自动预热 Fab 列表”开关 UI，并把用户切换动作接到 `SaveFabLibraryConfigCommand`
 - 至此 `S6` 设置开关接入阶段已完整闭环：设置契约、持久化、ViewModel、设置页 UI 全部落地

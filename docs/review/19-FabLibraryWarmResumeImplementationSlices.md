@@ -140,7 +140,7 @@
 | S6-B | S6 | 已完成 | 完成 Settings 持久化与默认值 |
 | S6-C | S6 | 已完成 | SettingsViewModel 暴露预热开关 |
 | S6-D | S6 | 已完成 | SettingsPage 增加预热开关 UI |
-| S7-A | S7 | 未开始 | 新增 Fab 预热协调器服务 |
+| S7-A | S7 | 已完成 | 新增 Fab 预热协调器服务 |
 | S7-B | S7 | 未开始 | Phase 3 调用预热协调器 |
 | S7-C | S7 | 未开始 | 预热跳过条件与静默日志收口 |
 | S8-A | S8 | 未开始 | 为 Session Store / 年龄策略补单测 |
@@ -677,12 +677,12 @@
 
 ### S7 启动预热协调器
 
-- 状态：`未开始`
+- 状态：`进行中`
 - 目标：在不污染 `App.xaml.cs` 的前提下，把 Phase 3 背景预热接进来。
 
 #### S7-A 新增 Fab 预热协调器服务
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：新增一个小型协调器，负责“读取设置 -> 判断条件 -> 拉首屏 -> 写快照”。
 - 本轮只做：
   - 新增 `FabLibraryWarmupCoordinator`
@@ -698,6 +698,11 @@
   - 预热逻辑不直接堆在 `App.xaml.cs`
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - 已新增 `FabLibraryWarmupCoordinator`，当前把启动预热收敛为单一服务入口，不再要求未来把逻辑直接堆到 `App.xaml.cs`
+  - 当前协调器已注入 `ISettingsReadService`、`IFabCatalogReadService`、`IFabLibrarySessionStateStore` 与 `IAuthService`，并只预热默认第一页查询结果
+  - 当前成功路径会把默认首屏结果写回 `FabLibrarySessionSnapshot`，供后续 Fab 列表页热恢复直接复用；服务本身也已注册进 Presentation DI，供后续 `S7-B` 在 Phase 3 启动流程调用
 
 #### S7-B Phase 3 调用预热协调器
 

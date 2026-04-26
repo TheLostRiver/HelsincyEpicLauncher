@@ -57,6 +57,7 @@ public static class DependencyInjection
         // FabLibrary ViewModel（Transient：每次导航刷新列表）
         services.AddSingleton<IFabListingPageReadService, FabListingPageReadService>();
         services.AddSingleton<IFabLibrarySessionStateStore, InMemoryFabLibrarySessionStateStore>();
+        services.AddSingleton<FabLibraryWarmupCoordinator>();
         services.AddTransient<FabLibraryViewModel>();
         services.AddTransient<FabAssetDetailViewModel>();
 
