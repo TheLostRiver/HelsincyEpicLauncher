@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.28 - Fab 热恢复 S8-B 补齐 ViewModel Restore/SWR 单测 (2026-04-27)
+- 新增 [tests/Launcher.Tests.Unit/FabLibraryViewModelWarmResumeTests.cs](tests/Launcher.Tests.Unit/FabLibraryViewModelWarmResumeTests.cs)，覆盖 `FabLibraryViewModel` 的无快照、`Fresh`、`Warm`、`Stale`、以及 `Warm` 刷新失败保留列表五条热恢复主路径
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，并同步更新同文件中的 `FabAssetCardViewModel`，补一个仅供内部使用的 UI 调度委托 seam，避免单测依赖 WinUI `DispatcherQueue` COM 激活；公开构造函数与运行时行为保持不变
+- 已执行 `dotnet test Q:\MyEpicLauncher\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibraryViewModelWarmResumeTests"`，5 个测试通过；测试项目仅剩既有 analyzer 警告，未在本轮处理
+
 ### Task 9.27 - Fab 热恢复 S8-A 补齐 Session Store 与年龄策略单测 (2026-04-27)
 - 新增 [tests/Launcher.Tests.Unit/FabLibrarySessionStateStoreTests.cs](tests/Launcher.Tests.Unit/FabLibrarySessionStateStoreTests.cs)，覆盖 `InMemoryFabLibrarySessionStateStore` 的 `Save / TryGet / Clear / Trim` 以及容量裁剪规范化行为
 - 新增 [tests/Launcher.Tests.Unit/FabLibrarySnapshotAgePolicyTests.cs](tests/Launcher.Tests.Unit/FabLibrarySnapshotAgePolicyTests.cs)，覆盖 `FabLibrarySnapshotAgePolicy` 的 `Fresh / Warm / Stale` 阈值边界与未来时间戳兜底逻辑

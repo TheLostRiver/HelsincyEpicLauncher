@@ -28,7 +28,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
     private readonly IAuthService _authService;
     private readonly INetworkMonitor _networkMonitor;
     private readonly INotificationService _notificationService;
-    private readonly DispatcherQueue _dispatcherQueue;
+    private readonly Action<Action> _enqueueOnUiThread;
     private CancellationTokenSource _searchCts = new();
     private bool _isRestoredFromSnapshot;
     private FabLibrarySnapshotAgeCategory? _restoredSnapshotAgeCategory;
@@ -77,6 +77,27 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         IAuthService authService,
         INetworkMonitor networkMonitor,
         INotificationService notificationService)
+        : this(
+            catalogService,
+            thumbnailCache,
+            previewUrlReadService,
+            sessionStateStore,
+            authService,
+            networkMonitor,
+            notificationService,
+                action => DispatcherQueue.GetForCurrentThread().TryEnqueue(() => action()))
+    {
+    }
+
+    internal FabLibraryViewModel(
+        IFabCatalogReadService catalogService,
+        IThumbnailCacheService thumbnailCache,
+        IFabPreviewUrlReadService previewUrlReadService,
+        IFabLibrarySessionStateStore sessionStateStore,
+        IAuthService authService,
+        INetworkMonitor networkMonitor,
+        INotificationService notificationService,
+        Action<Action> enqueueOnUiThread)
     {
         _catalogService = catalogService;
         _thumbnailCache = thumbnailCache;
@@ -85,7 +106,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         _authService = authService;
         _networkMonitor = networkMonitor;
         _notificationService = notificationService;
-        _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+        _enqueueOnUiThread = enqueueOnUiThread;
         _isRestoredFromSnapshot = false;
         _restoredSnapshotAgeCategory = null;
         _forceNetworkReload = false;
@@ -311,7 +332,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
 
         foreach (var summary in pagedResult.Items)
         {
-            var card = new FabAssetCardViewModel(summary, _thumbnailCache, _previewUrlReadService, _dispatcherQueue);
+            var card = new FabAssetCardViewModel(summary, _thumbnailCache, _previewUrlReadService, _enqueueOnUiThread);
             Assets.Add(card);
         }
 
@@ -379,7 +400,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
 
         foreach (var summary in snapshot.AssetSummaries)
         {
-            var card = new FabAssetCardViewModel(summary, _thumbnailCache, _previewUrlReadService, _dispatcherQueue);
+            var card = new FabAssetCardViewModel(summary, _thumbnailCache, _previewUrlReadService, _enqueueOnUiThread);
             Assets.Add(card);
         }
 
@@ -489,7 +510,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
 
     private void OnNetworkStatusChanged(bool isAvailable)
     {
-        _dispatcherQueue.TryEnqueue(() =>
+        _enqueueOnUiThread(() =>
         {
             IsOffline = !isAvailable;
             Logger.Debug("FabLibraryViewModel 网络状态变化 | IsOffline={IsOffline}", IsOffline);
@@ -521,7 +542,7 @@ public partial class FabAssetCardViewModel : ObservableObject
     private readonly IReadOnlyList<string> _supportedEngineVersions;
     private readonly IThumbnailCacheService _thumbnailCache;
     private readonly IFabPreviewUrlReadService _previewUrlReadService;
-    private readonly DispatcherQueue _dispatcherQueue;
+    private readonly Action<Action> _enqueueOnUiThread;
     private bool _thumbnailLoadAttempted;
 
     public string PriceText => Price == 0 ? "免费" : $"${Price:F2}";
@@ -539,6 +560,15 @@ public partial class FabAssetCardViewModel : ObservableObject
         IThumbnailCacheService thumbnailCache,
         IFabPreviewUrlReadService previewUrlReadService,
         DispatcherQueue dispatcherQueue)
+        : this(summary, thumbnailCache, previewUrlReadService, action => dispatcherQueue.TryEnqueue(() => action()))
+    {
+    }
+
+    internal FabAssetCardViewModel(
+        FabAssetSummary summary,
+        IThumbnailCacheService thumbnailCache,
+        IFabPreviewUrlReadService previewUrlReadService,
+        Action<Action> enqueueOnUiThread)
     {
         AssetId = summary.AssetId;
         Title = summary.Title;
@@ -554,7 +584,7 @@ public partial class FabAssetCardViewModel : ObservableObject
         _supportedEngineVersions = summary.SupportedEngineVersions;
         _thumbnailCache = thumbnailCache;
         _previewUrlReadService = previewUrlReadService;
-        _dispatcherQueue = dispatcherQueue;
+        _enqueueOnUiThread = enqueueOnUiThread;
     }
 
     public FabAssetSummary ToSummary()
@@ -617,7 +647,7 @@ public partial class FabAssetCardViewModel : ObservableObject
                 return;
             }
 
-            _dispatcherQueue.TryEnqueue(() =>
+            _enqueueOnUiThread(() =>
             {
                 // DecodePixelWidth 限制解码尺寸，减少内存占用 + 提升滚动帧率
                 Thumbnail = new BitmapImage(new Uri(localPath))
@@ -632,7 +662,7 @@ public partial class FabAssetCardViewModel : ObservableObject
         catch (Exception ex)
         {
             Log.Warning(ex, "缩略图加载失败");
-            _dispatcherQueue.TryEnqueue(() =>
+            _enqueueOnUiThread(() =>
             {
                 ShowThumbnailPlaceholder = true;
                 IsThumbnailLoading = false;

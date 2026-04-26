@@ -1,10 +1,10 @@
 # 会话交接文档
 
 ## 2026-04-27 文档增量
-- 完成内容：已完成 `S8-A`，新增 [tests/Launcher.Tests.Unit/FabLibrarySessionStateStoreTests.cs](tests/Launcher.Tests.Unit/FabLibrarySessionStateStoreTests.cs) 与 [tests/Launcher.Tests.Unit/FabLibrarySnapshotAgePolicyTests.cs](tests/Launcher.Tests.Unit/FabLibrarySnapshotAgePolicyTests.cs)，分别覆盖 Session Store 的保存/读取/清理/裁剪规范化，以及年龄策略的 `Fresh / Warm / Stale` 阈值边界
-- 当前重点：继续按 [docs/review/19-FabLibraryWarmResumeImplementationSlices.md](docs/review/19-FabLibraryWarmResumeImplementationSlices.md) 执行 `S8-B`，为 ViewModel Restore/SWR 主路径补单测
+- 完成内容：已完成 `S8-A`，新增 [tests/Launcher.Tests.Unit/FabLibrarySessionStateStoreTests.cs](tests/Launcher.Tests.Unit/FabLibrarySessionStateStoreTests.cs) 与 [tests/Launcher.Tests.Unit/FabLibrarySnapshotAgePolicyTests.cs](tests/Launcher.Tests.Unit/FabLibrarySnapshotAgePolicyTests.cs)，分别覆盖 Session Store 的保存/读取/清理/裁剪规范化，以及年龄策略的 `Fresh / Warm / Stale` 阈值边界；已完成 `S8-B`，新增 [tests/Launcher.Tests.Unit/FabLibraryViewModelWarmResumeTests.cs](tests/Launcher.Tests.Unit/FabLibraryViewModelWarmResumeTests.cs)，覆盖 `FabLibraryViewModel` 的无快照、`Fresh`、`Warm`、`Stale` 与 `Warm` 刷新失败保留列表五条主路径，并同步更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs) 内部测试 seam，避免单测依赖 WinUI `DispatcherQueue` 激活
+- 当前重点：继续按 [docs/review/19-FabLibraryWarmResumeImplementationSlices.md](docs/review/19-FabLibraryWarmResumeImplementationSlices.md) 执行 `S8-C`，为设置持久化与预热协调器补单测
 - 当前建议：首期主路径只做“快照恢复 + SWR + Phase 3 预热协调器”，暂不把 `NavigationCacheMode.Required` 当成前置条件；页面缓存仅作为 `S9` 可选实验切片
-- 本轮验证：`dotnet test tests/Launcher.Tests.Unit/Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibrarySessionStateStoreTests|FullyQualifiedName~FabLibrarySnapshotAgePolicyTests"` 已通过；测试项目仍有既有 analyzer 警告，未在本轮处理
+- 本轮验证：`dotnet test tests/Launcher.Tests.Unit/Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibrarySessionStateStoreTests|FullyQualifiedName~FabLibrarySnapshotAgePolicyTests"` 与 `dotnet test Q:\MyEpicLauncher\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibraryViewModelWarmResumeTests"` 已通过；测试项目仍有既有 analyzer 警告，未在本轮处理
 - 远端状态：本地仍存在未推送提交；继续前先用 `git status -sb` 与 `git rev-parse HEAD / origin/main` 复核远端是否追平，再进入下一切片
 
 ## 最后更新

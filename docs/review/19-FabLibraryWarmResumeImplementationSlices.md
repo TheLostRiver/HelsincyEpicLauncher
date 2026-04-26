@@ -144,7 +144,7 @@
 | S7-B | S7 | 已完成 | Phase 3 调用预热协调器 |
 | S7-C | S7 | 已完成 | 预热跳过条件与静默日志收口 |
 | S8-A | S8 | 已完成 | 为 Session Store / 年龄策略补单测 |
-| S8-B | S8 | 未开始 | 为 ViewModel Restore/SWR 补单测 |
+| S8-B | S8 | 已完成 | 为 ViewModel Restore/SWR 补单测 |
 | S8-C | S8 | 未开始 | 为设置持久化与预热协调器补单测 |
 | S8-D | S8 | 未开始 | 形成手工冒烟清单与提交前检查 |
 | S9-A | S9 | 未开始 | 单独评估 `NavigationCacheMode.Required` |
@@ -770,7 +770,7 @@
 
 #### S8-B ViewModel Restore/SWR 单测
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：把“先恢复、后刷新”的主路径压进测试。
 - 建议目标文件：
   - `tests/Launcher.Tests.Unit/FabLibraryViewModelWarmResumeTests.cs`
@@ -779,6 +779,11 @@
   - 覆盖“Warm 刷新失败不清空已有列表”
 - 验证动作：
   - 定向 `dotnet test`
+
+- 已完成结果：
+  - 已新增 `tests/Launcher.Tests.Unit/FabLibraryViewModelWarmResumeTests.cs`，当前覆盖 `NoSnapshot / Fresh / Warm / Stale` 四条恢复路径，以及 `Warm` 静默刷新失败后保留当前列表的行为
+  - 为避免测试路径硬依赖 WinUI `DispatcherQueue` COM 激活，`FabLibraryViewModel` 与 `FabAssetCardViewModel` 已补一个仅供内部使用的 UI 调度委托 seam；公开构造函数与运行时行为保持不变
+  - 已执行定向 `dotnet test Q:\MyEpicLauncher\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibraryViewModelWarmResumeTests"`，共 `5` 个测试通过
 
 #### S8-C 设置持久化与预热协调器单测
 
