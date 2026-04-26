@@ -67,6 +67,14 @@ internal sealed class SettingsService : ISettingsCommandService, ISettingsReadSe
         }
     }
 
+    public FabLibraryConfig GetFabLibraryConfig()
+    {
+        lock (_lock)
+        {
+            return Clone(_settings.FabLibrary);
+        }
+    }
+
     // === ISettingsCommandService ===
 
     public Task<Result> UpdateDownloadConfigAsync(DownloadConfig config, CancellationToken ct)
@@ -89,6 +97,11 @@ internal sealed class SettingsService : ISettingsCommandService, ISettingsReadSe
         return UpdateSectionAsync("Network", s => s.Network = Clone(config));
     }
 
+    public Task<Result> UpdateFabLibraryConfigAsync(FabLibraryConfig config, CancellationToken ct)
+    {
+        return UpdateSectionAsync("FabLibrary", s => s.FabLibrary = Clone(config));
+    }
+
     public Task<Result> ResetToDefaultsAsync(CancellationToken ct)
     {
         lock (_lock)
@@ -105,6 +118,7 @@ internal sealed class SettingsService : ISettingsCommandService, ISettingsReadSe
             ConfigChanged?.Invoke(new ConfigChangedEvent("Appearance", _settings.Appearance));
             ConfigChanged?.Invoke(new ConfigChangedEvent("Paths", _settings.Paths));
             ConfigChanged?.Invoke(new ConfigChangedEvent("Network", _settings.Network));
+            ConfigChanged?.Invoke(new ConfigChangedEvent("FabLibrary", _settings.FabLibrary));
 
             return Task.FromResult(Result.Ok());
         }
@@ -142,6 +156,7 @@ internal sealed class SettingsService : ISettingsCommandService, ISettingsReadSe
                 "Appearance" => _settings.Appearance,
                 "Paths" => _settings.Paths,
                 "Network" => _settings.Network,
+                "FabLibrary" => _settings.FabLibrary,
                 _ => _settings,
             };
             ConfigChanged?.Invoke(new ConfigChangedEvent(section, newConfig));

@@ -13,4 +13,5 @@ internal sealed class UserSettings
     public AppearanceConfig Appearance { get; set; } = new();
     public PathConfig Paths { get; set; } = new();
     public NetworkConfig Network { get; set; } = new();
+    public FabLibraryConfig FabLibrary { get; set; } = new();
 }

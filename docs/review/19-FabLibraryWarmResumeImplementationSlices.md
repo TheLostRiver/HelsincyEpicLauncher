@@ -137,7 +137,7 @@
 | S5-B | S5 | 已完成 | 为快照增加账号作用域并做失效判定 |
 | S5-C | S5 | 已完成 | 增加 Clear/Trim 的日志与显式清理路径 |
 | S6-A | S6 | 已完成 | 增加 `FabLibraryConfig` 配置模型与读写契约 |
-| S6-B | S6 | 未开始 | 完成 Settings 持久化与默认值 |
+| S6-B | S6 | 已完成 | 完成 Settings 持久化与默认值 |
 | S6-C | S6 | 未开始 | SettingsViewModel 暴露预热开关 |
 | S6-D | S6 | 未开始 | SettingsPage 增加预热开关 UI |
 | S7-A | S7 | 未开始 | 新增 Fab 预热协调器服务 |
@@ -617,7 +617,7 @@
 
 #### S6-B 完成 Settings 持久化与默认值
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：把 Fab 配置接入现有 `user.settings.json` 管线。
 - 本轮只做：
   - `UserSettings` 增加 `FabLibrary`
@@ -630,6 +630,11 @@
   - 配置能持久化并在重启后保留
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - `UserSettings` 已新增 `FabLibrary` 配置段，默认值来自 `FabLibraryConfig` 的默认构造
+  - `SettingsService` 已支持 `GetFabLibraryConfig()` 与 `UpdateFabLibraryConfigAsync(...)`
+  - `ResetToDefaultsAsync(...)` 与 `ConfigChanged` 现在也会覆盖 `FabLibrary` 配置段，后续设置页可以直接复用现有持久化管线
 
 #### S6-C SettingsViewModel 暴露预热开关
 

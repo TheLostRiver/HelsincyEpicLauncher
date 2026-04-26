@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.21 - Fab 热恢复 S6-B 设置持久化与默认值 (2026-04-26)
+- 更新 [src/Launcher.Infrastructure/Settings/UserSettings.cs](src/Launcher.Infrastructure/Settings/UserSettings.cs)，把 `FabLibrary` 配置段接入 `user.settings.json` 持久化模型
+- 更新 [src/Launcher.Infrastructure/Settings/SettingsService.cs](src/Launcher.Infrastructure/Settings/SettingsService.cs)，支持读取、更新、重置与变更广播 `FabLibraryConfig`
+- 已执行 `dotnet build src/Launcher.Infrastructure/Launcher.Infrastructure.csproj --no-restore`，构建通过
+
 ### Task 9.20 - Fab 热恢复 S6-A 设置契约接入 (2026-04-26)
 - 更新 [src/Launcher.Application/Modules/Settings/Contracts/ConfigModels.cs](src/Launcher.Application/Modules/Settings/Contracts/ConfigModels.cs)，新增 `FabLibraryConfig`，当前承载 `AutoWarmOnStartup` 开关
 - 更新 [src/Launcher.Application/Modules/Settings/Contracts/ISettingsReadService.cs](src/Launcher.Application/Modules/Settings/Contracts/ISettingsReadService.cs) 与 [src/Launcher.Application/Modules/Settings/Contracts/ISettingsCommandService.cs](src/Launcher.Application/Modules/Settings/Contracts/ISettingsCommandService.cs)，为 Fab 预热配置补齐读写契约入口
