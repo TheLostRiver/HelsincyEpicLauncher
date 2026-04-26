@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.13 - Fab 热恢复 S4-B Fresh 快照直接展示 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，在恢复会话快照时接入年龄分类，并仅对 `Fresh` 快照立即关闭加载骨架，让已恢复列表直接可见
+- 当前 `Fresh` 快照会显式跳过首轮刷新；`ForceNetworkReload` 则继续作为后续 `Warm / Stale` 分支的控制位，实际刷新策略留给后续切片
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.12 - Fab 热恢复 S4-A 快照年龄分类策略 (2026-04-26)
 - 新增 [src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySnapshotAgePolicy.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySnapshotAgePolicy.cs)，把 Fab 列表会话快照的年龄判定集中到单一 helper 中
 - 当前策略固定 `Fresh / Warm / Stale` 三段分类，阈值分别为 `30s` 和 `5m`，并对未来时间戳按 `0` 年龄处理，避免本机时钟轻微漂移导致误判

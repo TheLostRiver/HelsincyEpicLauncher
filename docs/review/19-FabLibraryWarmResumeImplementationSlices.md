@@ -129,7 +129,7 @@
 | S3-B | S3 | 已完成 | 页面恢复后回滚到上次位置 |
 | S3-C | S3 | 已完成 | 点击详情前先固化最新快照 |
 | S4-A | S4 | 已完成 | 定义快照年龄分类辅助逻辑 |
-| S4-B | S4 | 未开始 | Fresh 快照直接展示，不发刷新 |
+| S4-B | S4 | 已完成 | Fresh 快照直接展示，不发刷新 |
 | S4-C | S4 | 未开始 | Warm 快照先展示，再静默刷新 |
 | S4-D | S4 | 未开始 | Warm 刷新失败不覆盖当前可见列表 |
 | S4-E | S4 | 未开始 | Stale 快照走完整加载 |
@@ -447,7 +447,7 @@
 
 #### S4-B Fresh 快照直接展示，不发刷新
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：年龄足够新时，完全避免额外网络请求。
 - 目标文件：
   - [../../src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](../../src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)
@@ -455,6 +455,11 @@
   - `age <= 30s` 时恢复后不再触发首轮刷新
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - `FabLibraryViewModel` 现已接入 `FabLibrarySnapshotAgePolicy`，恢复快照时会先判定年龄分类
+  - `Fresh` 快照恢复后会立即关闭加载骨架，让已恢复列表直接可见，不再因为等待分类加载而继续遮住内容
+  - 当前 `ForceNetworkReload` 已为后续 `Warm / Stale` 分支预留控制位，但实际刷新行为仍继续留给 `S4-C` 与 `S4-E`
 
 #### S4-C Warm 快照先展示，再静默刷新
 

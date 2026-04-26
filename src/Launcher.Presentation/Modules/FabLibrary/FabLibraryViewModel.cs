@@ -105,6 +105,11 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
                 ? Task.CompletedTask
                 : SearchInternalAsync(1);
 
+            if (restoredFromSnapshot && !_forceNetworkReload)
+            {
+                IsLoading = false;
+            }
+
             await categoriesTask;
             var categoriesResult = categoriesTask.Result;
             if (categoriesResult.IsSuccess)
@@ -299,13 +304,20 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         if (!_sessionStateStore.TryGet(out var snapshot) || snapshot is null)
         {
             _isRestoredFromSnapshot = false;
+            _forceNetworkReload = false;
             return false;
         }
 
+        var ageCategory = FabLibrarySnapshotAgePolicy.Classify(snapshot);
         RestorePageState(snapshot);
-        _forceNetworkReload = false;
+        _forceNetworkReload = ageCategory is not FabLibrarySnapshotAgeCategory.Fresh;
         ClearPageError();
-        Logger.Information("Fab 页面已从会话快照恢复 | Count={Count} Page={Page}", Assets.Count, CurrentPage);
+        Logger.Information(
+            "Fab 页面已从会话快照恢复 | Count={Count} Page={Page} AgeCategory={AgeCategory} ForceReload={ForceReload}",
+            Assets.Count,
+            CurrentPage,
+            ageCategory,
+            _forceNetworkReload);
         return true;
     }
 
@@ -354,6 +366,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
 
         _sessionStateStore.Save(snapshot);
         _isRestoredFromSnapshot = false;
+        _forceNetworkReload = false;
     }
 
     internal void SaveCurrentScrollOffset(double verticalOffset)
