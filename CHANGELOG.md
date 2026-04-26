@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.14 - Fab 热恢复 S4-C Warm 快照静默刷新 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，为恢复路径保留快照年龄分类状态，并让 `Warm` 快照在列表可见后后台执行第一页刷新
+- 当前 `Warm` 快照不再继续停留在骨架屏；刷新仍复用已有成功路径，命中新结果时会以最新第一页内容覆盖当前列表
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.13 - Fab 热恢复 S4-B Fresh 快照直接展示 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，在恢复会话快照时接入年龄分类，并仅对 `Fresh` 快照立即关闭加载骨架，让已恢复列表直接可见
 - 当前 `Fresh` 快照会显式跳过首轮刷新；`ForceNetworkReload` 则继续作为后续 `Warm / Stale` 分支的控制位，实际刷新策略留给后续切片

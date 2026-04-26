@@ -29,6 +29,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
     private readonly DispatcherQueue _dispatcherQueue;
     private CancellationTokenSource _searchCts = new();
     private bool _isRestoredFromSnapshot;
+    private FabLibrarySnapshotAgeCategory? _restoredSnapshotAgeCategory;
     private bool _forceNetworkReload;
     private double? _pendingRestoreVerticalOffset;
     private bool _disposed;
@@ -82,6 +83,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         _notificationService = notificationService;
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         _isRestoredFromSnapshot = false;
+        _restoredSnapshotAgeCategory = null;
         _forceNetworkReload = false;
         _pendingRestoreVerticalOffset = null;
         _isOffline = !networkMonitor.IsNetworkAvailable;
@@ -102,12 +104,19 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
             // 并行加载分类和首页资产
             var categoriesTask = _catalogService.GetCategoriesAsync(CancellationToken.None);
             var assetsTask = restoredFromSnapshot
-                ? Task.CompletedTask
+                ? _forceNetworkReload
+                    ? SearchInternalAsync(1)
+                    : Task.CompletedTask
                 : SearchInternalAsync(1);
 
-            if (restoredFromSnapshot && !_forceNetworkReload)
+            if (restoredFromSnapshot && _restoredSnapshotAgeCategory is not FabLibrarySnapshotAgeCategory.Stale)
             {
                 IsLoading = false;
+            }
+
+            if (restoredFromSnapshot && _forceNetworkReload)
+            {
+                Logger.Information("Fab Warm 快照已恢复，开始静默刷新第一页");
             }
 
             await categoriesTask;
@@ -304,13 +313,15 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         if (!_sessionStateStore.TryGet(out var snapshot) || snapshot is null)
         {
             _isRestoredFromSnapshot = false;
+            _restoredSnapshotAgeCategory = null;
             _forceNetworkReload = false;
             return false;
         }
 
         var ageCategory = FabLibrarySnapshotAgePolicy.Classify(snapshot);
+        _restoredSnapshotAgeCategory = ageCategory;
         RestorePageState(snapshot);
-        _forceNetworkReload = ageCategory is not FabLibrarySnapshotAgeCategory.Fresh;
+        _forceNetworkReload = ageCategory is FabLibrarySnapshotAgeCategory.Warm;
         ClearPageError();
         Logger.Information(
             "Fab 页面已从会话快照恢复 | Count={Count} Page={Page} AgeCategory={AgeCategory} ForceReload={ForceReload}",
@@ -366,6 +377,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
 
         _sessionStateStore.Save(snapshot);
         _isRestoredFromSnapshot = false;
+        _restoredSnapshotAgeCategory = null;
         _forceNetworkReload = false;
     }
 
