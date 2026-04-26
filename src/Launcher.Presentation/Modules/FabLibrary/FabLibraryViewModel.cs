@@ -288,6 +288,25 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         IsEmpty = !HasAssets && !IsLoading;
     }
 
+    private void RestorePageState(FabLibrarySessionSnapshot snapshot)
+    {
+        Assets.Clear();
+
+        foreach (var summary in snapshot.AssetSummaries)
+        {
+            var card = new FabAssetCardViewModel(summary, _thumbnailCache, _previewUrlReadService, _dispatcherQueue);
+            Assets.Add(card);
+        }
+
+        CurrentPage = snapshot.CurrentPage;
+        TotalPages = snapshot.TotalPages;
+        HasNextPage = snapshot.HasNextPage;
+        TotalCount = snapshot.TotalCount;
+        HasAssets = Assets.Count > 0;
+        IsEmpty = !HasAssets;
+        _isRestoredFromSnapshot = HasAssets;
+    }
+
     private async Task CancelPendingSearchAsync()
     {
         try

@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.6 - Fab 热恢复 S2-B 快照卡片恢复辅助方法 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，新增从 `FabLibrarySessionSnapshot` 恢复卡片列表与分页状态的辅助方法
+- 当前恢复逻辑已覆盖 `Assets`、`CurrentPage`、`TotalPages`、`HasNextPage`、`TotalCount`、`HasAssets`、`IsEmpty` 等页面状态字段
+- 本轮仍未将恢复入口接入 `LoadAsync`，调用时机继续留给后续 `S2-C`
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.5 - Fab 热恢复 S2-A ViewModel 注入 Store (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，注入 `IFabLibrarySessionStateStore`，并补充 `_isRestoredFromSnapshot`、`_forceNetworkReload` 两个恢复守卫字段及内部只读观察属性
 - 为匹配 `FabLibraryViewModel` 的公开构造函数依赖链，更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySessionSnapshot.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySessionSnapshot.cs) 与 [src/Launcher.Presentation/Modules/FabLibrary/IFabLibrarySessionStateStore.cs](src/Launcher.Presentation/Modules/FabLibrary/IFabLibrarySessionStateStore.cs) 为 `public`；它们仍属于 Presentation 层内部实现面，不升级为 Application `Contracts`
