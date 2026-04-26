@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.1 - Fab 热恢复 S1-A 会话快照 DTO (2026-04-26)
+- 新增 [src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySessionSnapshot.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySessionSnapshot.cs)，为 Fab 列表页热恢复建立首个内部会话快照 DTO
+- 当前快照字段已覆盖查询态、分页态、滚动位置、时间戳、账号作用域，以及用于重建卡片列表的 `FabAssetSummary` 集合
+- 该 DTO 仅承载可恢复 UI 的窄状态，不持有 `FabAssetCardViewModel`、`BitmapImage` 或其他可变 UI 对象
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Fab 列表页热恢复实施文档 (2026-04-26)
 - 新增 [docs/review/19-FabLibraryWarmResumeImplementationSlices.md](docs/review/19-FabLibraryWarmResumeImplementationSlices.md)，把 Fab 列表页热恢复、SWR、启动预热方案拆成可逐步执行的细粒度原子任务，并为每个子切片补齐目标文件、完成标准、验证动作和禁止事项
 - 更新 [docs/review/18-FabLibraryWarmResumeStrategy.md](docs/review/18-FabLibraryWarmResumeStrategy.md)，明确其定位为策略文档，并把“首期不依赖页面实例常驻”的实现边界写清，避免后续误把页面缓存当成前置条件

@@ -103,7 +103,7 @@
 | Slice | 名称 | 状态 | 目标 |
 |------|------|------|------|
 | S0 | 文档与入口对齐 | 已完成 | 建立策略文档与实现拆解文档的双入口 |
-| S1 | 会话快照骨架 | 未开始 | 定义快照 DTO、Store 接口、内存实现、DI 注册 |
+| S1 | 会话快照骨架 | 进行中 | 定义快照 DTO、Store 接口、内存实现、DI 注册 |
 | S2 | 列表恢复与写回 | 未开始 | `FabLibraryViewModel` 具备 Restore/Save 主路径 |
 | S3 | 视口与返回体验 | 未开始 | 返回列表后恢复滚动位置，进入详情前先保存快照 |
 | S4 | SWR 刷新策略 | 未开始 | 按快照年龄区分 Fresh / Warm / Stale |
@@ -117,7 +117,7 @@
 
 | 子切片 | 所属 Slice | 状态 | 单次目标 |
 |------|------|------|------|
-| S1-A | S1 | 未开始 | 定义会话快照 DTO |
+| S1-A | S1 | 已完成 | 定义会话快照 DTO |
 | S1-B | S1 | 未开始 | 定义会话 Store 接口 |
 | S1-C | S1 | 未开始 | 实现内存版会话 Store |
 | S1-D | S1 | 未开始 | 在 Presentation DI 注册会话 Store |
@@ -168,7 +168,7 @@
 
 #### S1-A 定义会话快照 DTO
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：新增一个只承载可恢复 UI 状态的窄快照模型。
 - 本轮只做：
   - 新增 `FabLibrarySessionSnapshot`
@@ -185,6 +185,11 @@
   - 快照对象本身不持有可变 UI 对象
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - 已新增 `FabLibrarySessionSnapshot`
+  - 当前字段已覆盖 `Keyword / Category / SortOrder / CurrentPage / TotalPages / HasNextPage / TotalCount / VerticalOffset / SnapshotAtUtc / AccountScopeKey / AssetSummaries`
+  - 结果集合复用现有 `FabAssetSummary`，未新增重复 DTO
 
 #### S1-B 定义会话 Store 接口
 
@@ -717,13 +722,13 @@
 
 如果下一轮开始实现，默认从以下最小闭环启动：
 
-1. `S1-A` 定义 `FabLibrarySessionSnapshot`
-2. `S1-B` 定义 `IFabLibrarySessionStateStore`
-3. `S1-C` 实现 `InMemoryFabLibrarySessionStateStore`
-4. `S1-D` 注册到 Presentation DI
+1. `S1-B` 定义 `IFabLibrarySessionStateStore`
+2. `S1-C` 实现 `InMemoryFabLibrarySessionStateStore`
+3. `S1-D` 注册到 Presentation DI
+4. 再进入 `S2-A`，把 Store 接到 `FabLibraryViewModel`
 
 原因：
 
-1. 这是所有后续恢复逻辑的最小前提。
-2. 这一批不碰 UI 行为，不容易引入运行态抖动。
+1. `S1-A` 已经完成，后续只需把 Store 骨架补齐即可形成第一个可用基础层。
+2. 这一批仍然不碰 UI 行为，不容易引入运行态抖动。
 3. 完成后就能进入 `FabLibraryViewModel` 的 Restore/Save 接入。
