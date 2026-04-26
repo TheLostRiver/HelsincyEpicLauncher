@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.19 - Fab 热恢复 S5-C 快照清理日志与显式路径 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/InMemoryFabLibrarySessionStateStore.cs](src/Launcher.Presentation/Modules/FabLibrary/InMemoryFabLibrarySessionStateStore.cs)，为 `Save / Clear / Trim` 补齐结构化日志，并记录快照是否被裁剪、裁剪前后条目数与页码
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，明确三条会清理会话快照的显式路径：手动刷新、账号作用域不匹配、会话过期事件
+- 当前会话过期清理统一覆盖用户主动登出与 Token 刷新失败；至此 `S5` 失效与容量控制阶段已完整闭环
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.18 - Fab 热恢复 S5-B 账号作用域失效判定 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，接入 [src/Launcher.Application/Modules/Auth/Contracts/IAuthService.cs](src/Launcher.Application/Modules/Auth/Contracts/IAuthService.cs)，在保存会话快照时写入当前 `AccountId` 作为 `AccountScopeKey`
 - 当前恢复逻辑会在展示快照前先比对账号作用域；若快照所属账号与当前会话不匹配，则直接清理旧快照并回到完整加载路径

@@ -1,6 +1,7 @@
 // Copyright (c) Helsincy. All rights reserved.
 
 using Launcher.Application.Modules.FabLibrary.Contracts;
+using Serilog;
 
 namespace Launcher.Presentation.Modules.FabLibrary;
 
@@ -9,6 +10,8 @@ namespace Launcher.Presentation.Modules.FabLibrary;
 /// </summary>
 internal sealed class InMemoryFabLibrarySessionStateStore : IFabLibrarySessionStateStore
 {
+    private static readonly ILogger Logger = Log.ForContext<InMemoryFabLibrarySessionStateStore>();
+
     private readonly object _syncRoot = new();
     private FabLibrarySessionSnapshot? _snapshot;
 
@@ -16,11 +19,18 @@ internal sealed class InMemoryFabLibrarySessionStateStore : IFabLibrarySessionSt
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         var normalizedSnapshot = NormalizeSnapshot(snapshot);
+        var wasTrimmed = WasNormalized(snapshot, normalizedSnapshot);
 
         lock (_syncRoot)
         {
             _snapshot = normalizedSnapshot;
         }
+
+        Logger.Information(
+            "Fab 会话快照已保存 | Count={Count} CurrentPage={CurrentPage} WasTrimmed={WasTrimmed}",
+            normalizedSnapshot.AssetSummaries.Count,
+            normalizedSnapshot.CurrentPage,
+            wasTrimmed);
     }
 
     public bool TryGet(out FabLibrarySessionSnapshot? snapshot)
@@ -34,23 +44,44 @@ internal sealed class InMemoryFabLibrarySessionStateStore : IFabLibrarySessionSt
 
     public void Clear()
     {
+        FabLibrarySessionSnapshot? previousSnapshot;
         lock (_syncRoot)
         {
+            previousSnapshot = _snapshot;
             _snapshot = null;
         }
+
+        Logger.Information(
+            "Fab 会话快照已清理 | HadSnapshot={HadSnapshot} PreviousCount={PreviousCount} PreviousPage={PreviousPage}",
+            previousSnapshot is not null,
+            previousSnapshot?.AssetSummaries.Count ?? 0,
+            previousSnapshot?.CurrentPage ?? 0);
     }
 
     public void Trim()
     {
+        FabLibrarySessionSnapshot? originalSnapshot;
+        FabLibrarySessionSnapshot? normalizedSnapshot;
         lock (_syncRoot)
         {
             if (_snapshot is null)
             {
+                Logger.Information("Fab 会话快照执行 Trim 时没有可裁剪内容");
                 return;
             }
 
-            _snapshot = NormalizeSnapshot(_snapshot);
+            originalSnapshot = _snapshot;
+            normalizedSnapshot = NormalizeSnapshot(_snapshot);
+            _snapshot = normalizedSnapshot;
         }
+
+        Logger.Information(
+            "Fab 会话快照已执行 Trim | OriginalCount={OriginalCount} RetainedCount={RetainedCount} OriginalPage={OriginalPage} RetainedPage={RetainedPage} WasTrimmed={WasTrimmed}",
+            originalSnapshot!.AssetSummaries.Count,
+            normalizedSnapshot!.AssetSummaries.Count,
+            originalSnapshot.CurrentPage,
+            normalizedSnapshot.CurrentPage,
+            WasNormalized(originalSnapshot, normalizedSnapshot));
     }
 
     private static FabLibrarySessionSnapshot NormalizeSnapshot(FabLibrarySessionSnapshot snapshot)
@@ -79,5 +110,13 @@ internal sealed class InMemoryFabLibrarySessionStateStore : IFabLibrarySessionSt
             AccountScopeKey = snapshot.AccountScopeKey,
             AssetSummaries = retainedAssets,
         };
+    }
+
+    private static bool WasNormalized(FabLibrarySessionSnapshot originalSnapshot, FabLibrarySessionSnapshot normalizedSnapshot)
+    {
+        return originalSnapshot.AssetSummaries.Count != normalizedSnapshot.AssetSummaries.Count
+            || originalSnapshot.CurrentPage != normalizedSnapshot.CurrentPage
+            || originalSnapshot.VerticalOffset != normalizedSnapshot.VerticalOffset
+            || originalSnapshot.HasNextPage != normalizedSnapshot.HasNextPage;
     }
 }

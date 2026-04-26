@@ -91,6 +91,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         _forceNetworkReload = false;
         _pendingRestoreVerticalOffset = null;
         _isOffline = !networkMonitor.IsNetworkAvailable;
+        _authService.SessionExpired += OnSessionExpired;
         _networkMonitor.NetworkStatusChanged += OnNetworkStatusChanged;
 
         Logger.Debug("FabLibraryViewModel 已创建");
@@ -199,6 +200,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         IsLoading = true;
         try
         {
+            ClearSessionSnapshot("manual_refresh");
             await SearchInternalAsync(1);
         }
         finally
@@ -334,7 +336,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         var currentAccountScopeKey = GetCurrentAccountScopeKey();
         if (!string.Equals(snapshot.AccountScopeKey, currentAccountScopeKey, StringComparison.Ordinal))
         {
-            _sessionStateStore.Clear();
+            ClearSessionSnapshot("scope_mismatch");
             _isRestoredFromSnapshot = false;
             _restoredSnapshotAgeCategory = null;
             _pendingRestoreVerticalOffset = null;
@@ -425,6 +427,19 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         return _authService.CurrentUser?.AccountId ?? string.Empty;
     }
 
+    private void ClearSessionSnapshot(string reason, string? detail = null)
+    {
+        _sessionStateStore.Clear();
+
+        if (string.IsNullOrWhiteSpace(detail))
+        {
+            Logger.Information("Fab 会话快照已清理 | Reason={Reason}", reason);
+            return;
+        }
+
+        Logger.Information("Fab 会话快照已清理 | Reason={Reason} Detail={Detail}", reason, detail);
+    }
+
     internal void SaveCurrentScrollOffset(double verticalOffset)
     {
         SaveSessionSnapshot(verticalOffset);
@@ -461,9 +476,15 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+        _authService.SessionExpired -= OnSessionExpired;
         _networkMonitor.NetworkStatusChanged -= OnNetworkStatusChanged;
         _searchCts.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    private void OnSessionExpired(SessionExpiredEvent evt)
+    {
+        ClearSessionSnapshot("session_expired", evt.Reason);
     }
 
     private void OnNetworkStatusChanged(bool isAvailable)

@@ -107,7 +107,7 @@
 | S2 | 列表恢复与写回 | 已完成 | `FabLibraryViewModel` 具备 Restore/Save 主路径 |
 | S3 | 视口与返回体验 | 已完成 | 返回列表后恢复滚动位置，进入详情前先保存快照 |
 | S4 | SWR 刷新策略 | 已完成 | 按快照年龄区分 Fresh / Warm / Stale |
-| S5 | 失效与容量控制 | 进行中 | 防止快照无限增长、跨账号串态、长期脏数据 |
+| S5 | 失效与容量控制 | 已完成 | 防止快照无限增长、跨账号串态、长期脏数据 |
 | S6 | 设置开关接入 | 未开始 | 增加 `FabLibrary.AutoWarmOnStartup` 设置项 |
 | S7 | 启动预热协调器 | 未开始 | 在 Phase 3 背景预热 Fab 首屏但不导航 |
 | S8 | 验证与提交流程 | 未开始 | 固化单测、冒烟、日志点、提交前检查 |
@@ -135,7 +135,7 @@
 | S4-E | S4 | 已完成 | Stale 快照走完整加载 |
 | S5-A | S5 | 已完成 | 限制快照页数和卡片数量 |
 | S5-B | S5 | 已完成 | 为快照增加账号作用域并做失效判定 |
-| S5-C | S5 | 未开始 | 增加 Clear/Trim 的日志与显式清理路径 |
+| S5-C | S5 | 已完成 | 增加 Clear/Trim 的日志与显式清理路径 |
 | S6-A | S6 | 未开始 | 增加 `FabLibraryConfig` 配置模型与读写契约 |
 | S6-B | S6 | 未开始 | 完成 Settings 持久化与默认值 |
 | S6-C | S6 | 未开始 | SettingsViewModel 暴露预热开关 |
@@ -522,7 +522,7 @@
 
 ### S5 失效与容量控制
 
-- 状态：`进行中`
+- 状态：`已完成`
 - 目标：防止会话快照无限增长、跨账号串态、长期脏数据常驻。
 
 #### S5-A 限制快照页数与卡片数量
@@ -570,7 +570,7 @@
 
 #### S5-C Clear/Trim 日志与显式清理路径
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：Store 的清理行为要可观测，而不是 silent state change。
 - 本轮只做：
   - `Save / Clear / Trim / ScopeMismatch` 打日志
@@ -582,6 +582,11 @@
   - 快照保存/清理/裁剪都有结构化日志
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - `InMemoryFabLibrarySessionStateStore` 已为 `Save / Clear / Trim` 补齐结构化日志，并记录是否发生裁剪、裁剪前后条目数与页码
+  - `FabLibraryViewModel` 已明确三条会主动清理会话快照的路径：`manual_refresh`、`scope_mismatch`、`session_expired`
+  - `session_expired` 当前统一覆盖用户主动登出与 Token 刷新失败两条认证失效路径；至此 `S5` 失效与容量控制阶段已完整闭环
 
 ### S6 设置开关接入
 
