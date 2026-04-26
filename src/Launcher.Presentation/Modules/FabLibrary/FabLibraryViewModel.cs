@@ -264,6 +264,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         ClearPageError();
         var pagedResult = result.Value!;
         UpdatePageState(pagedResult, append);
+        SaveSessionSnapshot();
     }
 
     private void ClearPageError()
@@ -325,6 +326,33 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         _isRestoredFromSnapshot = HasAssets;
     }
 
+    private void SaveSessionSnapshot()
+    {
+        var assetSummaries = new List<FabAssetSummary>(Assets.Count);
+        foreach (var card in Assets)
+        {
+            assetSummaries.Add(card.ToSummary());
+        }
+
+        var snapshot = new FabLibrarySessionSnapshot
+        {
+            Keyword = SearchKeyword,
+            Category = SelectedCategory,
+            SortOrder = SelectedSortOrder,
+            CurrentPage = CurrentPage,
+            TotalPages = TotalPages,
+            HasNextPage = HasNextPage,
+            TotalCount = TotalCount,
+            VerticalOffset = 0,
+            SnapshotAtUtc = DateTime.UtcNow,
+            AccountScopeKey = string.Empty,
+            AssetSummaries = assetSummaries,
+        };
+
+        _sessionStateStore.Save(snapshot);
+        _isRestoredFromSnapshot = false;
+    }
+
     private async Task CancelPendingSearchAsync()
     {
         try
@@ -378,6 +406,7 @@ public partial class FabAssetCardViewModel : ObservableObject
     private readonly string _thumbnailUrl;
     private readonly string _previewListingId;
     private readonly string _previewProductId;
+    private readonly IReadOnlyList<string> _supportedEngineVersions;
     private readonly IThumbnailCacheService _thumbnailCache;
     private readonly IFabPreviewUrlReadService _previewUrlReadService;
     private readonly DispatcherQueue _dispatcherQueue;
@@ -410,9 +439,29 @@ public partial class FabAssetCardViewModel : ObservableObject
         _thumbnailUrl = summary.ThumbnailUrl;
         _previewListingId = summary.PreviewListingId;
         _previewProductId = summary.PreviewProductId;
+        _supportedEngineVersions = summary.SupportedEngineVersions;
         _thumbnailCache = thumbnailCache;
         _previewUrlReadService = previewUrlReadService;
         _dispatcherQueue = dispatcherQueue;
+    }
+
+    public FabAssetSummary ToSummary()
+    {
+        return new FabAssetSummary
+        {
+            AssetId = AssetId,
+            Title = Title,
+            ThumbnailUrl = _thumbnailUrl,
+            PreviewListingId = _previewListingId,
+            PreviewProductId = _previewProductId,
+            Category = Category,
+            Author = Author,
+            Price = Price,
+            Rating = Rating,
+            IsOwned = IsOwned,
+            IsInstalled = IsInstalled,
+            SupportedEngineVersions = _supportedEngineVersions,
+        };
     }
 
     /// <summary>

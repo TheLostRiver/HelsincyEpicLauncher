@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.8 - Fab 热恢复 S2-D 成功路径写回快照 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，在列表查询成功路径后统一写回会话快照
+- `FabAssetCardViewModel` 新增导出 `FabAssetSummary` 的能力，保证当前列表可以被稳定保存到 `FabLibrarySessionSnapshot`
+- 至此 `S2` 列表恢复与写回切片已完整闭环：依赖接入、卡片恢复辅助方法、`LoadAsync` 恢复入口、成功路径写回快照均已落地
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.7 - Fab 热恢复 S2-C 首次加载恢复入口 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，在 `LoadAsync` 中优先尝试恢复会话快照
 - 当前恢复成功时会先展示快照内容，并跳过本轮首页资产查询；分类加载仍照常执行
