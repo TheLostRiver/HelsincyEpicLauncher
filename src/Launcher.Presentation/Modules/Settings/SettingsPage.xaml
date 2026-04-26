@@ -79,6 +79,31 @@
                 </ComboBox>
             </Grid>
 
+            <!-- Fab 预热 -->
+            <Grid
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                CornerRadius="4"
+                Padding="16,12"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="启动后自动预热 Fab 列表" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                    <TextBlock Text="应用启动后在后台预热 Fab 首屏，减少本次会话首次进入等待" Style="{StaticResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="WrapWholeWords" />
+                </StackPanel>
+                <ToggleSwitch
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    IsOn="{x:Bind ViewModel.AutoWarmOnStartup, Mode=TwoWay}"
+                    OnContent="开"
+                    OffContent="关"
+                    Loaded="FabWarmupToggleSwitch_Loaded"
+                    Toggled="FabWarmupToggleSwitch_Toggled" />
+            </Grid>
+
             <!-- ====== 下载 ====== -->
             <TextBlock
                 Text="下载"

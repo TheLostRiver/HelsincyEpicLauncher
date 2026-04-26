@@ -15,6 +15,7 @@ public sealed partial class SettingsPage : Page
     private static readonly ILogger Logger = Log.ForContext<SettingsPage>();
     private readonly IDialogService _dialogService;
     private readonly IFolderPickerService _folderPickerService;
+    private bool _isFabWarmupToggleReady;
 
     public SettingsViewModel ViewModel { get; }
 
@@ -63,6 +64,21 @@ public sealed partial class SettingsPage : Page
     private async void CachePathBrowseButton_Click(object sender, RoutedEventArgs e)
     {
         await SelectPathAsync(path => ViewModel.CachePath = path, "缓存路径");
+    }
+
+    private void FabWarmupToggleSwitch_Loaded(object sender, RoutedEventArgs e)
+    {
+        _isFabWarmupToggleReady = true;
+    }
+
+    private async void FabWarmupToggleSwitch_Toggled(object sender, RoutedEventArgs e)
+    {
+        if (!_isFabWarmupToggleReady)
+        {
+            return;
+        }
+
+        await ViewModel.SaveFabLibraryConfigCommand.ExecuteAsync(null);
     }
 
     private async Task SelectPathAsync(Action<string> applyPath, string label)

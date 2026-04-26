@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.23 - Fab 热恢复 S6-D 设置页预热开关 UI (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/Settings/SettingsPage.xaml](src/Launcher.Presentation/Modules/Settings/SettingsPage.xaml) 与 [src/Launcher.Presentation/Modules/Settings/SettingsPage.xaml.cs](src/Launcher.Presentation/Modules/Settings/SettingsPage.xaml.cs)，在“通用”区块增加“启动后自动预热 Fab 列表”开关 UI，并把用户切换动作接到 `SaveFabLibraryConfigCommand`
+- 至此 `S6` 设置开关接入阶段已完整闭环：设置契约、持久化、ViewModel、设置页 UI 全部落地
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.22 - Fab 热恢复 S6-C SettingsViewModel 暴露预热开关 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/Settings/SettingsViewModel.cs](src/Launcher.Presentation/Modules/Settings/SettingsViewModel.cs)，新增 `AutoWarmOnStartup` 绑定属性，并在 `LoadSettings()` 中读取 `FabLibraryConfig`
 - `SettingsViewModel` 已新增 `SaveFabLibraryConfigAsync()`，后续设置页 UI 可以直接复用该命令保存 Fab 预热开关

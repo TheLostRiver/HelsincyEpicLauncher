@@ -108,7 +108,7 @@
 | S3 | 视口与返回体验 | 已完成 | 返回列表后恢复滚动位置，进入详情前先保存快照 |
 | S4 | SWR 刷新策略 | 已完成 | 按快照年龄区分 Fresh / Warm / Stale |
 | S5 | 失效与容量控制 | 已完成 | 防止快照无限增长、跨账号串态、长期脏数据 |
-| S6 | 设置开关接入 | 进行中 | 增加 `FabLibrary.AutoWarmOnStartup` 设置项 |
+| S6 | 设置开关接入 | 已完成 | 增加 `FabLibrary.AutoWarmOnStartup` 设置项 |
 | S7 | 启动预热协调器 | 未开始 | 在 Phase 3 背景预热 Fab 首屏但不导航 |
 | S8 | 验证与提交流程 | 未开始 | 固化单测、冒烟、日志点、提交前检查 |
 | S9 | 页面缓存试验（可选） | 未开始 | 仅在主路径完成后，再评估是否启用 `NavigationCacheMode.Required` |
@@ -139,7 +139,7 @@
 | S6-A | S6 | 已完成 | 增加 `FabLibraryConfig` 配置模型与读写契约 |
 | S6-B | S6 | 已完成 | 完成 Settings 持久化与默认值 |
 | S6-C | S6 | 已完成 | SettingsViewModel 暴露预热开关 |
-| S6-D | S6 | 未开始 | SettingsPage 增加预热开关 UI |
+| S6-D | S6 | 已完成 | SettingsPage 增加预热开关 UI |
 | S7-A | S7 | 未开始 | 新增 Fab 预热协调器服务 |
 | S7-B | S7 | 未开始 | Phase 3 调用预热协调器 |
 | S7-C | S7 | 未开始 | 预热跳过条件与静默日志收口 |
@@ -590,7 +590,7 @@
 
 ### S6 设置开关接入
 
-- 状态：`进行中`
+- 状态：`已完成`
 - 目标：让“启动后自动预热 Fab 列表”成为显式配置，而不是硬编码策略。
 
 #### S6-A 增加 FabLibrary 配置模型与读写契约
@@ -654,7 +654,7 @@
 
 #### S6-D SettingsPage 增加预热开关 UI
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：在现有设置页中提供最小 UI 入口。
 - 本轮只做：
   - 在 Settings 页面增加一个 ToggleSwitch
@@ -669,6 +669,11 @@
   - 用户可以在设置页显式控制该开关
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - `SettingsPage` 的“通用”区块已新增“启动后自动预热 Fab 列表”开关 UI
+  - `ToggleSwitch` 已通过 `x:Bind` 绑定 `ViewModel.AutoWarmOnStartup`，并在用户真实切换时调用 `SaveFabLibraryConfigCommand`
+  - 至此 `S6` 设置开关接入阶段已完整闭环：契约、持久化、ViewModel、设置页 UI 全部落地
 
 ### S7 启动预热协调器
 
