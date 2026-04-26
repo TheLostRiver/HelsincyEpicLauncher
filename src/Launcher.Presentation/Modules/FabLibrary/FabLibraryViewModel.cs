@@ -105,7 +105,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
             var categoriesTask = _catalogService.GetCategoriesAsync(CancellationToken.None);
             var assetsTask = restoredFromSnapshot
                 ? _forceNetworkReload
-                    ? SearchInternalAsync(1)
+                    ? SearchInternalAsync(1, preserveVisibleContentOnFailure: true)
                     : Task.CompletedTask
                 : SearchInternalAsync(1);
 
@@ -228,9 +228,10 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         }
     }
 
-    private async Task SearchInternalAsync(int page, bool append = false)
+    private async Task SearchInternalAsync(int page, bool append = false, bool preserveVisibleContentOnFailure = false)
     {
         var hadVisibleAssets = Assets.Count > 0;
+        var shouldPreserveVisibleContent = preserveVisibleContentOnFailure && hadVisibleAssets && !append;
         var query = new FabSearchQuery
         {
             Keyword = string.IsNullOrWhiteSpace(SearchKeyword) ? null : SearchKeyword.Trim(),
@@ -247,7 +248,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
             {
                 ClearPageError();
 
-                if (!append)
+                if (!append && !shouldPreserveVisibleContent)
                 {
                     Assets.Clear();
                     CurrentPage = 1;
@@ -256,6 +257,14 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
                     TotalCount = 0;
                     HasAssets = false;
                     IsEmpty = false;
+                }
+
+                if (shouldPreserveVisibleContent)
+                {
+                    var authUserMessage = result.Error?.UserMessage ?? "当前登录状态已失效";
+                    _notificationService.ShowWarning(authUserMessage);
+                    Logger.Warning("Fab 静默刷新失败（认证失效，保留当前列表）: {Error}", result.Error?.TechnicalMessage);
+                    return;
                 }
 
                 Logger.Information("Fab 当前尚未完成认证，等待会话恢复后自动重载");

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.15 - Fab 热恢复 S4-D Warm 刷新失败保留列表 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，为 `SearchInternalAsync(...)` 增加失败时保留当前可见列表的窄参数，并仅让 Warm 静默刷新路径使用它
+- 当前 `AUTH_NOT_AUTHENTICATED` 与普通失败场景都会在 Warm 静默刷新时保留已恢复列表，并通过现有 `INotificationService` 给出轻提示，不再清空当前页面内容
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.14 - Fab 热恢复 S4-C Warm 快照静默刷新 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，为恢复路径保留快照年龄分类状态，并让 `Warm` 快照在列表可见后后台执行第一页刷新
 - 当前 `Warm` 快照不再继续停留在骨架屏；刷新仍复用已有成功路径，命中新结果时会以最新第一页内容覆盖当前列表
