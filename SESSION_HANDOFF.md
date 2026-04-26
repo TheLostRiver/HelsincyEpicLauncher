@@ -5,7 +5,7 @@
 - 当前重点：Fab 热恢复 `S0-S9` 已闭环；若后续人工 UI 测量仍显示 Fab 返回耗时明显超过目标，再重新开启仅针对 `FabLibraryPage` 的缓存页实验
 - 当前建议：首期主路径只做“快照恢复 + SWR + Phase 3 预热协调器”，暂不把 `NavigationCacheMode.Required` 当成前置条件；页面缓存仅作为 `S9` 可选实验切片
 - 本轮验证：`dotnet test tests/Launcher.Tests.Unit/Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibrarySessionStateStoreTests|FullyQualifiedName~FabLibrarySnapshotAgePolicyTests"`、`dotnet test Q:\MyEpicLauncher\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibraryViewModelWarmResumeTests"`、`dotnet test Q:\MyEpicLauncher\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~SettingsServiceFabLibraryConfigTests|FullyQualifiedName~FabLibraryWarmupCoordinatorTests"` 与 `dotnet test Q:\MyEpicLauncher\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibrarySessionStateStoreTests|FullyQualifiedName~FabLibrarySnapshotAgePolicyTests|FullyQualifiedName~FabLibraryViewModelWarmResumeTests|FullyQualifiedName~SettingsServiceFabLibraryConfigTests|FullyQualifiedName~FabLibraryWarmupCoordinatorTests"` 已通过；`dotnet build Q:\MyEpicLauncher\src\Launcher.App\Launcher.App.csproj --no-restore` 已通过；人工 UI 冒烟步骤已形成清单，但未由代理实际执行
-- 远端状态：本地仍存在未推送提交；继续前先用 `git status -sb` 与 `git rev-parse HEAD / origin/main` 复核远端是否追平，再进入下一切片
+- 远端状态：当前 `HEAD` 与 `origin/main` 已追平到 `0f1f8d08f8da1ffc457adaad530363ed420241b1`；Fab 热恢复 `S0-S9` 收口完成
 
 ## 最后更新
 - 时间：2026-04-22
