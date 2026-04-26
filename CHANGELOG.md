@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.29 - Fab 热恢复 S8-C 补齐设置持久化与预热协调器单测 (2026-04-27)
+- 新增 [tests/Launcher.Tests.Unit/SettingsServiceFabLibraryConfigTests.cs](tests/Launcher.Tests.Unit/SettingsServiceFabLibraryConfigTests.cs)，覆盖 `FabLibraryConfig` 的开启/关闭持久化，以及 `ResetToDefaultsAsync()` 对 `FabLibrary` 配置段的重置与变更广播
+- 新增 [tests/Launcher.Tests.Unit/FabLibraryWarmupCoordinatorTests.cs](tests/Launcher.Tests.Unit/FabLibraryWarmupCoordinatorTests.cs)，覆盖 `FabLibraryWarmupCoordinator` 的 `disabled / unauthenticated / offline / fresh_snapshot` 跳过条件，以及满足条件时的默认第一页预热写快照路径
+- 已执行 `dotnet test Q:\MyEpicLauncher\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~SettingsServiceFabLibraryConfigTests|FullyQualifiedName~FabLibraryWarmupCoordinatorTests"`，7 个测试通过；测试项目仅剩既有 analyzer 警告，未在本轮处理
+
 ### Task 9.28 - Fab 热恢复 S8-B 补齐 ViewModel Restore/SWR 单测 (2026-04-27)
 - 新增 [tests/Launcher.Tests.Unit/FabLibraryViewModelWarmResumeTests.cs](tests/Launcher.Tests.Unit/FabLibraryViewModelWarmResumeTests.cs)，覆盖 `FabLibraryViewModel` 的无快照、`Fresh`、`Warm`、`Stale`、以及 `Warm` 刷新失败保留列表五条热恢复主路径
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，并同步更新同文件中的 `FabAssetCardViewModel`，补一个仅供内部使用的 UI 调度委托 seam，避免单测依赖 WinUI `DispatcherQueue` COM 激活；公开构造函数与运行时行为保持不变

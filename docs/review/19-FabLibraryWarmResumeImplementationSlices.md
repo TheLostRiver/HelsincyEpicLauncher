@@ -145,7 +145,7 @@
 | S7-C | S7 | 已完成 | 预热跳过条件与静默日志收口 |
 | S8-A | S8 | 已完成 | 为 Session Store / 年龄策略补单测 |
 | S8-B | S8 | 已完成 | 为 ViewModel Restore/SWR 补单测 |
-| S8-C | S8 | 未开始 | 为设置持久化与预热协调器补单测 |
+| S8-C | S8 | 已完成 | 为设置持久化与预热协调器补单测 |
 | S8-D | S8 | 未开始 | 形成手工冒烟清单与提交前检查 |
 | S9-A | S9 | 未开始 | 单独评估 `NavigationCacheMode.Required` |
 | S9-B | S9 | 未开始 | 对比内存与返回耗时数据后决定保留或回退 |
@@ -787,7 +787,7 @@
 
 #### S8-C 设置持久化与预热协调器单测
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：把“配置保存”和“Phase 3 预热条件分支”补进测试。
 - 建议目标文件：
   - `tests/Launcher.Tests.Unit/SettingsServiceFabLibraryConfigTests.cs`
@@ -797,6 +797,11 @@
   - 覆盖未登录、离线、已有新鲜快照三种跳过条件
 - 验证动作：
   - 定向 `dotnet test`
+
+- 已完成结果：
+  - 已新增 `tests/Launcher.Tests.Unit/SettingsServiceFabLibraryConfigTests.cs`，当前覆盖 `FabLibraryConfig` 的开启/关闭持久化，以及 `ResetToDefaultsAsync()` 对 `FabLibrary` 配置段的重置与 `ConfigChanged` 广播
+  - 已新增 `tests/Launcher.Tests.Unit/FabLibraryWarmupCoordinatorTests.cs`，当前覆盖 `disabled / unauthenticated / offline / fresh_snapshot` 四类跳过条件，以及满足条件时的默认第一页预热写快照路径
+  - 已执行定向 `dotnet test Q:\MyEpicLauncher\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~SettingsServiceFabLibraryConfigTests|FullyQualifiedName~FabLibraryWarmupCoordinatorTests"`，共 `7` 个测试通过
 
 #### S8-D 手工冒烟清单与提交前检查
 
