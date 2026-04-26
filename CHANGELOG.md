@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.2 - Fab 热恢复 S1-B 会话 Store 接口 (2026-04-26)
+- 新增 [src/Launcher.Presentation/Modules/FabLibrary/IFabLibrarySessionStateStore.cs](src/Launcher.Presentation/Modules/FabLibrary/IFabLibrarySessionStateStore.cs)，为 Fab 列表页热恢复建立 Presentation 内部的会话快照存储接口
+- 当前接口保持最小职责面，只暴露 `Save`、`TryGet`、`Clear`、`Trim` 四个方法，避免演化为通用缓存中心
+- 该接口仍停留在 Presentation 层内部，未升级为跨模块 `Contracts`
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.1 - Fab 热恢复 S1-A 会话快照 DTO (2026-04-26)
 - 新增 [src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySessionSnapshot.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySessionSnapshot.cs)，为 Fab 列表页热恢复建立首个内部会话快照 DTO
 - 当前快照字段已覆盖查询态、分页态、滚动位置、时间戳、账号作用域，以及用于重建卡片列表的 `FabAssetSummary` 集合

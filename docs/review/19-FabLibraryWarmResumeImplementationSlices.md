@@ -118,7 +118,7 @@
 | 子切片 | 所属 Slice | 状态 | 单次目标 |
 |------|------|------|------|
 | S1-A | S1 | 已完成 | 定义会话快照 DTO |
-| S1-B | S1 | 未开始 | 定义会话 Store 接口 |
+| S1-B | S1 | 已完成 | 定义会话 Store 接口 |
 | S1-C | S1 | 未开始 | 实现内存版会话 Store |
 | S1-D | S1 | 未开始 | 在 Presentation DI 注册会话 Store |
 | S2-A | S2 | 未开始 | `FabLibraryViewModel` 注入 Store 与恢复守卫字段 |
@@ -193,7 +193,7 @@
 
 #### S1-B 定义会话 Store 接口
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：把 Session Store 的职责压缩成最小接口。
 - 本轮只做：
   - 新增 `IFabLibrarySessionStateStore`
@@ -207,6 +207,11 @@
   - 接口足够支撑列表恢复，但没有演化成万能缓存中心
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - 已新增 `IFabLibrarySessionStateStore`
+  - 当前接口只暴露 `Save / TryGet / Clear / Trim`
+  - 接口保持在 Presentation 内部，未升级为跨模块 Contracts
 
 #### S1-C 实现内存版会话 Store
 
@@ -722,13 +727,13 @@
 
 如果下一轮开始实现，默认从以下最小闭环启动：
 
-1. `S1-B` 定义 `IFabLibrarySessionStateStore`
-2. `S1-C` 实现 `InMemoryFabLibrarySessionStateStore`
-3. `S1-D` 注册到 Presentation DI
-4. 再进入 `S2-A`，把 Store 接到 `FabLibraryViewModel`
+1. `S1-C` 实现 `InMemoryFabLibrarySessionStateStore`
+2. `S1-D` 注册到 Presentation DI
+3. 再进入 `S2-A`，把 Store 接到 `FabLibraryViewModel`
+4. 然后推进 `S2-B`，补卡片列表恢复辅助方法
 
 原因：
 
-1. `S1-A` 已经完成，后续只需把 Store 骨架补齐即可形成第一个可用基础层。
+1. `S1-A` 与 `S1-B` 已经完成，继续补 Store 实现即可收口第一层基础设施。
 2. 这一批仍然不碰 UI 行为，不容易引入运行态抖动。
 3. 完成后就能进入 `FabLibraryViewModel` 的 Restore/Save 接入。
