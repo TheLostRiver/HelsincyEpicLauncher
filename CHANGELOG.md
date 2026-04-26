@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.26 - Fab 热恢复 S7-C 预热跳过条件与静默日志收口 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryWarmupCoordinator.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryWarmupCoordinator.cs)，统一收口 `disabled / unauthenticated / offline / fresh_snapshot` 四类启动预热跳过条件，并为当前账号的新鲜快照增加静默短路
+- 当前预热失败与跳过都只写结构化日志，不弹 UI、不干扰启动链；至此 `S7` 启动预热阶段已完整闭环
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.25 - Fab 热恢复 S7-B Phase 3 调用预热协调器 (2026-04-26)
 - 更新 [src/Launcher.App/App.xaml.cs](src/Launcher.App/App.xaml.cs)，在 `StartBackgroundServicesAsync(...)` 中于现有后台 Worker 启动后以后台非阻塞方式调度 `FabLibraryWarmupCoordinator`
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryWarmupCoordinator.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryWarmupCoordinator.cs)，将协调器提升为 `public`，使 `Launcher.App` 宿主可以直接解析并调用该服务
