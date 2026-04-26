@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Fab 列表页热恢复实施文档 (2026-04-26)
+- 新增 [docs/review/19-FabLibraryWarmResumeImplementationSlices.md](docs/review/19-FabLibraryWarmResumeImplementationSlices.md)，把 Fab 列表页热恢复、SWR、启动预热方案拆成可逐步执行的细粒度原子任务，并为每个子切片补齐目标文件、完成标准、验证动作和禁止事项
+- 更新 [docs/review/18-FabLibraryWarmResumeStrategy.md](docs/review/18-FabLibraryWarmResumeStrategy.md)，明确其定位为策略文档，并把“首期不依赖页面实例常驻”的实现边界写清，避免后续误把页面缓存当成前置条件
+- 更新 [docs/06-ModuleDefinitions/FabLibrary.md](docs/06-ModuleDefinitions/FabLibrary.md)，补充 Fab 列表页热恢复文档入口，便于后续从模块文档直接恢复上下文
+- 本轮仅完成文档与交接入口整理，未执行 `dotnet build` 或 `dotnet test`
+
 ### Fab 预览追踪锚点保留 (2026-04-22)
 - `FabAssetSummary` 新增 `PreviewListingId` / `PreviewProductId`，用于为后续二级 preview resolver 保留非 UI 预览追踪元数据，不再要求重新打穿 owned fallback 链路
 - `EpicOwnedFabCatalogClient` 现在会从 Epic library owned record 保留 `productId`，并从 catalog `customAttributes` 中大小写不敏感地提取 `ListingIdentifier`；即使 `keyImages=[]`，无图资产也会把后续预览解析所需锚点继续带到列表层

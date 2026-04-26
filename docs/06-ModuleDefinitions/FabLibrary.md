@@ -16,6 +16,8 @@
 
 > Fab 详情富内容（介绍图、格式信息、详情元数据）的一期设计见 [16-FabDetailRichContentDesign.md](../review/16-FabDetailRichContentDesign.md)。
 > 如需防上下文丢失的细粒度实施拆解，请看 [17-FabDetailImplementationSlices.md](../review/17-FabDetailImplementationSlices.md)。
+> Fab 列表页热恢复与分层缓存策略见 [18-FabLibraryWarmResumeStrategy.md](../review/18-FabLibraryWarmResumeStrategy.md)。
+> 如需把热恢复方案拆成可单步落地的原子任务，请看 [19-FabLibraryWarmResumeImplementationSlices.md](../review/19-FabLibraryWarmResumeImplementationSlices.md)。
 
 ### 不负责
 

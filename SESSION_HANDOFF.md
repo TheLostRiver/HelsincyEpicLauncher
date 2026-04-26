@@ -1,5 +1,11 @@
 # 会话交接文档
 
+## 2026-04-26 文档增量
+- 完成内容：新增 [docs/review/19-FabLibraryWarmResumeImplementationSlices.md](docs/review/19-FabLibraryWarmResumeImplementationSlices.md)，把 Fab 列表页热恢复方案拆成细粒度原子任务；同时更新 [docs/review/18-FabLibraryWarmResumeStrategy.md](docs/review/18-FabLibraryWarmResumeStrategy.md) 与 [docs/06-ModuleDefinitions/FabLibrary.md](docs/06-ModuleDefinitions/FabLibrary.md) 的入口引用
+- 当前重点：如果下一轮开始实现，按 [docs/review/19-FabLibraryWarmResumeImplementationSlices.md](docs/review/19-FabLibraryWarmResumeImplementationSlices.md) 从 `S1-A` 开始，先建立 `SessionSnapshot` 与 `SessionStateStore` 骨架
+- 当前建议：首期主路径只做“快照恢复 + SWR + Phase 3 预热协调器”，暂不把 `NavigationCacheMode.Required` 当成前置条件；页面缓存仅作为 `S9` 可选实验切片
+- 本轮验证：仅完成文档整理，未执行 `dotnet build` 或 `dotnet test`
+
 ## 最后更新
 - 时间：2026-04-22
 - 完成任务：Epic 两步式登录验证 + Auth 手动 JSON 输入止血 + Auth 自动回调预研/loopback 清单整理 + Auth 宿主自动回调骨架接入 + Auth 第二实例自动回调转发正式修复并完成运行态验收 + Legendary 参考实现分析与下一阶段 Auth 设计文档定稿 + Auth Phase L1 内部 completion 抽象与结构化日志归一 + EGL refresh token 导入预研 + WebView2 exchange code 预研、默认登录实现与风险加固 + Fab 网页端接口误接入修补 + Fab owned 回退统一到流式详情/分页链路 + WebView2 运行态 loader 缺失修正 + Fab 预览追踪锚点保留与无图占位语义细分 + Fab 真实预览运行态修正（隐藏 WebView2 桌面级视口 + preview 成功结果缓存） + Fab 页面状态提示区防覆盖修正 + Fab 列表阻断/非阻断错误提示分流

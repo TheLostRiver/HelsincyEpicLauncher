@@ -1,5 +1,7 @@
 # Fab 列表页热恢复与缓存策略（替代无脑懒加载）
 
+> 本文只定义方案边界、行为策略与约束。若要按“一个很小的原子任务”推进实现，请配套阅读 [19-FabLibraryWarmResumeImplementationSlices.md](19-FabLibraryWarmResumeImplementationSlices.md)。
+
 ## 1. 问题定义
 
 当前体验问题集中在两条路径：
@@ -91,14 +93,16 @@
 
 ## 7. 导航与生命周期改造建议
 
-### 7.1 不再在 `Unloaded` 立即销毁 Fab 列表会话
+### 7.1 首期实现不依赖页面实例常驻
 
-现状在 `Unloaded` 调 `Dispose()` 会直接切断热恢复。
+现状在 `Unloaded` 调 `Dispose()` 会结束当前页面实例；但首期热恢复并不要求页面实例常驻。
 
-建议：
+建议分两阶段：
 
-1. `FabLibraryPage` 不在 `Unloaded` 直接销毁 VM。
-2. 由页面会话策略统一决定何时释放（例如超时、内存压力、手动刷新）。
+1. 首期主路径：允许页面实例按当前生命周期结束，但必须在离开前把“可恢复快照”写入 `SessionStateStore`。
+2. 可选增强：若主路径完成后仍存在明显抖动，再单独评估 `NavigationCacheMode.Required` 或其他有限页面缓存策略。
+
+这样可以先解决“回页秒开”的主问题，而不把方案绑定到页面缓存或 VM 常驻上。
 
 ### 7.2 Fab 列表页启用有限缓存（可选）
 
@@ -172,7 +176,9 @@
 
 两者组合可以覆盖首次进入和往返进入两类慢路径。
 
-## 11. 实施切片（建议）
+## 11. 实施切片概览（详细版见 19）
+
+详细的原子任务拆解、目标文件、完成标准与验证动作见 [19-FabLibraryWarmResumeImplementationSlices.md](19-FabLibraryWarmResumeImplementationSlices.md)。
 
 ### W1：会话状态接口与内存实现
 
