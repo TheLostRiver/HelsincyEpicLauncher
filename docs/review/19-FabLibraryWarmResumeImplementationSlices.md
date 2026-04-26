@@ -103,7 +103,7 @@
 | Slice | 名称 | 状态 | 目标 |
 |------|------|------|------|
 | S0 | 文档与入口对齐 | 已完成 | 建立策略文档与实现拆解文档的双入口 |
-| S1 | 会话快照骨架 | 进行中 | 定义快照 DTO、Store 接口、内存实现、DI 注册 |
+| S1 | 会话快照骨架 | 已完成 | 定义快照 DTO、Store 接口、内存实现、DI 注册 |
 | S2 | 列表恢复与写回 | 未开始 | `FabLibraryViewModel` 具备 Restore/Save 主路径 |
 | S3 | 视口与返回体验 | 未开始 | 返回列表后恢复滚动位置，进入详情前先保存快照 |
 | S4 | SWR 刷新策略 | 未开始 | 按快照年龄区分 Fresh / Warm / Stale |
@@ -120,7 +120,7 @@
 | S1-A | S1 | 已完成 | 定义会话快照 DTO |
 | S1-B | S1 | 已完成 | 定义会话 Store 接口 |
 | S1-C | S1 | 已完成 | 实现内存版会话 Store |
-| S1-D | S1 | 未开始 | 在 Presentation DI 注册会话 Store |
+| S1-D | S1 | 已完成 | 在 Presentation DI 注册会话 Store |
 | S2-A | S2 | 未开始 | `FabLibraryViewModel` 注入 Store 与恢复守卫字段 |
 | S2-B | S2 | 未开始 | 把快照 `FabAssetSummary` 恢复成卡片列表 |
 | S2-C | S2 | 未开始 | 首次加载先尝试恢复快照 |
@@ -239,7 +239,7 @@
 
 #### S1-D 在 Presentation DI 注册 Store
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：把 Session Store 注册成 `Singleton`，但不改动 `FabLibraryViewModel` 的 `Transient` 生命周期。
 - 目标文件：
   - [../../src/Launcher.Presentation/DependencyInjection.cs](../../src/Launcher.Presentation/DependencyInjection.cs)
@@ -248,6 +248,11 @@
   - `FabLibraryViewModel` 仍保持 `Transient`
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - `IFabLibrarySessionStateStore` 已注册为 `Singleton`
+  - `InMemoryFabLibrarySessionStateStore` 已作为默认实现接入 Presentation DI
+  - `FabLibraryViewModel` 仍保持 `Transient`
 
 ### S2 列表恢复与写回
 
@@ -732,13 +737,13 @@
 
 如果下一轮开始实现，默认从以下最小闭环启动：
 
-1. `S1-D` 注册到 Presentation DI
-2. 再进入 `S2-A`，把 Store 接到 `FabLibraryViewModel`
-3. 然后推进 `S2-B`，补卡片列表恢复辅助方法
-4. 最后补 `S2-C`，把恢复入口插进 `LoadAsync`
+1. `S2-A`，把 Store 接到 `FabLibraryViewModel`
+2. `S2-B`，补卡片列表恢复辅助方法
+3. `S2-C`，把恢复入口插进 `LoadAsync`
+4. `S2-D`，把成功路径统一写回快照
 
 原因：
 
-1. `S1-A`、`S1-B`、`S1-C` 已经完成，接上 DI 就能结束第一层基础设施。
-2. 这一批仍然不碰 UI 行为，不容易引入运行态抖动。
-3. 完成后就能进入 `FabLibraryViewModel` 的 Restore/Save 接入。
+1. `S1` 已经完整闭环，后续工作重心正式转入 `FabLibraryViewModel` 的 Restore/Save 主路径。
+2. `S2-A` 到 `S2-D` 仍然可以保持很小的单步推进，不必一次改完整个恢复流程。
+3. 完成 `S2` 后才能继续做滚动位置和 SWR 年龄策略。

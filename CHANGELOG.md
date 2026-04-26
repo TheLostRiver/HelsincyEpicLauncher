@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.4 - Fab 热恢复 S1-D 会话 Store DI 注册 (2026-04-26)
+- 更新 [src/Launcher.Presentation/DependencyInjection.cs](src/Launcher.Presentation/DependencyInjection.cs)，将 `IFabLibrarySessionStateStore` 注册为 `Singleton`，默认实现为 `InMemoryFabLibrarySessionStateStore`
+- 保持 `FabLibraryViewModel` 继续为 `Transient`，避免把热恢复方案错误演化为页面级全局单例
+- 至此 `S1` 会话快照骨架切片已经完整闭环：快照 DTO、Store 接口、内存实现、DI 注册全部落地
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.3 - Fab 热恢复 S1-C 内存会话 Store (2026-04-26)
 - 新增 [src/Launcher.Presentation/Modules/FabLibrary/InMemoryFabLibrarySessionStateStore.cs](src/Launcher.Presentation/Modules/FabLibrary/InMemoryFabLibrarySessionStateStore.cs)，为 Fab 列表页热恢复提供进程内单槽位的会话快照存储实现
 - 当前实现使用单槽位快照字段加 `lock` 互斥保护，先完成 `Save`、`TryGet`、`Clear`、`Trim` 的最小闭环，不引入多快照、磁盘持久化或容量裁剪策略
