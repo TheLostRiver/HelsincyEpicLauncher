@@ -328,6 +328,17 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         }
 
         var ageCategory = FabLibrarySnapshotAgePolicy.Classify(snapshot);
+
+        if (ageCategory is FabLibrarySnapshotAgeCategory.Stale)
+        {
+            _isRestoredFromSnapshot = false;
+            _restoredSnapshotAgeCategory = null;
+            _pendingRestoreVerticalOffset = null;
+            _forceNetworkReload = false;
+            Logger.Information("Fab 会话快照已过期，改走完整加载 | SnapshotAtUtc={SnapshotAtUtc}", snapshot.SnapshotAtUtc);
+            return false;
+        }
+
         _restoredSnapshotAgeCategory = ageCategory;
         RestorePageState(snapshot);
         _forceNetworkReload = ageCategory is FabLibrarySnapshotAgeCategory.Warm;

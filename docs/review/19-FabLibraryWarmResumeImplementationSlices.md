@@ -106,7 +106,7 @@
 | S1 | 会话快照骨架 | 已完成 | 定义快照 DTO、Store 接口、内存实现、DI 注册 |
 | S2 | 列表恢复与写回 | 已完成 | `FabLibraryViewModel` 具备 Restore/Save 主路径 |
 | S3 | 视口与返回体验 | 已完成 | 返回列表后恢复滚动位置，进入详情前先保存快照 |
-| S4 | SWR 刷新策略 | 进行中 | 按快照年龄区分 Fresh / Warm / Stale |
+| S4 | SWR 刷新策略 | 已完成 | 按快照年龄区分 Fresh / Warm / Stale |
 | S5 | 失效与容量控制 | 未开始 | 防止快照无限增长、跨账号串态、长期脏数据 |
 | S6 | 设置开关接入 | 未开始 | 增加 `FabLibrary.AutoWarmOnStartup` 设置项 |
 | S7 | 启动预热协调器 | 未开始 | 在 Phase 3 背景预热 Fab 首屏但不导航 |
@@ -132,7 +132,7 @@
 | S4-B | S4 | 已完成 | Fresh 快照直接展示，不发刷新 |
 | S4-C | S4 | 已完成 | Warm 快照先展示，再静默刷新 |
 | S4-D | S4 | 已完成 | Warm 刷新失败不覆盖当前可见列表 |
-| S4-E | S4 | 未开始 | Stale 快照走完整加载 |
+| S4-E | S4 | 已完成 | Stale 快照走完整加载 |
 | S5-A | S5 | 未开始 | 限制快照页数和卡片数量 |
 | S5-B | S5 | 未开始 | 为快照增加账号作用域并做失效判定 |
 | S5-C | S5 | 未开始 | 增加 Clear/Trim 的日志与显式清理路径 |
@@ -423,7 +423,7 @@
 
 ### S4 SWR 刷新策略
 
-- 状态：`进行中`
+- 状态：`已完成`
 - 目标：把“有快照”再拆成 `Fresh / Warm / Stale` 三种行为，而不是一刀切。
 
 #### S4-A 定义快照年龄分类辅助逻辑
@@ -506,7 +506,7 @@
 
 #### S4-E Stale 快照走完整加载
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：快照过旧时，不再假装热恢复成功。
 - 目标文件：
   - [../../src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](../../src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)
@@ -514,6 +514,11 @@
   - `age > 5m` 时走完整加载路径
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - `FabLibraryViewModel.TryRestorePageStateFromSnapshot()` 现在会在恢复前先判断是否为 `Stale` 快照
+  - 当前 `Stale` 快照会直接跳过恢复，回到常规完整加载路径，不再展示过期列表内容
+  - 至此 `S4` SWR 刷新策略切片已经完整闭环：`Fresh` 直显、`Warm` 静默刷新、`Warm` 失败保留列表、`Stale` 完整加载均已落地
 
 ### S5 失效与容量控制
 
