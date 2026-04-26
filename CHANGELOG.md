@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.32 - Fab 热恢复 S9-B 回退单页缓存实验 (2026-04-27)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)，回退 `FabLibraryPage` 的 `NavigationCacheMode.Required` 实验，恢复为“离开即保存快照并销毁 ViewModel”的现有基线
+- 更新 [docs/review/18-FabLibraryWarmResumeStrategy.md](docs/review/18-FabLibraryWarmResumeStrategy.md) 与 [docs/review/19-FabLibraryWarmResumeImplementationSlices.md](docs/review/19-FabLibraryWarmResumeImplementationSlices.md)，记录 `S9` 结论：当前主路径继续以 `SessionStateStore + SWR` 为准，不保留页面缓存
+- 决策依据：缓存页的潜在收益只是在返回时少一次 `LoadCommand` 与卡片重建，但代价是保留 `FabLibraryPage / FabLibraryViewModel / 缩略图` 等 UI 对象图；在当前自动化环境无法完成可信 UI 往返测量时，按保守策略回退
+
 ### Task 9.31 - Fab 热恢复 S9-A 单页缓存实验 (2026-04-27)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)，仅对 `FabLibraryPage` 打开 `NavigationCacheMode.Required`，不改动通用导航服务
 - 当前缓存页实验同步调整 `Loaded / Unloaded` 生命周期：首次进入仍执行 `LoadCommand`，缓存返回不再重复加载；离开时只保存滚动位置，不再销毁 `FabLibraryViewModel`

@@ -111,7 +111,7 @@
 | S6 | 设置开关接入 | 已完成 | 增加 `FabLibrary.AutoWarmOnStartup` 设置项 |
 | S7 | 启动预热协调器 | 未开始 | 在 Phase 3 背景预热 Fab 首屏但不导航 |
 | S8 | 验证与提交流程 | 已完成 | 固化单测、冒烟、日志点、提交前检查 |
-| S9 | 页面缓存试验（可选） | 进行中 | 仅在主路径完成后，再评估是否启用 `NavigationCacheMode.Required` |
+| S9 | 页面缓存试验（可选） | 已完成 | 仅在主路径完成后，再评估是否启用 `NavigationCacheMode.Required` |
 
 ### 5.1 子切片总览
 
@@ -148,7 +148,7 @@
 | S8-C | S8 | 已完成 | 为设置持久化与预热协调器补单测 |
 | S8-D | S8 | 已完成 | 形成手工冒烟清单与提交前检查 |
 | S9-A | S9 | 已完成 | 单独评估 `NavigationCacheMode.Required` |
-| S9-B | S9 | 未开始 | 对比内存与返回耗时数据后决定保留或回退 |
+| S9-B | S9 | 已完成 | 对比内存与返回耗时数据后决定保留或回退 |
 
 ## 6. 细粒度切片定义
 
@@ -870,16 +870,21 @@
   - 手工冒烟 + 内存观察
 
 - 已完成结果：
-  - `FabLibraryPage` 已单独设置 `NavigationCacheMode.Required`，当前页面缓存试验只作用于 Fab 列表页，不影响通用导航服务或其他模块页面
-  - 为避免缓存页在 `Unloaded` 时把实验效果抵消，当前 `Page_Unloaded` 已改为只保存滚动位置和记录日志，不再销毁 `FabLibraryViewModel`
-  - 当前 `Page_Loaded` 只在首次进入时执行 `LoadCommand`；缓存页返回路径会直接复用现有页面/VM 状态，并记录 `initial_load / cached_return` 的耗时与托管内存近似值日志，供 `S9-B` 做保留或回退判断
+  - 已完成最小实验验证：若只在 `FabLibraryPage` 层启用 `NavigationCacheMode.Required`，所需生命周期改动可以局限在页面本体，不必改通用导航服务
+  - 当前已确认页面缓存真正生效需要同时调整 `Page_Loaded / Page_Unloaded`，否则会被“每次进入都加载、每次离开都销毁”的现有行为直接抵消
+  - 本轮实验结论见 `S9-B`；当前默认基线不把页面缓存当成主路径前提
 
 #### S9-B 以数据决定保留或回退
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：记录缓存页前后“返回耗时”和“内存占用”的差异，再决定要不要留。
 - 完成标准：
   - 若收益不明显或引入新泄漏，立即回退
+
+- 已完成结果：
+  - 代码路径对比结论已经明确：保留缓存页可以省掉一次 `LoadCommand` 和最多 `60` 个卡片 VM 的重建，但也会把 `FabLibraryPage`、`FabLibraryViewModel`、事件订阅以及已加载缩略图的 UI 对象图一起常驻在会话内存中
+  - 鉴于当前主路径已经由 `SessionStateStore + SWR` 覆盖，且自动化环境无法提供可信的 WinUI 往返耗时与内存实测数据，本轮按保守策略回退 `NavigationCacheMode.Required` 实验，恢复到“快照恢复为主、页面缓存不保留”的基线
+  - 若后续人工实测仍表明 Fab 返回耗时明显超过目标，再重新开启仅针对 `FabLibraryPage` 的页面缓存实验；届时可直接复用本轮已验证的局部改造思路
 
 ## 7. 推荐执行顺序
 

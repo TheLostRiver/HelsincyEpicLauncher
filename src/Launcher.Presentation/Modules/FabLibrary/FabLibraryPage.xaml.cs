@@ -1,6 +1,5 @@
 // Copyright (c) Helsincy. All rights reserved.
 
-using System.Diagnostics;
 using Launcher.Application.Modules.FabLibrary.Contracts;
 using Launcher.Presentation.Shell;
 using Launcher.Presentation.Shell.Navigation;
@@ -8,8 +7,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Navigation;
-using Serilog;
 
 namespace Launcher.Presentation.Modules.FabLibrary;
 
@@ -18,50 +15,31 @@ namespace Launcher.Presentation.Modules.FabLibrary;
 /// </summary>
 public sealed partial class FabLibraryPage : Page
 {
-    private static readonly ILogger Logger = Log.ForContext<FabLibraryPage>();
-
-    private bool _hasLoadedOnce;
-    private double? _cachedReturnVerticalOffset;
-
     public FabLibraryViewModel ViewModel { get; }
 
     public FabLibraryPage()
     {
         ViewModel = ViewModelLocator.Resolve<FabLibraryViewModel>();
-        NavigationCacheMode = Microsoft.UI.Xaml.Navigation.NavigationCacheMode.Required;
         this.InitializeComponent();
     }
 
     private async void Page_Loaded(object sender, RoutedEventArgs e)
     {
-        var startTimestamp = Stopwatch.GetTimestamp();
-        if (!_hasLoadedOnce)
-        {
-            _hasLoadedOnce = true;
-            await ViewModel.LoadCommand.ExecuteAsync(null);
-            TryRestoreScrollOffsetFromViewModel();
-            LogNavigationCacheMetrics("initial_load", startTimestamp);
-            return;
-        }
+        await ViewModel.LoadCommand.ExecuteAsync(null);
 
-        if (_cachedReturnVerticalOffset is double verticalOffset)
+        if (ViewModel.TryConsumePendingRestoreVerticalOffset(out var verticalOffset))
         {
-            RestoreScrollOffset(verticalOffset);
-            _cachedReturnVerticalOffset = null;
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                AssetScrollViewer.ChangeView(null, verticalOffset, null, true);
+            });
         }
-
-        LogNavigationCacheMetrics("cached_return", startTimestamp);
     }
 
     private void Page_Unloaded(object sender, RoutedEventArgs e)
     {
-        var verticalOffset = AssetScrollViewer.VerticalOffset;
-        ViewModel.SaveCurrentScrollOffset(verticalOffset);
-        _cachedReturnVerticalOffset = verticalOffset;
-        Logger.Debug(
-            "Fab 缓存页已离开可视树，保留页面实例 | VerticalOffset={VerticalOffset} AssetCount={AssetCount}",
-            verticalOffset,
-            ViewModel.Assets.Count);
+        ViewModel.SaveCurrentScrollOffset(AssetScrollViewer.VerticalOffset);
+        ViewModel.Dispose();
     }
 
     private async void RefreshButton_Click(object sender, RoutedEventArgs e)
@@ -119,32 +97,6 @@ public sealed partial class FabLibraryPage : Page
             var nav = ViewModelLocator.Resolve<NavigationService>();
             await nav.NavigateAsync(NavigationRoute.FabAssetDetail, card.DetailNavigationPayload);
         }
-    }
-
-    private void TryRestoreScrollOffsetFromViewModel()
-    {
-        if (ViewModel.TryConsumePendingRestoreVerticalOffset(out var verticalOffset))
-        {
-            RestoreScrollOffset(verticalOffset);
-        }
-    }
-
-    private void RestoreScrollOffset(double verticalOffset)
-    {
-        DispatcherQueue.TryEnqueue(() =>
-        {
-            AssetScrollViewer.ChangeView(null, verticalOffset, null, true);
-        });
-    }
-
-    private void LogNavigationCacheMetrics(string outcome, long startTimestamp)
-    {
-        Logger.Information(
-            "Fab 页面缓存实验命中 | Outcome={Outcome} ElapsedMs={ElapsedMs:F1} AssetCount={AssetCount} ManagedMemoryMb={ManagedMemoryMb:F2}",
-            outcome,
-            Stopwatch.GetElapsedTime(startTimestamp).TotalMilliseconds,
-            ViewModel.Assets.Count,
-            GC.GetTotalMemory(forceFullCollection: false) / 1024d / 1024d);
     }
 }
 
