@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.25 - Fab 热恢复 S7-B Phase 3 调用预热协调器 (2026-04-26)
+- 更新 [src/Launcher.App/App.xaml.cs](src/Launcher.App/App.xaml.cs)，在 `StartBackgroundServicesAsync(...)` 中于现有后台 Worker 启动后以后台非阻塞方式调度 `FabLibraryWarmupCoordinator`
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryWarmupCoordinator.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryWarmupCoordinator.cs)，将协调器提升为 `public`，使 `Launcher.App` 宿主可以直接解析并调用该服务
+- 已执行 `dotnet build src/Launcher.App/Launcher.App.csproj --no-restore`，构建通过
+
 ### Task 9.24 - Fab 热恢复 S7-A 新增预热协调器服务 (2026-04-26)
 - 新增 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryWarmupCoordinator.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryWarmupCoordinator.cs)，把“读取预热设置 -> 检查认证态 -> 拉默认第一页 -> 写会话快照”的启动预热主路径收敛到独立协调器中
 - 更新 [src/Launcher.Presentation/DependencyInjection.cs](src/Launcher.Presentation/DependencyInjection.cs)，将 `FabLibraryWarmupCoordinator` 注册到 Presentation DI，供后续 `S7-B` 在启动 Phase 3 中后台调用

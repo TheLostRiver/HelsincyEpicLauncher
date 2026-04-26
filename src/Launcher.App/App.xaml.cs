@@ -8,6 +8,7 @@ using Launcher.Background;
 using Launcher.Domain;
 using Launcher.Infrastructure;
 using Launcher.Presentation;
+using Launcher.Presentation.Modules.FabLibrary;
 using Launcher.Presentation.Shell;
 using Launcher.Shared.Configuration;
 using Launcher.Shared.Logging;
@@ -144,6 +145,8 @@ public partial class App : Microsoft.UI.Xaml.Application
             var networkWorker = Services.GetRequiredService<Launcher.Background.Network.NetworkMonitorWorker>();
             networkWorker.Start();
 
+            StartFabLibraryWarmup(ct);
+
             Log.Information("所有后台服务已启动");
 
             // TODO: Phase 3 - 缩略图预热（预加载首屏缩略图）
@@ -157,6 +160,26 @@ public partial class App : Microsoft.UI.Xaml.Application
         }
 
         return Task.CompletedTask;
+    }
+
+    private static void StartFabLibraryWarmup(CancellationToken ct)
+    {
+        var warmupCoordinator = Services.GetRequiredService<FabLibraryWarmupCoordinator>();
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await warmupCoordinator.WarmAsync(ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Fab 启动预热失败");
+            }
+        }, ct);
     }
 
     /// <summary>

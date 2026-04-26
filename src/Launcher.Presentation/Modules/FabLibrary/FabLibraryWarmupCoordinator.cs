@@ -7,7 +7,7 @@ using Serilog;
 
 namespace Launcher.Presentation.Modules.FabLibrary;
 
-internal sealed class FabLibraryWarmupCoordinator
+public sealed class FabLibraryWarmupCoordinator
 {
     private static readonly ILogger Logger = Log.ForContext<FabLibraryWarmupCoordinator>();
     private const int WarmupPageSize = 20;

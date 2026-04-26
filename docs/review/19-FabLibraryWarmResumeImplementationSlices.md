@@ -141,7 +141,7 @@
 | S6-C | S6 | 已完成 | SettingsViewModel 暴露预热开关 |
 | S6-D | S6 | 已完成 | SettingsPage 增加预热开关 UI |
 | S7-A | S7 | 已完成 | 新增 Fab 预热协调器服务 |
-| S7-B | S7 | 未开始 | Phase 3 调用预热协调器 |
+| S7-B | S7 | 已完成 | Phase 3 调用预热协调器 |
 | S7-C | S7 | 未开始 | 预热跳过条件与静默日志收口 |
 | S8-A | S8 | 未开始 | 为 Session Store / 年龄策略补单测 |
 | S8-B | S8 | 未开始 | 为 ViewModel Restore/SWR 补单测 |
@@ -706,7 +706,7 @@
 
 #### S7-B Phase 3 调用预热协调器
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：把预热调用放到启动流程正确位置。
 - 本轮只做：
   - `StartBackgroundServicesAsync(...)` 在现有 Worker 启动后调用协调器
@@ -720,6 +720,11 @@
   - 预热只发生在 Phase 3
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - `App.xaml.cs` 的 `StartBackgroundServicesAsync(...)` 已在现有后台 Worker 启动后调度 `FabLibraryWarmupCoordinator`
+  - 当前调度方式保持为后台 `fire-and-forget`，不会把 Fab 预热提前到主窗口显示前，也不会阻塞现有 Phase 3 启动链
+  - 为了让宿主可直接解析并调用该协调器，`FabLibraryWarmupCoordinator` 已提升为 `public`；当前 `Launcher.App` 定向编译已通过，说明宿主到 Presentation 的调用边界已经闭合
 
 #### S7-C 预热跳过条件与静默日志收口
 
