@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.10 - Fab 热恢复 S3-B 恢复滚动位置 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，支持暂存一次性消费的恢复滚动偏移量
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)，在 `LoadAsync` 完成后消费恢复偏移量，并调用 `AssetScrollViewer.ChangeView(...)`
+- 当前只有在偏移量大于 `0` 时才触发回滚，避免对顶部位置做无意义恢复
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.9 - Fab 热恢复 S3-A 写回滚动位置 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，使当前会话快照支持带 `VerticalOffset` 写回
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)，在页面卸载前先保存 `AssetScrollViewer.VerticalOffset`，再执行 `Dispose()`

@@ -30,6 +30,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
     private CancellationTokenSource _searchCts = new();
     private bool _isRestoredFromSnapshot;
     private bool _forceNetworkReload;
+    private double? _pendingRestoreVerticalOffset;
     private bool _disposed;
 
     /// <summary>资产卡片列表</summary>
@@ -82,6 +83,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         _isRestoredFromSnapshot = false;
         _forceNetworkReload = false;
+        _pendingRestoreVerticalOffset = null;
         _isOffline = !networkMonitor.IsNetworkAvailable;
         _networkMonitor.NetworkStatusChanged += OnNetworkStatusChanged;
 
@@ -324,6 +326,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         HasAssets = Assets.Count > 0;
         IsEmpty = !HasAssets;
         _isRestoredFromSnapshot = HasAssets;
+        _pendingRestoreVerticalOffset = snapshot.VerticalOffset;
     }
 
     private void SaveSessionSnapshot(double verticalOffset = 0)
@@ -356,6 +359,20 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
     internal void SaveCurrentScrollOffset(double verticalOffset)
     {
         SaveSessionSnapshot(verticalOffset);
+    }
+
+    internal bool TryConsumePendingRestoreVerticalOffset(out double verticalOffset)
+    {
+        if (_pendingRestoreVerticalOffset is not double offset || offset <= 0)
+        {
+            verticalOffset = 0;
+            _pendingRestoreVerticalOffset = null;
+            return false;
+        }
+
+        verticalOffset = offset;
+        _pendingRestoreVerticalOffset = null;
+        return true;
     }
 
     private async Task CancelPendingSearchAsync()

@@ -26,6 +26,14 @@ public sealed partial class FabLibraryPage : Page
     private async void Page_Loaded(object sender, RoutedEventArgs e)
     {
         await ViewModel.LoadCommand.ExecuteAsync(null);
+
+        if (ViewModel.TryConsumePendingRestoreVerticalOffset(out var verticalOffset))
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                AssetScrollViewer.ChangeView(null, verticalOffset, null, true);
+            });
+        }
     }
 
     private void Page_Unloaded(object sender, RoutedEventArgs e)
