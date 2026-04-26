@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.30 - Fab 热恢复 S8-D 固化冒烟与提交前检查 (2026-04-27)
+- 更新 [docs/review/19-FabLibraryWarmResumeImplementationSlices.md](docs/review/19-FabLibraryWarmResumeImplementationSlices.md)，把 Fab 热恢复的手工冒烟步骤、建议截图点位与提交前检查清单固化到 `S8-D`，并将 `S8` 整体标记为完成
+- 当前文档已明确首进 Fab、详情返回、Fresh/Warm/Stale 行为、Warm 失败保留列表、启动预热、切换账号等关键运行态验证步骤
+- 已执行 `dotnet build Q:\MyEpicLauncher\src\Launcher.App\Launcher.App.csproj --no-restore` 与 `dotnet test Q:\MyEpicLauncher\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibrarySessionStateStoreTests|FullyQualifiedName~FabLibrarySnapshotAgePolicyTests|FullyQualifiedName~FabLibraryViewModelWarmResumeTests|FullyQualifiedName~SettingsServiceFabLibraryConfigTests|FullyQualifiedName~FabLibraryWarmupCoordinatorTests"`，23 个 Fab 热恢复相关测试通过；人工 UI 冒烟步骤已整理成标准清单，未由代理实际执行
+
 ### Task 9.29 - Fab 热恢复 S8-C 补齐设置持久化与预热协调器单测 (2026-04-27)
 - 新增 [tests/Launcher.Tests.Unit/SettingsServiceFabLibraryConfigTests.cs](tests/Launcher.Tests.Unit/SettingsServiceFabLibraryConfigTests.cs)，覆盖 `FabLibraryConfig` 的开启/关闭持久化，以及 `ResetToDefaultsAsync()` 对 `FabLibrary` 配置段的重置与变更广播
 - 新增 [tests/Launcher.Tests.Unit/FabLibraryWarmupCoordinatorTests.cs](tests/Launcher.Tests.Unit/FabLibraryWarmupCoordinatorTests.cs)，覆盖 `FabLibraryWarmupCoordinator` 的 `disabled / unauthenticated / offline / fresh_snapshot` 跳过条件，以及满足条件时的默认第一页预热写快照路径

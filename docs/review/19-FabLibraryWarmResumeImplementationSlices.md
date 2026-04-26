@@ -110,7 +110,7 @@
 | S5 | 失效与容量控制 | 已完成 | 防止快照无限增长、跨账号串态、长期脏数据 |
 | S6 | 设置开关接入 | 已完成 | 增加 `FabLibrary.AutoWarmOnStartup` 设置项 |
 | S7 | 启动预热协调器 | 未开始 | 在 Phase 3 背景预热 Fab 首屏但不导航 |
-| S8 | 验证与提交流程 | 未开始 | 固化单测、冒烟、日志点、提交前检查 |
+| S8 | 验证与提交流程 | 已完成 | 固化单测、冒烟、日志点、提交前检查 |
 | S9 | 页面缓存试验（可选） | 未开始 | 仅在主路径完成后，再评估是否启用 `NavigationCacheMode.Required` |
 
 ### 5.1 子切片总览
@@ -146,7 +146,7 @@
 | S8-A | S8 | 已完成 | 为 Session Store / 年龄策略补单测 |
 | S8-B | S8 | 已完成 | 为 ViewModel Restore/SWR 补单测 |
 | S8-C | S8 | 已完成 | 为设置持久化与预热协调器补单测 |
-| S8-D | S8 | 未开始 | 形成手工冒烟清单与提交前检查 |
+| S8-D | S8 | 已完成 | 形成手工冒烟清单与提交前检查 |
 | S9-A | S9 | 未开始 | 单独评估 `NavigationCacheMode.Required` |
 | S9-B | S9 | 未开始 | 对比内存与返回耗时数据后决定保留或回退 |
 
@@ -747,7 +747,7 @@
 
 ### S8 验证与提交流程
 
-- 状态：`进行中`
+- 状态：`已完成`
 - 目标：在实现前就把验证方式和提交边界写死，防止后面边做边飘。
 
 #### S8-A Session Store / 年龄策略单测
@@ -805,7 +805,7 @@
 
 #### S8-D 手工冒烟清单与提交前检查
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：把运行态验收与提交边界固化，避免后续忘记。
 - 本轮必须形成以下手工检查步骤：
   1. 首次进入 Fab：无快照时正常骨架加载。
@@ -820,6 +820,37 @@
   3. 定向 `dotnet build`
   4. 定向 `dotnet test`
   5. 再做一次最小手工冒烟
+
+- 已完成结果：
+  - 当前 Fab 热恢复方案的手工冒烟与提交前检查已在本文固化，后续继续推进或回归时不再需要重新整理验证步骤
+  - 已执行 `dotnet build Q:\MyEpicLauncher\src\Launcher.App\Launcher.App.csproj --no-restore` 与 `dotnet test Q:\MyEpicLauncher\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibrarySessionStateStoreTests|FullyQualifiedName~FabLibrarySnapshotAgePolicyTests|FullyQualifiedName~FabLibraryViewModelWarmResumeTests|FullyQualifiedName~SettingsServiceFabLibraryConfigTests|FullyQualifiedName~FabLibraryWarmupCoordinatorTests"`；当前 `23` 个 Fab 热恢复相关单测全部通过
+  - 人工 UI 冒烟步骤已形成标准清单，供后续提交前按单执行
+
+- 标准手工冒烟步骤：
+
+1. 启动 `Launcher.App`，保持当前账号已登录，并确认“启动后自动预热 Fab 列表”开关状态符合本轮预期。
+2. 首次进入 Fab 列表页，确认无快照时先出现骨架，再稳定加载第一页卡片。
+3. 进入任一 Fab 详情页后返回列表，确认列表秒开且滚动位置恢复到离开前附近。
+4. 在 Fab、其他模块、Fab 之间往返切换，分别观察 `Fresh / Warm / Stale` 三种快照年龄下的行为是否符合设计：`Fresh` 不发刷新，`Warm` 先显后静默刷新，`Stale` 走完整加载。
+5. 人工制造或模拟 Warm 刷新失败场景，确认已有卡片不被清空，只出现轻提示，不回退成整页错误态。
+6. 关闭并重开应用；若已开启预热，确认首次再次进入 Fab 时首屏可见速度明显快于无预热状态。
+7. 执行登出或切换账号，确认旧账号的快照不会串到新账号列表页。
+
+- 建议截图点位：
+
+1. 首次进入 Fab 的骨架 -> 首屏卡片切换截图
+2. 详情返回后列表与滚动位置恢复截图
+3. Warm 静默刷新成功或失败后的列表状态截图
+4. 切换账号后的 Fab 列表首屏截图
+
+- 提交前检查清单：
+
+1. 运行 `dotnet build src/Launcher.App/Launcher.App.csproj --no-restore`
+2. 运行 `dotnet test tests/Launcher.Tests.Unit/Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~FabLibrarySessionStateStoreTests|FullyQualifiedName~FabLibrarySnapshotAgePolicyTests|FullyQualifiedName~FabLibraryViewModelWarmResumeTests|FullyQualifiedName~SettingsServiceFabLibraryConfigTests|FullyQualifiedName~FabLibraryWarmupCoordinatorTests"`
+3. 检查 [../../docs/review/18-FabLibraryWarmResumeStrategy.md](../../docs/review/18-FabLibraryWarmResumeStrategy.md) 与本文状态是否一致
+4. 检查 [../../CHANGELOG.md](../../CHANGELOG.md) 与 [../../SESSION_HANDOFF.md](../../SESSION_HANDOFF.md) 是否已同步本轮切片状态
+5. 检查当前提交是否只包含 Fab 热恢复、启动预热与对应测试/文档文件，没有意外混入无关改动
+6. 按上面的最小手工冒烟步骤至少执行一次关键路径验证
 
 ### S9 页面缓存试验（可选）
 
