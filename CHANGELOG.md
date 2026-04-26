@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.7 - Fab 热恢复 S2-C 首次加载恢复入口 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，在 `LoadAsync` 中优先尝试恢复会话快照
+- 当前恢复成功时会先展示快照内容，并跳过本轮首页资产查询；分类加载仍照常执行
+- 本轮仍未引入快照写回逻辑与 SWR 后台刷新策略，相关行为继续留给后续 `S2-D` 与 `S4`
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.6 - Fab 热恢复 S2-B 快照卡片恢复辅助方法 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，新增从 `FabLibrarySessionSnapshot` 恢复卡片列表与分页状态的辅助方法
 - 当前恢复逻辑已覆盖 `Assets`、`CurrentPage`、`TotalPages`、`HasNextPage`、`TotalCount`、`HasAssets`、`IsEmpty` 等页面状态字段

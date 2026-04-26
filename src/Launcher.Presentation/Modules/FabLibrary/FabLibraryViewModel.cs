@@ -94,11 +94,14 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
     {
         HasError = false;
         IsLoading = true;
+        var restoredFromSnapshot = TryRestorePageStateFromSnapshot();
         try
         {
             // 并行加载分类和首页资产
             var categoriesTask = _catalogService.GetCategoriesAsync(CancellationToken.None);
-            var assetsTask = SearchInternalAsync(1);
+            var assetsTask = restoredFromSnapshot
+                ? Task.CompletedTask
+                : SearchInternalAsync(1);
 
             await categoriesTask;
             var categoriesResult = categoriesTask.Result;
@@ -286,6 +289,21 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         TotalCount = pagedResult.TotalCount;
         HasAssets = Assets.Count > 0;
         IsEmpty = !HasAssets && !IsLoading;
+    }
+
+    private bool TryRestorePageStateFromSnapshot()
+    {
+        if (!_sessionStateStore.TryGet(out var snapshot) || snapshot is null)
+        {
+            _isRestoredFromSnapshot = false;
+            return false;
+        }
+
+        RestorePageState(snapshot);
+        _forceNetworkReload = false;
+        ClearPageError();
+        Logger.Information("Fab 页面已从会话快照恢复 | Count={Count} Page={Page}", Assets.Count, CurrentPage);
+        return true;
     }
 
     private void RestorePageState(FabLibrarySessionSnapshot snapshot)
