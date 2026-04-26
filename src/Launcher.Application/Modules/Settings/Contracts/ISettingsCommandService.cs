@@ -21,6 +21,9 @@ public interface ISettingsCommandService
     /// <summary>更新网络配置</summary>
     Task<Result> UpdateNetworkConfigAsync(NetworkConfig config, CancellationToken ct);
 
+    /// <summary>更新 Fab 列表配置</summary>
+    Task<Result> UpdateFabLibraryConfigAsync(FabLibraryConfig config, CancellationToken ct);
+
     /// <summary>重置所有配置到默认值</summary>
     Task<Result> ResetToDefaultsAsync(CancellationToken ct);
 }

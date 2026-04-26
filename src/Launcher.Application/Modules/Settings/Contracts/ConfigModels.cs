@@ -58,3 +58,12 @@ public sealed class NetworkConfig
     /// <summary>启用 CDN 回退</summary>
     public bool EnableCdnFallback { get; set; } = true;
 }
+
+/// <summary>
+/// Fab 列表预热配置
+/// </summary>
+public sealed class FabLibraryConfig
+{
+    /// <summary>启动后自动预热 Fab 列表</summary>
+    public bool AutoWarmOnStartup { get; set; }
+}

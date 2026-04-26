@@ -18,4 +18,7 @@ public interface ISettingsReadService
 
     /// <summary>获取网络配置</summary>
     NetworkConfig GetNetworkConfig();
+
+    /// <summary>获取 Fab 列表配置</summary>
+    FabLibraryConfig GetFabLibraryConfig();
 }

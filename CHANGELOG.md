@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.20 - Fab 热恢复 S6-A 设置契约接入 (2026-04-26)
+- 更新 [src/Launcher.Application/Modules/Settings/Contracts/ConfigModels.cs](src/Launcher.Application/Modules/Settings/Contracts/ConfigModels.cs)，新增 `FabLibraryConfig`，当前承载 `AutoWarmOnStartup` 开关
+- 更新 [src/Launcher.Application/Modules/Settings/Contracts/ISettingsReadService.cs](src/Launcher.Application/Modules/Settings/Contracts/ISettingsReadService.cs) 与 [src/Launcher.Application/Modules/Settings/Contracts/ISettingsCommandService.cs](src/Launcher.Application/Modules/Settings/Contracts/ISettingsCommandService.cs)，为 Fab 预热配置补齐读写契约入口
+- 已执行 `dotnet build src/Launcher.Application/Launcher.Application.csproj --no-restore`，构建通过
+
 ### Task 9.19 - Fab 热恢复 S5-C 快照清理日志与显式路径 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/InMemoryFabLibrarySessionStateStore.cs](src/Launcher.Presentation/Modules/FabLibrary/InMemoryFabLibrarySessionStateStore.cs)，为 `Save / Clear / Trim` 补齐结构化日志，并记录快照是否被裁剪、裁剪前后条目数与页码
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，明确三条会清理会话快照的显式路径：手动刷新、账号作用域不匹配、会话过期事件
