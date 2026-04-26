@@ -319,6 +319,12 @@ public partial class FabAssetDetailViewModel : ObservableObject
         try
         {
             var relatedSummaries = await TryLoadRelatedSummariesAsync(detail);
+            if (relatedSummaries.Count == 0)
+            {
+                Logger.Information("详情页更多内容为空，按设计隐藏区块 | AssetId={AssetId}", detail.AssetId);
+                return;
+            }
+
             foreach (var summary in relatedSummaries)
             {
                 var card = new FabRelatedAssetCardViewModel(summary, _thumbnailCache, _previewUrlReadService, _dispatcherQueue);
@@ -351,15 +357,32 @@ public partial class FabAssetDetailViewModel : ObservableObject
             {
                 return searchMatches;
             }
+
+            Logger.Information("详情页更多内容在线搜索无匹配，回退到已拥有资产 | AssetId={AssetId}", detail.AssetId);
+        }
+        else
+        {
+            Logger.Warning("详情页更多内容在线搜索失败，回退到已拥有资产 | AssetId={AssetId} | Error={Error}",
+                detail.AssetId,
+                searchResult.Error?.TechnicalMessage);
         }
 
         var ownedResult = await _catalogService.GetOwnedAssetsAsync(CancellationToken.None);
         if (!ownedResult.IsSuccess)
         {
+            Logger.Warning("详情页更多内容已拥有资产回退失败 | AssetId={AssetId} | Error={Error}",
+                detail.AssetId,
+                ownedResult.Error?.TechnicalMessage);
             return [];
         }
 
-        return FilterRelatedItems(ownedResult.Value!, detail);
+        var ownedMatches = FilterRelatedItems(ownedResult.Value!, detail);
+        if (ownedMatches.Count == 0)
+        {
+            Logger.Information("详情页更多内容回退后仍无匹配 | AssetId={AssetId}", detail.AssetId);
+        }
+
+        return ownedMatches;
     }
 
     private static List<FabAssetSummary> FilterRelatedItems(IEnumerable<FabAssetSummary> items, FabAssetDetail detail)
