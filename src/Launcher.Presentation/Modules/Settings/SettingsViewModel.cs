@@ -36,6 +36,9 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty] private int _timeoutSeconds;
     [ObservableProperty] private bool _enableCdnFallback;
 
+    // === Fab 配置 ===
+    [ObservableProperty] private bool _autoWarmOnStartup;
+
     // === 状态 ===
     [ObservableProperty] private bool _isSaving;
     [ObservableProperty] private string _statusMessage = string.Empty;
@@ -82,6 +85,9 @@ public partial class SettingsViewModel : ObservableObject
         ProxyAddress = network.ProxyAddress;
         TimeoutSeconds = network.TimeoutSeconds;
         EnableCdnFallback = network.EnableCdnFallback;
+
+        var fabLibrary = _readService.GetFabLibraryConfig();
+        AutoWarmOnStartup = fabLibrary.AutoWarmOnStartup;
     }
 
     /// <summary>
@@ -209,6 +215,35 @@ public partial class SettingsViewModel : ObservableObject
         else
         {
             StatusMessage = $"保存失败：{result.Error?.UserMessage}";
+        }
+
+        IsSaving = false;
+    }
+
+    /// <summary>
+    /// 保存 Fab 列表预热配置
+    /// </summary>
+    [RelayCommand]
+    private async Task SaveFabLibraryConfigAsync()
+    {
+        IsSaving = true;
+        StatusMessage = string.Empty;
+
+        var config = new FabLibraryConfig
+        {
+            AutoWarmOnStartup = AutoWarmOnStartup,
+        };
+
+        var result = await _commandService.UpdateFabLibraryConfigAsync(config, CancellationToken.None);
+        if (result.IsSuccess)
+        {
+            StatusMessage = "Fab 预热配置已保存";
+            Logger.Information("Fab 预热配置已保存 | AutoWarmOnStartup={AutoWarmOnStartup}", AutoWarmOnStartup);
+        }
+        else
+        {
+            StatusMessage = $"保存失败：{result.Error?.UserMessage}";
+            Logger.Warning("Fab 预热配置保存失败 | {Error}", result.Error?.TechnicalMessage);
         }
 
         IsSaving = false;

@@ -138,7 +138,7 @@
 | S5-C | S5 | 已完成 | 增加 Clear/Trim 的日志与显式清理路径 |
 | S6-A | S6 | 已完成 | 增加 `FabLibraryConfig` 配置模型与读写契约 |
 | S6-B | S6 | 已完成 | 完成 Settings 持久化与默认值 |
-| S6-C | S6 | 未开始 | SettingsViewModel 暴露预热开关 |
+| S6-C | S6 | 已完成 | SettingsViewModel 暴露预热开关 |
 | S6-D | S6 | 未开始 | SettingsPage 增加预热开关 UI |
 | S7-A | S7 | 未开始 | 新增 Fab 预热协调器服务 |
 | S7-B | S7 | 未开始 | Phase 3 调用预热协调器 |
@@ -638,7 +638,7 @@
 
 #### S6-C SettingsViewModel 暴露预热开关
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：在设置页 VM 中暴露一个简单布尔开关。
 - 目标文件：
   - [../../src/Launcher.Presentation/Modules/Settings/SettingsViewModel.cs](../../src/Launcher.Presentation/Modules/Settings/SettingsViewModel.cs)
@@ -646,6 +646,11 @@
   - 可以读取/保存 `AutoWarmOnStartup`
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - `SettingsViewModel` 已新增 `AutoWarmOnStartup` 绑定属性
+  - `LoadSettings()` 现在会从 `ISettingsReadService.GetFabLibraryConfig()` 读取当前值
+  - 已新增 `SaveFabLibraryConfigAsync()`，后续设置页 UI 可以直接复用该命令保存预热开关
 
 #### S6-D SettingsPage 增加预热开关 UI
 

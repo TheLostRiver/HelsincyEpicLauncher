@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.22 - Fab 热恢复 S6-C SettingsViewModel 暴露预热开关 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/Settings/SettingsViewModel.cs](src/Launcher.Presentation/Modules/Settings/SettingsViewModel.cs)，新增 `AutoWarmOnStartup` 绑定属性，并在 `LoadSettings()` 中读取 `FabLibraryConfig`
+- `SettingsViewModel` 已新增 `SaveFabLibraryConfigAsync()`，后续设置页 UI 可以直接复用该命令保存 Fab 预热开关
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.21 - Fab 热恢复 S6-B 设置持久化与默认值 (2026-04-26)
 - 更新 [src/Launcher.Infrastructure/Settings/UserSettings.cs](src/Launcher.Infrastructure/Settings/UserSettings.cs)，把 `FabLibrary` 配置段接入 `user.settings.json` 持久化模型
 - 更新 [src/Launcher.Infrastructure/Settings/SettingsService.cs](src/Launcher.Infrastructure/Settings/SettingsService.cs)，支持读取、更新、重置与变更广播 `FabLibraryConfig`
