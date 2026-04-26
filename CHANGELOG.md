@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.12 - Fab 热恢复 S4-A 快照年龄分类策略 (2026-04-26)
+- 新增 [src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySnapshotAgePolicy.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySnapshotAgePolicy.cs)，把 Fab 列表会话快照的年龄判定集中到单一 helper 中
+- 当前策略固定 `Fresh / Warm / Stale` 三段分类，阈值分别为 `30s` 和 `5m`，并对未来时间戳按 `0` 年龄处理，避免本机时钟轻微漂移导致误判
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.11 - Fab 热恢复 S3-C 详情导航前固化快照 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)，在点击资产卡片导航到详情页前，先写回当前滚动位置与最新会话快照
 - 至此 `S3` 视口与返回体验切片已完整闭环：离开页面时保存滚动位置、恢复后回滚位置、导航详情前固化最新快照三条路径均已落地
