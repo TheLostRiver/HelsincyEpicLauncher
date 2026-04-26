@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.9 - Fab 热恢复 S3-A 写回滚动位置 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，使当前会话快照支持带 `VerticalOffset` 写回
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)，在页面卸载前先保存 `AssetScrollViewer.VerticalOffset`，再执行 `Dispose()`
+- 当前离开 Fab 列表页时，会话快照已不再固定写回 `0` 滚动位置
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.8 - Fab 热恢复 S2-D 成功路径写回快照 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，在列表查询成功路径后统一写回会话快照
 - `FabAssetCardViewModel` 新增导出 `FabAssetSummary` 的能力，保证当前列表可以被稳定保存到 `FabLibrarySessionSnapshot`

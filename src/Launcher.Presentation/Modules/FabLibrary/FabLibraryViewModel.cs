@@ -326,7 +326,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         _isRestoredFromSnapshot = HasAssets;
     }
 
-    private void SaveSessionSnapshot()
+    private void SaveSessionSnapshot(double verticalOffset = 0)
     {
         var assetSummaries = new List<FabAssetSummary>(Assets.Count);
         foreach (var card in Assets)
@@ -343,7 +343,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
             TotalPages = TotalPages,
             HasNextPage = HasNextPage,
             TotalCount = TotalCount,
-            VerticalOffset = 0,
+            VerticalOffset = verticalOffset,
             SnapshotAtUtc = DateTime.UtcNow,
             AccountScopeKey = string.Empty,
             AssetSummaries = assetSummaries,
@@ -351,6 +351,11 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
 
         _sessionStateStore.Save(snapshot);
         _isRestoredFromSnapshot = false;
+    }
+
+    internal void SaveCurrentScrollOffset(double verticalOffset)
+    {
+        SaveSessionSnapshot(verticalOffset);
     }
 
     private async Task CancelPendingSearchAsync()

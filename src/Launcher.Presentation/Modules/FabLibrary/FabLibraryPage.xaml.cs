@@ -30,6 +30,7 @@ public sealed partial class FabLibraryPage : Page
 
     private void Page_Unloaded(object sender, RoutedEventArgs e)
     {
+        ViewModel.SaveCurrentScrollOffset(AssetScrollViewer.VerticalOffset);
         ViewModel.Dispose();
     }
 
