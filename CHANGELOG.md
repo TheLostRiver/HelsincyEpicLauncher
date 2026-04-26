@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.18 - Fab 热恢复 S5-B 账号作用域失效判定 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，接入 [src/Launcher.Application/Modules/Auth/Contracts/IAuthService.cs](src/Launcher.Application/Modules/Auth/Contracts/IAuthService.cs)，在保存会话快照时写入当前 `AccountId` 作为 `AccountScopeKey`
+- 当前恢复逻辑会在展示快照前先比对账号作用域；若快照所属账号与当前会话不匹配，则直接清理旧快照并回到完整加载路径
+- 旧版未写账号作用域的快照在当前登录账号下会被保守视为失效，避免把 A 账号的列表状态直接串到 B 账号
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.17 - Fab 热恢复 S5-A 限制快照容量 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySessionSnapshot.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySessionSnapshot.cs)，集中定义会话快照的容量上限：最多保留 `3` 页、`60` 条卡片摘要
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/InMemoryFabLibrarySessionStateStore.cs](src/Launcher.Presentation/Modules/FabLibrary/InMemoryFabLibrarySessionStateStore.cs)，在 `Save(...)` 和 `Trim()` 中统一规范化快照，确保过深分页不会把整个列表镜像长期留在会话 Store 中

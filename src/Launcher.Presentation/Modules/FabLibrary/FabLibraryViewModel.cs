@@ -3,6 +3,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Launcher.Application.Modules.Auth.Contracts;
 using Launcher.Application.Modules.FabLibrary.Contracts;
 using Launcher.Application.Modules.Network.Contracts;
 using Launcher.Presentation.Shell;
@@ -24,6 +25,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
     private readonly IThumbnailCacheService _thumbnailCache;
     private readonly IFabPreviewUrlReadService _previewUrlReadService;
     private readonly IFabLibrarySessionStateStore _sessionStateStore;
+    private readonly IAuthService _authService;
     private readonly INetworkMonitor _networkMonitor;
     private readonly INotificationService _notificationService;
     private readonly DispatcherQueue _dispatcherQueue;
@@ -72,6 +74,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         IThumbnailCacheService thumbnailCache,
         IFabPreviewUrlReadService previewUrlReadService,
         IFabLibrarySessionStateStore sessionStateStore,
+        IAuthService authService,
         INetworkMonitor networkMonitor,
         INotificationService notificationService)
     {
@@ -79,6 +82,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         _thumbnailCache = thumbnailCache;
         _previewUrlReadService = previewUrlReadService;
         _sessionStateStore = sessionStateStore;
+        _authService = authService;
         _networkMonitor = networkMonitor;
         _notificationService = notificationService;
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
@@ -327,6 +331,21 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
             return false;
         }
 
+        var currentAccountScopeKey = GetCurrentAccountScopeKey();
+        if (!string.Equals(snapshot.AccountScopeKey, currentAccountScopeKey, StringComparison.Ordinal))
+        {
+            _sessionStateStore.Clear();
+            _isRestoredFromSnapshot = false;
+            _restoredSnapshotAgeCategory = null;
+            _pendingRestoreVerticalOffset = null;
+            _forceNetworkReload = false;
+            Logger.Information(
+                "Fab 会话快照账号作用域不匹配，已跳过恢复 | SnapshotScope={SnapshotScope} CurrentScope={CurrentScope}",
+                snapshot.AccountScopeKey,
+                currentAccountScopeKey);
+            return false;
+        }
+
         var ageCategory = FabLibrarySnapshotAgePolicy.Classify(snapshot);
 
         if (ageCategory is FabLibrarySnapshotAgeCategory.Stale)
@@ -391,7 +410,7 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
             TotalCount = TotalCount,
             VerticalOffset = verticalOffset,
             SnapshotAtUtc = DateTime.UtcNow,
-            AccountScopeKey = string.Empty,
+            AccountScopeKey = GetCurrentAccountScopeKey(),
             AssetSummaries = assetSummaries,
         };
 
@@ -399,6 +418,11 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         _isRestoredFromSnapshot = false;
         _restoredSnapshotAgeCategory = null;
         _forceNetworkReload = false;
+    }
+
+    private string GetCurrentAccountScopeKey()
+    {
+        return _authService.CurrentUser?.AccountId ?? string.Empty;
     }
 
     internal void SaveCurrentScrollOffset(double verticalOffset)
