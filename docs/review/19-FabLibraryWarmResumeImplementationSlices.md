@@ -111,7 +111,7 @@
 | S6 | 设置开关接入 | 已完成 | 增加 `FabLibrary.AutoWarmOnStartup` 设置项 |
 | S7 | 启动预热协调器 | 未开始 | 在 Phase 3 背景预热 Fab 首屏但不导航 |
 | S8 | 验证与提交流程 | 已完成 | 固化单测、冒烟、日志点、提交前检查 |
-| S9 | 页面缓存试验（可选） | 未开始 | 仅在主路径完成后，再评估是否启用 `NavigationCacheMode.Required` |
+| S9 | 页面缓存试验（可选） | 进行中 | 仅在主路径完成后，再评估是否启用 `NavigationCacheMode.Required` |
 
 ### 5.1 子切片总览
 
@@ -147,7 +147,7 @@
 | S8-B | S8 | 已完成 | 为 ViewModel Restore/SWR 补单测 |
 | S8-C | S8 | 已完成 | 为设置持久化与预热协调器补单测 |
 | S8-D | S8 | 已完成 | 形成手工冒烟清单与提交前检查 |
-| S9-A | S9 | 未开始 | 单独评估 `NavigationCacheMode.Required` |
+| S9-A | S9 | 已完成 | 单独评估 `NavigationCacheMode.Required` |
 | S9-B | S9 | 未开始 | 对比内存与返回耗时数据后决定保留或回退 |
 
 ## 6. 细粒度切片定义
@@ -859,7 +859,7 @@
 
 #### S9-A 单独评估 `NavigationCacheMode.Required`
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：把页面实例缓存当成增量优化，而不是主路径前提。
 - 目标文件：
   - [../../src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](../../src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)
@@ -868,6 +868,11 @@
   - 只影响 `FabLibraryPage`，不波及全站导航
 - 验证动作：
   - 手工冒烟 + 内存观察
+
+- 已完成结果：
+  - `FabLibraryPage` 已单独设置 `NavigationCacheMode.Required`，当前页面缓存试验只作用于 Fab 列表页，不影响通用导航服务或其他模块页面
+  - 为避免缓存页在 `Unloaded` 时把实验效果抵消，当前 `Page_Unloaded` 已改为只保存滚动位置和记录日志，不再销毁 `FabLibraryViewModel`
+  - 当前 `Page_Loaded` 只在首次进入时执行 `LoadCommand`；缓存页返回路径会直接复用现有页面/VM 状态，并记录 `initial_load / cached_return` 的耗时与托管内存近似值日志，供 `S9-B` 做保留或回退判断
 
 #### S9-B 以数据决定保留或回退
 

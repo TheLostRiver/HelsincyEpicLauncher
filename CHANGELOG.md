@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Task 9.31 - Fab 热恢复 S9-A 单页缓存实验 (2026-04-27)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)，仅对 `FabLibraryPage` 打开 `NavigationCacheMode.Required`，不改动通用导航服务
+- 当前缓存页实验同步调整 `Loaded / Unloaded` 生命周期：首次进入仍执行 `LoadCommand`，缓存返回不再重复加载；离开时只保存滚动位置，不再销毁 `FabLibraryViewModel`
+- 当前日志已补 `initial_load / cached_return` 两类页面缓存实验指标，记录返回耗时与托管内存近似值，供 `S9-B` 决定保留或回退
+
 ### Task 9.30 - Fab 热恢复 S8-D 固化冒烟与提交前检查 (2026-04-27)
 - 更新 [docs/review/19-FabLibraryWarmResumeImplementationSlices.md](docs/review/19-FabLibraryWarmResumeImplementationSlices.md)，把 Fab 热恢复的手工冒烟步骤、建议截图点位与提交前检查清单固化到 `S8-D`，并将 `S8` 整体标记为完成
 - 当前文档已明确首进 Fab、详情返回、Fresh/Warm/Stale 行为、Warm 失败保留列表、启动预热、切换账号等关键运行态验证步骤
