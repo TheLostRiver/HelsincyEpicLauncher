@@ -23,10 +23,13 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
     private readonly IFabCatalogReadService _catalogService;
     private readonly IThumbnailCacheService _thumbnailCache;
     private readonly IFabPreviewUrlReadService _previewUrlReadService;
+    private readonly IFabLibrarySessionStateStore _sessionStateStore;
     private readonly INetworkMonitor _networkMonitor;
     private readonly INotificationService _notificationService;
     private readonly DispatcherQueue _dispatcherQueue;
     private CancellationTokenSource _searchCts = new();
+    private bool _isRestoredFromSnapshot;
+    private bool _forceNetworkReload;
     private bool _disposed;
 
     /// <summary>资产卡片列表</summary>
@@ -55,6 +58,10 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _hasNextPage;
     [ObservableProperty] private int _totalCount;
 
+    internal bool IsRestoredFromSnapshot => _isRestoredFromSnapshot;
+
+    internal bool ForceNetworkReload => _forceNetworkReload;
+
     private const int PageSize = 20;
     private const int SearchDebounceMs = 300;
 
@@ -62,15 +69,19 @@ public partial class FabLibraryViewModel : ObservableObject, IDisposable
         IFabCatalogReadService catalogService,
         IThumbnailCacheService thumbnailCache,
         IFabPreviewUrlReadService previewUrlReadService,
+        IFabLibrarySessionStateStore sessionStateStore,
         INetworkMonitor networkMonitor,
         INotificationService notificationService)
     {
         _catalogService = catalogService;
         _thumbnailCache = thumbnailCache;
         _previewUrlReadService = previewUrlReadService;
+        _sessionStateStore = sessionStateStore;
         _networkMonitor = networkMonitor;
         _notificationService = notificationService;
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
+        _isRestoredFromSnapshot = false;
+        _forceNetworkReload = false;
         _isOffline = !networkMonitor.IsNetworkAvailable;
         _networkMonitor.NetworkStatusChanged += OnNetworkStatusChanged;
 

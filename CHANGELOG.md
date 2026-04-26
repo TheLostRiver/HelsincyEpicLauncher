@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.5 - Fab 热恢复 S2-A ViewModel 注入 Store (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，注入 `IFabLibrarySessionStateStore`，并补充 `_isRestoredFromSnapshot`、`_forceNetworkReload` 两个恢复守卫字段及内部只读观察属性
+- 为匹配 `FabLibraryViewModel` 的公开构造函数依赖链，更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySessionSnapshot.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySessionSnapshot.cs) 与 [src/Launcher.Presentation/Modules/FabLibrary/IFabLibrarySessionStateStore.cs](src/Launcher.Presentation/Modules/FabLibrary/IFabLibrarySessionStateStore.cs) 为 `public`；它们仍属于 Presentation 层内部实现面，不升级为 Application `Contracts`
+- 当前切片只完成依赖接入与守卫位准备，不包含实际的快照恢复或写回行为
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.4 - Fab 热恢复 S1-D 会话 Store DI 注册 (2026-04-26)
 - 更新 [src/Launcher.Presentation/DependencyInjection.cs](src/Launcher.Presentation/DependencyInjection.cs)，将 `IFabLibrarySessionStateStore` 注册为 `Singleton`，默认实现为 `InMemoryFabLibrarySessionStateStore`
 - 保持 `FabLibraryViewModel` 继续为 `Transient`，避免把热恢复方案错误演化为页面级全局单例

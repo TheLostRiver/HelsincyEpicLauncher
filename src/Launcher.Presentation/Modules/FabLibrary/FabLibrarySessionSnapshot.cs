@@ -7,7 +7,7 @@ namespace Launcher.Presentation.Modules.FabLibrary;
 /// <summary>
 /// Fab 列表页会话快照。仅保存可恢复 UI 的窄状态，不持有可变 UI 对象。
 /// </summary>
-internal sealed class FabLibrarySessionSnapshot
+public sealed class FabLibrarySessionSnapshot
 {
     public string Keyword { get; init; } = string.Empty;
 

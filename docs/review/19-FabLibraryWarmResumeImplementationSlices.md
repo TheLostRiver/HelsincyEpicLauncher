@@ -121,7 +121,7 @@
 | S1-B | S1 | 已完成 | 定义会话 Store 接口 |
 | S1-C | S1 | 已完成 | 实现内存版会话 Store |
 | S1-D | S1 | 已完成 | 在 Presentation DI 注册会话 Store |
-| S2-A | S2 | 未开始 | `FabLibraryViewModel` 注入 Store 与恢复守卫字段 |
+| S2-A | S2 | 已完成 | `FabLibraryViewModel` 注入 Store 与恢复守卫字段 |
 | S2-B | S2 | 未开始 | 把快照 `FabAssetSummary` 恢复成卡片列表 |
 | S2-C | S2 | 未开始 | 首次加载先尝试恢复快照 |
 | S2-D | S2 | 未开始 | 搜索/翻页成功后写回快照 |
@@ -261,7 +261,7 @@
 
 #### S2-A 注入 Store 与恢复守卫字段
 
-- 状态：`未开始`
+- 状态：`已完成`
 - 目标：先把 ViewModel 内部的最小控制位补齐。
 - 本轮只做：
   - 注入 `IFabLibrarySessionStateStore`
@@ -276,6 +276,12 @@
   - 后续恢复逻辑有明确插入点
 - 验证动作：
   - 编译通过
+
+- 已完成结果：
+  - `FabLibraryViewModel` 已注入 `IFabLibrarySessionStateStore`
+  - 已补充 `_isRestoredFromSnapshot`、`_forceNetworkReload` 两个恢复守卫字段
+  - 已补充内部只读属性，作为后续切片与测试的稳定观察点
+  - 为兼容公开构造函数依赖链，`FabLibrarySessionSnapshot` 与 `IFabLibrarySessionStateStore` 已调整为 `public`，但仍然留在 Presentation 层，不升级到 Application `Contracts`
 
 #### S2-B 快照摘要恢复成卡片列表
 
@@ -737,13 +743,13 @@
 
 如果下一轮开始实现，默认从以下最小闭环启动：
 
-1. `S2-A`，把 Store 接到 `FabLibraryViewModel`
-2. `S2-B`，补卡片列表恢复辅助方法
-3. `S2-C`，把恢复入口插进 `LoadAsync`
-4. `S2-D`，把成功路径统一写回快照
+1. `S2-B`，补卡片列表恢复辅助方法
+2. `S2-C`，把恢复入口插进 `LoadAsync`
+3. `S2-D`，把成功路径统一写回快照
+4. 再进入 `S3-A`，保存滚动位置
 
 原因：
 
-1. `S1` 已经完整闭环，后续工作重心正式转入 `FabLibraryViewModel` 的 Restore/Save 主路径。
-2. `S2-A` 到 `S2-D` 仍然可以保持很小的单步推进，不必一次改完整个恢复流程。
+1. `S2-A` 已经把依赖链和守卫位准备好，下一步可以开始真正恢复列表内容。
+2. `S2-B` 到 `S2-D` 仍然可以保持很小的单步推进，不必一次改完整个恢复流程。
 3. 完成 `S2` 后才能继续做滚动位置和 SWR 年龄策略。
