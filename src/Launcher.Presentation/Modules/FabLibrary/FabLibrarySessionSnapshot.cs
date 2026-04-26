@@ -9,6 +9,9 @@ namespace Launcher.Presentation.Modules.FabLibrary;
 /// </summary>
 public sealed class FabLibrarySessionSnapshot
 {
+    internal const int MaxRetainedPages = 3;
+    internal const int MaxRetainedAssetCount = 60;
+
     public string Keyword { get; init; } = string.Empty;
 
     public string Category { get; init; } = string.Empty;

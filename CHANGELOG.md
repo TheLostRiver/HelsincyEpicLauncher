@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Task 9.17 - Fab 热恢复 S5-A 限制快照容量 (2026-04-26)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySessionSnapshot.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibrarySessionSnapshot.cs)，集中定义会话快照的容量上限：最多保留 `3` 页、`60` 条卡片摘要
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/InMemoryFabLibrarySessionStateStore.cs](src/Launcher.Presentation/Modules/FabLibrary/InMemoryFabLibrarySessionStateStore.cs)，在 `Save(...)` 和 `Trim()` 中统一规范化快照，确保过深分页不会把整个列表镜像长期留在会话 Store 中
+- 当原快照页数超过保留上限时，当前实现会同步把恢复滚动位置重置为 `0`，避免把深页滚动偏移错误映射到被裁剪后的内容范围
+- 已执行 `dotnet build src/Launcher.Presentation/Launcher.Presentation.csproj --no-restore`，构建通过
+
 ### Task 9.16 - Fab 热恢复 S4-E Stale 快照完整加载 (2026-04-26)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs)，在恢复会话快照前先判断是否为 `Stale`；若已过期则直接跳过恢复，回到完整加载路径
 - 至此 `S4` SWR 刷新策略阶段已闭环：`Fresh` 直显、`Warm` 静默刷新、`Warm` 失败保留列表、`Stale` 完整加载均已落地

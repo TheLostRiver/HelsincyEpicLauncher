@@ -1,5 +1,7 @@
 // Copyright (c) Helsincy. All rights reserved.
 
+using Launcher.Application.Modules.FabLibrary.Contracts;
+
 namespace Launcher.Presentation.Modules.FabLibrary;
 
 /// <summary>
@@ -13,10 +15,11 @@ internal sealed class InMemoryFabLibrarySessionStateStore : IFabLibrarySessionSt
     public void Save(FabLibrarySessionSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
+        var normalizedSnapshot = NormalizeSnapshot(snapshot);
 
         lock (_syncRoot)
         {
-            _snapshot = snapshot;
+            _snapshot = normalizedSnapshot;
         }
     }
 
@@ -39,6 +42,42 @@ internal sealed class InMemoryFabLibrarySessionStateStore : IFabLibrarySessionSt
 
     public void Trim()
     {
-        // 当前实现是单槽位进程内快照，暂时没有可裁剪内容。
+        lock (_syncRoot)
+        {
+            if (_snapshot is null)
+            {
+                return;
+            }
+
+            _snapshot = NormalizeSnapshot(_snapshot);
+        }
+    }
+
+    private static FabLibrarySessionSnapshot NormalizeSnapshot(FabLibrarySessionSnapshot snapshot)
+    {
+        var retainedAssetCount = Math.Min(snapshot.AssetSummaries.Count, FabLibrarySessionSnapshot.MaxRetainedAssetCount);
+        var retainedAssets = new FabAssetSummary[retainedAssetCount];
+        for (var index = 0; index < retainedAssetCount; index++)
+        {
+            retainedAssets[index] = snapshot.AssetSummaries[index];
+        }
+
+        var retainedCurrentPage = Math.Max(1, Math.Min(snapshot.CurrentPage, FabLibrarySessionSnapshot.MaxRetainedPages));
+        var wasPageCapped = retainedCurrentPage != snapshot.CurrentPage;
+
+        return new FabLibrarySessionSnapshot
+        {
+            Keyword = snapshot.Keyword,
+            Category = snapshot.Category,
+            SortOrder = snapshot.SortOrder,
+            CurrentPage = retainedCurrentPage,
+            TotalPages = snapshot.TotalPages,
+            HasNextPage = wasPageCapped || snapshot.HasNextPage,
+            TotalCount = snapshot.TotalCount,
+            VerticalOffset = wasPageCapped ? 0 : snapshot.VerticalOffset,
+            SnapshotAtUtc = snapshot.SnapshotAtUtc,
+            AccountScopeKey = snapshot.AccountScopeKey,
+            AssetSummaries = retainedAssets,
+        };
     }
 }
