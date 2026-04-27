@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Task 9.34 - Fab 列表卡片点击导航修复 (2026-04-27)
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml)，将列表卡片点击入口由 `Tapped + DataContext` 改为 `Button + Tag` 透传 `FabAssetDetailNavigationPayload`，避免 `ItemsRepeater` 虚拟化场景下 `DataContext` 取值不稳定导致点击无反应
+- 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)，`AssetCard_Click(...)` 现在直接从 `Tag` 读取导航 payload，并在导航前继续保存当前滚动位置
+- 已执行 `dotnet build Q:\MyEpicLauncher\src\Launcher.App\Launcher.App.csproj --no-restore`，构建通过；修复目标是恢复 Fab 资产卡片进入详情页的点击导航主路径
+
+### Task 9.33 - Fab 列表性能止血实施拆解与执行记录模板 (2026-04-27)
+- 新增 [docs/review/20-FabLibraryPerformanceReliefImplementationSlices.md](docs/review/20-FabLibraryPerformanceReliefImplementationSlices.md)，将“列表页先停用 WebView2 probe、缺图直接占位、详情页主 Hero 保留真实预览恢复”拆成可逐步推进的原子切片
+- 新增 [docs/review/21-FabLibraryPerformanceReliefExecutionLog.md](docs/review/21-FabLibraryPerformanceReliefExecutionLog.md)，作为上下文接近上限时必须先更新的本地执行记录文件，明确记录当前子切片、修改文件、验证结果与恢复第一步
+- 本轮仅完成计划与交接入口整理，未修改生产代码，也未执行 `dotnet build` 或 `dotnet test`
+
 ### Task 9.32 - Fab 热恢复 S9-B 回退单页缓存实验 (2026-04-27)
 - 更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)，回退 `FabLibraryPage` 的 `NavigationCacheMode.Required` 实验，恢复为“离开即保存快照并销毁 ViewModel”的现有基线
 - 更新 [docs/review/18-FabLibraryWarmResumeStrategy.md](docs/review/18-FabLibraryWarmResumeStrategy.md) 与 [docs/review/19-FabLibraryWarmResumeImplementationSlices.md](docs/review/19-FabLibraryWarmResumeImplementationSlices.md)，记录 `S9` 结论：当前主路径继续以 `SessionStateStore + SWR` 为准，不保留页面缓存

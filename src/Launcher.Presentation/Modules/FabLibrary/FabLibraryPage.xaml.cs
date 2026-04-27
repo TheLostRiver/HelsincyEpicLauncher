@@ -89,13 +89,13 @@ public sealed partial class FabLibraryPage : Page
     }
 
     /// <summary>卡片点击导航到详情页</summary>
-    private async void AssetCard_Tapped(object sender, TappedRoutedEventArgs e)
+    private async void AssetCard_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement fe && fe.DataContext is FabAssetCardViewModel card)
+        if (sender is FrameworkElement fe && fe.Tag is FabAssetDetailNavigationPayload payload)
         {
             ViewModel.SaveCurrentScrollOffset(AssetScrollViewer.VerticalOffset);
             var nav = ViewModelLocator.Resolve<NavigationService>();
-            await nav.NavigateAsync(NavigationRoute.FabAssetDetail, card.DetailNavigationPayload);
+            await nav.NavigateAsync(NavigationRoute.FabAssetDetail, payload);
         }
     }
 }

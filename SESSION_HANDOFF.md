@@ -1,5 +1,16 @@
 # 会话交接文档
 
+## 2026-04-27 Fab 列表卡片点击修复
+- 完成内容：已更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml)，将列表卡片点击入口调整为 `Button + Tag` 绑定 `FabAssetDetailNavigationPayload`；已更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryPage.xaml.cs)，点击处理函数改为直接从 `Tag` 读取 payload，避免 `ItemsRepeater` 虚拟化场景下 `DataContext` 不稳定导致 Fab 卡片点击无反应
+- 当前重点：Fab 列表卡片进入详情页的主导航路径已恢复；若继续推进性能止血，则下一步默认按 [docs/review/20-FabLibraryPerformanceReliefImplementationSlices.md](docs/review/20-FabLibraryPerformanceReliefImplementationSlices.md) 从 `S1-A` 开始，先让列表缺图卡片停用 WebView2 probe
+- 本轮验证：`dotnet build Q:\MyEpicLauncher\src\Launcher.App\Launcher.App.csproj --no-restore` 已通过；应用已完成重启级验证准备，但最终 UI 点击验收仍以人工运行为准
+
+## 2026-04-27 Fab 列表性能止血计划
+- 完成内容：已新增 [docs/review/20-FabLibraryPerformanceReliefImplementationSlices.md](docs/review/20-FabLibraryPerformanceReliefImplementationSlices.md)，把“列表页停用 WebView2 preview probe、缺图直接占位、详情页主 Hero 保留真实预览恢复”的性能止血主线拆成 `S0-S6` 与 `S1-A ~ S6-B` 原子切片；已新增 [docs/review/21-FabLibraryPerformanceReliefExecutionLog.md](docs/review/21-FabLibraryPerformanceReliefExecutionLog.md)，作为上下文接近上限时必须先更新的本地执行记录模板
+- 当前重点：下一步默认从 `S1-A` 开工，在 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs) 内为列表卡片引入显式 preview probe 策略位，并保持详情页主 Hero 的真实预览恢复路径不变
+- 当前建议：首期只做“列表页停 probe + 稳定占位态 + 最小日志/测试”，暂不做单长期存活 probe 复用，也不重新开启页面缓存实验；若上下文快满，先更新 [docs/review/21-FabLibraryPerformanceReliefExecutionLog.md](docs/review/21-FabLibraryPerformanceReliefExecutionLog.md)，压缩后先读它和 [docs/review/20-FabLibraryPerformanceReliefImplementationSlices.md](docs/review/20-FabLibraryPerformanceReliefImplementationSlices.md)
+- 本轮验证：文档规划任务，无编译和测试执行
+
 ## 2026-04-27 文档增量
 - 完成内容：已完成 `S8-A`，新增 [tests/Launcher.Tests.Unit/FabLibrarySessionStateStoreTests.cs](tests/Launcher.Tests.Unit/FabLibrarySessionStateStoreTests.cs) 与 [tests/Launcher.Tests.Unit/FabLibrarySnapshotAgePolicyTests.cs](tests/Launcher.Tests.Unit/FabLibrarySnapshotAgePolicyTests.cs)，分别覆盖 Session Store 的保存/读取/清理/裁剪规范化，以及年龄策略的 `Fresh / Warm / Stale` 阈值边界；已完成 `S8-B`，新增 [tests/Launcher.Tests.Unit/FabLibraryViewModelWarmResumeTests.cs](tests/Launcher.Tests.Unit/FabLibraryViewModelWarmResumeTests.cs)，覆盖 `FabLibraryViewModel` 的无快照、`Fresh`、`Warm`、`Stale` 与 `Warm` 刷新失败保留列表五条主路径，并同步更新 [src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs](src/Launcher.Presentation/Modules/FabLibrary/FabLibraryViewModel.cs) 内部测试 seam，避免单测依赖 WinUI `DispatcherQueue` 激活；已完成 `S8-C`，新增 [tests/Launcher.Tests.Unit/SettingsServiceFabLibraryConfigTests.cs](tests/Launcher.Tests.Unit/SettingsServiceFabLibraryConfigTests.cs) 与 [tests/Launcher.Tests.Unit/FabLibraryWarmupCoordinatorTests.cs](tests/Launcher.Tests.Unit/FabLibraryWarmupCoordinatorTests.cs)，分别覆盖 Fab 设置持久化/重置与预热协调器的成功/跳过分支；本轮已完成 `S8-D`，把 Fab 热恢复方案的最小手工冒烟步骤、建议截图点位与提交前检查清单固化到 [docs/review/19-FabLibraryWarmResumeImplementationSlices.md](docs/review/19-FabLibraryWarmResumeImplementationSlices.md)；已完成 `S9-A`，验证单页缓存实验可以被限制在 `FabLibraryPage`；已完成 `S9-B`，根据代码路径收益与对象保留成本比较，回退 `NavigationCacheMode.Required` 实验，恢复以 `SessionStateStore + SWR` 为主的基线
 - 当前重点：Fab 热恢复 `S0-S9` 已闭环；若后续人工 UI 测量仍显示 Fab 返回耗时明显超过目标，再重新开启仅针对 `FabLibraryPage` 的缓存页实验
