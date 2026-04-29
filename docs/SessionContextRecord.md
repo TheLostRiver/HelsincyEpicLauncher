@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `798e994` |
+| 当前基线提交 | `bdee417` |
 | 当前阶段 | Phase 1：Application 层补实 |
-| 当前任务 | Task 1.1：梳理 Downloads 应用层端口 |
+| 当前任务 | Task 1.2：为 Downloads 新增应用用例壳 |
 | 当前状态 | 已完成 |
-| 下一步 | 提交 Task 1.1；然后进入 Task 1.2：为 Downloads 新增应用用例壳 |
+| 下一步 | 提交 Task 1.2；然后进入 Task 1.3：迁移 DownloadCommandService 到 Application |
 | 阻塞项 | 无 |
 
 ---
@@ -93,6 +93,9 @@
 | `tests/Launcher.Tests.Unit/Architecture/ForbiddenNamespaceReferenceTests.cs` | 新增 | Task 0.4：扫描 Presentation 中禁用的 `Launcher.Domain` 引用 |
 | `docs/SessionContextRecord.md` | 修改 | Task 1.1：标记 Downloads 应用层端口梳理任务开始 |
 | `src/Launcher.Application/Modules/Downloads/README_ARCH.md` | 新增 | Task 1.1：记录 Downloads 公共 Contracts、内部端口、Domain 泄漏和迁移顺序 |
+| `docs/SessionContextRecord.md` | 修改 | Task 1.2：标记 StartDownloadUseCase 用例壳任务开始 |
+| `tests/Launcher.Tests.Unit/Downloads/StartDownloadUseCaseTests.cs` | 新增 | Task 1.2：验证合法请求委托 orchestrator，非法请求不委托 |
+| `src/Launcher.Application/Modules/Downloads/UseCases/StartDownloadUseCase.cs` | 新增 | Task 1.2：新增开始下载用例壳，做前置校验并委托 orchestrator |
 
 ---
 
@@ -140,13 +143,17 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 1.1 已确认 `IDownloadTaskRepository`、`IDownloadScheduler`、`IDownloadRuntimeStore`、`IDownloadOrchestrator` 当前位于 Contracts 目录，但架构语义上应视作内部端口。
 - Task 1.1 已确认当前 `ChunkDownloadClient` 没有 Application 层接口，后续应引入内部 `IChunkDownloader` 端口。
 - 已执行 Task 1.1 验证命令 `dotnet build .\src\Launcher.Application\Launcher.Application.csproj --no-restore`，构建成功，0 警告，0 错误。
+- 已提交 Task 1.1：`bdee417 docs: 梳理 Downloads 应用层端口`。
+- Task 1.2 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~StartDownloadUseCaseTests"`，按预期编译失败，因为 `StartDownloadUseCase` 尚不存在。
+- Task 1.2 绿灯验证已执行：同一过滤测试通过，2 个测试通过，0 个失败；存在既有 analyzer 警告。
+- Task 1.2 额外验证已执行：`dotnet build .\src\Launcher.Application\Launcher.Application.csproj --no-restore`，构建成功，0 警告，0 错误。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 1.1 尚需提交 Downloads 应用层端口梳理文档。
-- Task 1.2 将为 Downloads 新增 `StartDownloadUseCase`，必须使用 TDD：先写失败测试，再实现用例壳。
+- Task 1.2 尚需提交 `StartDownloadUseCase` 用例壳和测试。
+- Task 1.3 将迁移 `DownloadCommandService` 到 Application，涉及 DI 和现有 Infrastructure 包装，开始前必须重新读取相关实现和测试。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
