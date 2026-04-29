@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `c363968` |
+| 当前基线提交 | `70f362d` |
 | 当前阶段 | Phase 2：Contracts 去 Domain 泄漏 |
-| 当前任务 | Task 2.2：为 Downloads 增加 Contract-owned UI 类型 |
-| 当前状态 | 已完成 |
-| 下一步 | 提交 Task 2.2；然后进入 Task 2.3：移除 Downloads UI 对 Domain 的直接引用 |
+| 当前任务 | Task 2.3：移除 Downloads UI 对 Domain 的直接引用 |
+| 当前状态 | 验证完成，待提交 |
+| 下一步 | 检查 diff、提交 Task 2.3 |
 | 阻塞项 | 无 |
 
 ---
@@ -110,6 +110,13 @@
 | `tests/Launcher.Tests.Unit/DownloadModelsTests.cs` | 新增 | Task 2.2：验证 `DownloadStatusSummary` 暴露 Contract-owned 状态、可序列化且为 init-only 投影 |
 | `src/Launcher.Application/Modules/Downloads/Contracts/DownloadModels.cs` | 修改 | Task 2.2：新增 `DownloadStatusKind` 和 `DownloadStatusSummary.Status` 兼容字段 |
 | `src/Launcher.Infrastructure/Downloads/DownloadReadService.cs` | 修改 | Task 2.2：将旧 `DownloadUiState` 映射到新的 Contract-owned `DownloadStatusKind` |
+| `docs/SessionContextRecord.md` | 修改 | Task 2.3：标记 Downloads UI 去 Domain 引用任务开始 |
+| `tests/Launcher.Tests.Unit/Architecture/ForbiddenNamespaceReferenceTests.cs` | 修改 | Task 2.3：先移除 Downloads 例外，触发红灯以暴露待迁移 UI 文件 |
+| `tests/Launcher.Tests.Unit/DownloadModelsTests.cs` | 修改 | Task 2.3：新增 `DownloadTaskKey` 和快照公共状态红灯测试 |
+| `src/Launcher.Application/Modules/Downloads/Contracts/DownloadModels.cs` | 修改 | Task 2.3：新增 `DownloadTaskKey`，并为 Summary、Snapshot、事件提供公共任务标识投影 |
+| `src/Launcher.Presentation/Modules/Downloads/DownloadsViewModel.cs` | 修改 | Task 2.3：ViewModel 改用 `DownloadTaskKey` 和 `DownloadStatusKind`，移除 Domain using |
+| `src/Launcher.Presentation/Modules/Downloads/DownloadsPage.xaml.cs` | 修改 | Task 2.3：按钮 Tag 类型改为 `DownloadTaskKey`，移除 Domain using |
+| `src/Launcher.Presentation/Modules/Downloads/DownloadsPage.xaml` | 修改 | Task 2.3：按钮 Tag 绑定由 `TaskId` 改为 `TaskKey` |
 
 ---
 
@@ -179,13 +186,20 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 2.2 绿灯第一次验证失败：同一命令编译失败，原因是当前 Domain `DownloadUiState` 没有 `Installing` 值；下一步按真实枚举修正映射。
 - Task 2.2 绿灯验证已执行：同一过滤测试通过，4 个测试通过，0 个失败；存在既有 analyzer 警告。
 - Task 2.2 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
+- 已提交 Task 2.2：`70f362d feat: 添加下载状态公共投影`。
+- Task 2.3 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ForbiddenNamespaceReferenceTests"`，按预期失败；失败输出暴露 `DownloadsPage.xaml.cs`、`DownloadsViewModel.cs` 仍直接引用 `Launcher.Domain`，`InstallationsViewModel.cs` 仍是当前唯一保留例外。
+- Task 2.3 Contract 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~DownloadModelsTests"`，按预期编译失败；缺少 `DownloadStatusSummary.TaskKey`、`DownloadProgressSnapshot.TaskKey`、`DownloadProgressSnapshot.Status`。
+- Task 2.3 Contract 绿灯验证已执行：同一 `DownloadModelsTests` 过滤命令通过，6 个测试通过，0 个失败；存在既有 analyzer 警告。
+- Task 2.3 namespace 绿灯验证已执行：同一 `ForbiddenNamespaceReferenceTests` 过滤命令通过，1 个测试通过，0 个失败。
+- Task 2.3 指定测试验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ForbiddenNamespaceReferenceTests|FullyQualifiedName~DownloadRuntimeStoreTests"`，14 个测试通过，0 个失败。
+- Task 2.3 Presentation 构建验证已执行：`dotnet build .\src\Launcher.Presentation\Launcher.Presentation.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 2.3 额外源码检查已执行：`rg -n "Launcher\.Domain" src\Launcher.Presentation\Modules\Downloads -g "*.cs"` 无匹配，退出码 1 表示未找到匹配项。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 2.2 尚需提交 Downloads Contract-owned UI 类型、映射和测试。
-- Task 2.3 将移除 Downloads UI 对 Domain 的直接引用，涉及 Presentation，必须先读取当前 ViewModel/Page 代码和已有 runtime store 测试。
+- Task 2.3 已完成验证，待提交：移除 Downloads UI 对 Domain 的直接引用。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---

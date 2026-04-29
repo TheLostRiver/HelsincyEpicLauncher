@@ -6,8 +6,6 @@ public class ForbiddenNamespaceReferenceTests
 {
     private static readonly string[] KnownPresentationDomainReferenceExceptions =
     [
-        "src/Launcher.Presentation/Modules/Downloads/DownloadsPage.xaml.cs",
-        "src/Launcher.Presentation/Modules/Downloads/DownloadsViewModel.cs",
         "src/Launcher.Presentation/Modules/Installations/InstallationsViewModel.cs",
     ];
 

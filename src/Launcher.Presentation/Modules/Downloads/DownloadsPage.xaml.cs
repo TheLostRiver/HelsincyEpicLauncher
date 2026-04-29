@@ -1,6 +1,6 @@
 // Copyright (c) Helsincy. All rights reserved.
 
-using Launcher.Domain.Downloads;
+using Launcher.Application.Modules.Downloads.Contracts;
 using Launcher.Presentation.Shell;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -37,20 +37,20 @@ public sealed partial class DownloadsPage : Page
 
     private async void PauseButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: DownloadTaskId taskId })
-            await ViewModel.PauseCommand.ExecuteAsync(taskId);
+        if (sender is Button { Tag: DownloadTaskKey taskKey })
+            await ViewModel.PauseCommand.ExecuteAsync(taskKey);
     }
 
     private async void ResumeButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: DownloadTaskId taskId })
-            await ViewModel.ResumeCommand.ExecuteAsync(taskId);
+        if (sender is Button { Tag: DownloadTaskKey taskKey })
+            await ViewModel.ResumeCommand.ExecuteAsync(taskKey);
     }
 
     private async void CancelButton_Click(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: DownloadTaskId taskId })
-            await ViewModel.CancelCommand.ExecuteAsync(taskId);
+        if (sender is Button { Tag: DownloadTaskKey taskKey })
+            await ViewModel.CancelCommand.ExecuteAsync(taskKey);
     }
 }
 
