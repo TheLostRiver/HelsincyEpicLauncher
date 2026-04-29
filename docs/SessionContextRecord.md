@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `aec9f91` |
+| 当前基线提交 | `82de133` |
 | 当前阶段 | Phase 0：护栏和真实基线 |
-| 当前任务 | Task 0.3：新增项目引用方向测试 |
+| 当前任务 | Task 0.4：新增禁用 namespace 扫描测试 |
 | 当前状态 | 已完成 |
-| 下一步 | 提交 Task 0.3；然后进入 Task 0.4：新增禁用 namespace 扫描测试 |
+| 下一步 | 提交 Task 0.4；然后进入 Phase 1 Task 1.1：梳理 Downloads 应用层端口 |
 | 阻塞项 | 无 |
 
 ---
@@ -89,6 +89,8 @@
 | `docs/11-TechStack.md` | 修改 | 将运行时基线同步为 `net9.0-windows10.0.19041.0`，将自包含部署改为发布目标建议 |
 | `docs/SessionContextRecord.md` | 修改 | Task 0.3：标记项目引用方向测试任务开始 |
 | `tests/Launcher.Tests.Unit/Architecture/ProjectReferenceRulesTests.cs` | 新增 | Task 0.3：新增项目引用方向架构测试 |
+| `docs/SessionContextRecord.md` | 修改 | Task 0.4：标记禁用 namespace 扫描测试任务开始 |
+| `tests/Launcher.Tests.Unit/Architecture/ForbiddenNamespaceReferenceTests.cs` | 新增 | Task 0.4：扫描 Presentation 中禁用的 `Launcher.Domain` 引用 |
 
 ---
 
@@ -125,13 +127,18 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 0.3 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ProjectReferenceRulesTests"`，按预期失败在 `NotImplementedException`。
 - Task 0.3 绿灯第一次验证失败：同一命令编译失败，错误为 `CS1061 StringAssertions` 不包含 `BeAnExistingFile`；下一步改用 `File.Exists(...).Should().BeTrue(...)`。
 - Task 0.3 绿灯验证已执行：同一过滤测试通过，3 个测试通过，0 个失败；存在既有 analyzer 警告。
+- 已提交 Task 0.3：`82de133 test: 添加项目引用方向护栏`。
+- Task 0.4 已扫描当前 Presentation 中的 `Launcher.Domain` 引用，已知例外为 `DownloadsPage.xaml.cs`、`DownloadsViewModel.cs`、`InstallationsViewModel.cs`。
+- Task 0.4 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ForbiddenNamespaceReferenceTests"`，按预期失败在 `NotImplementedException`。
+- Task 0.4 绿灯验证已执行：同一过滤测试通过，1 个测试通过，0 个失败；存在既有 analyzer 警告。
+- 已执行 Phase 0 架构测试过滤验证：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~Architecture"`，4 个测试通过，0 个失败。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 0.3 尚需提交项目引用方向测试。
-- Task 0.4 将新增禁用 namespace 扫描测试，开始前必须读取 Presentation 当前 Domain 引用并建立已知例外清单。
+- Task 0.4 尚需提交禁用 namespace 扫描测试。
+- Phase 1 Task 1.1 将梳理 Downloads 应用层端口，开始前必须读取 `docs/06-ModuleDefinitions/Downloads.md` 和 `docs/07-DownloadSubsystem.md`。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
