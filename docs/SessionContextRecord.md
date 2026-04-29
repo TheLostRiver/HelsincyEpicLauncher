@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `8048253` |
-| 当前阶段 | Phase 1：Application 层补实 |
-| 当前任务 | Task 1.4：InstallCommandService 编排迁移预备 |
+| 当前基线提交 | `ba39493` |
+| 当前阶段 | Phase 2：Contracts 去 Domain 泄漏 |
+| 当前任务 | Task 2.1：建立公共 Contracts 与内部端口命名规则 |
 | 当前状态 | 已完成 |
-| 下一步 | 提交 Task 1.4；然后进入 Phase 2 Task 2.1：建立公共 Contracts 与内部端口命名规则 |
+| 下一步 | 提交 Task 2.1；然后进入 Task 2.2：为 Downloads 增加 Contract-owned UI 类型 |
 | 阻塞项 | 无 |
 
 ---
@@ -103,6 +103,9 @@
 | `src/Launcher.Infrastructure/Downloads/DownloadCommandService.cs` | 修改 | Task 1.3：保留旧实现并标记为迁移兼容参考 |
 | `docs/SessionContextRecord.md` | 修改 | Task 1.4：标记 Installations 编排迁移预备任务开始 |
 | `src/Launcher.Application/Modules/Installations/README_ARCH.md` | 新增 | Task 1.4：记录 Installations 编排迁移边界、Infrastructure 保留项和后续顺序 |
+| `docs/SessionContextRecord.md` | 修改 | Task 2.1：标记公共 Contracts 与内部端口命名规则任务开始 |
+| `docs/04-ModuleDependencyRules.md` | 修改 | Task 2.1：新增 Contracts、Ports、Persistence、UseCases 命名规则 |
+| `docs/05-CoreInterfaces.md` | 修改 | Task 2.1：修正“所有接口位于 Contracts”的旧表述，增加公共接口和内部端口区分 |
 
 ---
 
@@ -163,13 +166,17 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 1.4 已确认 `InstallCommandService.InstallAsync`、`UninstallAsync`、`RepairAsync` 含有应用编排，应逐步迁到 Application。
 - Task 1.4 已确认 `InstallWorker`、`RepairFileDownloader`、`IntegrityVerifier`、`HashingService`、`InstallationRepository` 应继续留在 Infrastructure。
 - 已执行 Task 1.4 验证命令 `dotnet build .\src\Launcher.Application\Launcher.Application.csproj --no-restore`，构建成功，0 警告，0 错误。
+- 已提交 Task 1.4：`ba39493 docs: 梳理 Installations 编排边界`。
+- Task 2.1 已读取 `docs/04-ModuleDependencyRules.md` 和 `docs/05-CoreInterfaces.md`。
+- Task 2.1 已明确 Repository 端口属于内部端口，不能作为 Presentation 或跨模块入口。
+- 已执行 Task 2.1 验证命令 `dotnet build .\HelsincyEpicLauncher.slnx --no-restore`，构建成功；存在既有 9 个 analyzer 警告，0 个错误。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 1.4 尚需提交 Installations 编排迁移预备文档。
-- Phase 2 Task 2.1 将修改 `docs/04-ModuleDependencyRules.md` 和 `docs/05-CoreInterfaces.md`，明确公共 Contracts 与内部端口命名规则。
+- Task 2.1 尚需提交公共 Contracts 与内部端口命名规则文档。
+- Task 2.2 将为 Downloads 增加 Contract-owned UI 类型，涉及公共 DTO，必须先写测试并保持兼容字段。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---

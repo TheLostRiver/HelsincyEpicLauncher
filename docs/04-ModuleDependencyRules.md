@@ -62,6 +62,35 @@ Presentation  →  Application  →  Domain  →  Shared
 
 ---
 
+## 2.3 Contracts 与内部端口命名规则
+
+模块之间只允许依赖对方的 `Contracts`，但不是所有接口都应该放进 `Contracts`。命名规则如下：
+
+| 目录 | 用途 | 可被谁依赖 |
+|------|------|------------|
+| `Contracts` | 跨模块和 UI 可见的 Command、Query、Summary、Event、Request DTO | 其他模块、Presentation、Background |
+| `Ports` | 模块内部应用端口，例如 Repository、HTTP gateway、文件操作、Scheduler、RuntimeStore | 本模块 Application / Infrastructure |
+| `Persistence` | 持久化专用端口或模型，例如 SQLite repository、row mapper、migration-facing abstraction | 本模块 Application / Infrastructure |
+| `UseCases` | 应用用例和命令/查询处理器 | 本模块 Application，外部通过 Contracts 调用 |
+
+### 公共 Contracts 必须满足
+
+- 只表达模块对外能力，不暴露实现细节。
+- 返回稳定 DTO / Summary / Event，不返回领域实体。
+- 不暴露 Repository、SQLite、HTTP、WebView2、文件系统、Scheduler、Worker、RuntimeStore。
+- 不要求 Presentation 引用 `Launcher.Domain.*`。
+
+### 内部端口可以满足
+
+- 可以接受或返回领域实体和值对象。
+- 可以表达技术能力需求，例如 `IChunkDownloader`、`IInstallationRepository`、`IIntegrityVerifier`。
+- 由 Application 定义、Infrastructure 实现。
+- 不被其他模块或 Presentation 直接依赖。
+
+当前代码中部分 Repository、Scheduler、RuntimeStore 接口仍位于 `Contracts` 目录，这是迁移期债务。新增接口必须按上述规则放置，旧接口后续按原子任务逐步迁移。
+
+---
+
 ## 3. 硬性禁止项
 
 ### 禁止 P-01：跨模块引用内部实现
@@ -98,7 +127,7 @@ Presentation  →  Application  →  Domain  →  Shared
 ❌ Downloads 直接改 Installations 的数据库记录
 ```
 
-**正确做法**：通过对方 Contracts 的 Repository 接口。
+**正确做法**：通过对方公共 Query / Command Contract；Repository 属于内部端口，不作为跨模块入口。
 
 ### 禁止 P-05：反向依赖
 

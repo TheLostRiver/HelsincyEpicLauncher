@@ -1,7 +1,24 @@
 # 核心接口设计
 
 > 本文档定义跨模块的关键接口。这些接口是模块之间的"通信管道"，也是架构边界的物理体现。
-> 所有接口均位于对应模块的 `Contracts/` 目录中。
+> 公共接口位于对应模块的 `Contracts/` 目录中；Repository、HTTP、文件系统、Scheduler、RuntimeStore 等内部端口不再新增到 `Contracts/`。
+
+---
+
+## 0. 命名与目录规则
+
+后续新增接口必须先判断它是公共 Contract 还是模块内部端口。
+
+| 目录 | 放什么 | 不放什么 |
+|------|--------|----------|
+| `Contracts` | 跨模块/UI 可见的 Command、Query、Request、Summary、Event | Repository、HTTP client、SQLite、文件系统、Scheduler、RuntimeStore、Worker |
+| `Ports` | Application 依赖的内部能力端口 | UI 直接消费接口 |
+| `Persistence` | 持久化端口、持久化模型、迁移相关抽象 | 跨模块查询接口 |
+| `UseCases` | 应用用例、命令处理器、查询处理器 | HTTP/SQLite/WinUI 具体实现 |
+
+公共 Contracts 的返回值必须是稳定 DTO、Summary、Event 或 `Result`。除短期兼容债务外，不应返回 `DownloadTask`、`Installation` 等领域实体，也不应要求 Presentation 引用 `Launcher.Domain.*`。
+
+内部端口可以使用领域实体和值对象，但只能被本模块 Application 和 Infrastructure 使用。若一个接口名称包含 `Repository`、`Store`、`Scheduler`、`Worker`、`Downloader`、`Verifier`、`FileSystem`、`TokenStore`，默认先归入内部端口，除非有明确跨模块理由。
 
 ---
 
