@@ -31,6 +31,7 @@
 - 每个原子任务必须小、可验证、可恢复。
 - AI 无法读取精确额度，因此以保守上下文风险信号代替额度检测。
 - 上下文将要爆满或判断可能接近限额时，必须先更新本文件，然后停止执行。
+- 架构优化实现任务在隔离 worktree 执行，不触碰 `Q:\MyEpicLauncher` 主工作区中的既有未提交改动。
 
 ---
 
@@ -59,10 +60,14 @@
 
 | 字段 | 内容 |
 |------|------|
-| 当前阶段 | 文档规划阶段 |
-| 当前任务 | 补充额度风险检测替代约束 |
+| 当前执行者 | GPT-5 Codex |
+| 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
+| 执行分支 | `codex/architecture-optimization-implementation` |
+| 当前基线提交 | `a6c624a` |
+| 当前阶段 | Phase 0：护栏和真实基线 |
+| 当前任务 | Task 0.1：初始化 SessionContextRecord 基线 |
 | 当前状态 | 已完成 |
-| 下一步 | 等待用户确认是否开始执行；若进入执行阶段，从 `docs/18-ArchitectureOptimizationImplementation.md` 的 Task 0.1 开始 |
+| 下一步 | 提交 Task 0.1；然后进入 Task 0.2：同步 README 与技术栈真实基线 |
 | 阻塞项 | 无 |
 
 ---
@@ -77,6 +82,7 @@
 | `docs/17-ArchitectureOptimizationPlan.md` | 修改 | 补充额度风险触发时先记录并停止 |
 | `docs/18-ArchitectureOptimizationImplementation.md` | 修改 | 新增上下文风险信号和触发后动作 |
 | `docs/SessionContextRecord.md` | 修改 | 固化额度风险替代检测约束并记录当前任务 |
+| `docs/SessionContextRecord.md` | 修改 | Task 0.1：记录执行者、worktree、分支、基线提交和当前任务 |
 
 ---
 
@@ -100,14 +106,19 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - 已执行占位词检查：无未完成占位词输出。
 - 已执行 `git diff --check -- docs/17-ArchitectureOptimizationPlan.md docs/18-ArchitectureOptimizationImplementation.md docs/SessionContextRecord.md`，无空白错误；仅出现 Git 的 LF/CRLF 提示。
 - 已确认本次补丁目标文件仅为三份文档。
+- 已创建隔离 worktree：`C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation`。
+- 已执行 `dotnet restore .\HelsincyEpicLauncher.slnx`，成功。
+- 已执行 `dotnet build .\HelsincyEpicLauncher.slnx --no-restore`，成功；存在既有 analyzer 警告，0 个错误。
+- 已执行 `git status --short`，隔离 worktree 初始状态无未提交文件。
+- 已执行 Task 0.1 验证命令 `Get-Content .\docs\SessionContextRecord.md -Encoding UTF8`，输出包含当前任务、恢复顺序和最近验证命令。
 
 ---
 
 ## 7. 未完成事项
 
-- 用户确认是否认可文档结构和执行顺序。
-- 若进入执行阶段，从 `docs/18-ArchitectureOptimizationImplementation.md` 的 Task 0.1 开始。
-- 执行任何任务前，先更新本文件的“当前任务状态”。
+- Task 0.1 尚需提交本记录更新。
+- Task 0.2 将同步 README 与技术栈真实基线，开始前必须读取相关文档和目标文件。
+- 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
 
