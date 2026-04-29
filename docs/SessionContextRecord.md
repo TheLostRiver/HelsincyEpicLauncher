@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `8d1247b` |
+| 当前基线提交 | `8048253` |
 | 当前阶段 | Phase 1：Application 层补实 |
-| 当前任务 | Task 1.3：迁移 DownloadCommandService 到 Application |
+| 当前任务 | Task 1.4：InstallCommandService 编排迁移预备 |
 | 当前状态 | 已完成 |
-| 下一步 | 提交 Task 1.3；然后进入 Task 1.4：InstallCommandService 编排迁移预备 |
+| 下一步 | 提交 Task 1.4；然后进入 Phase 2 Task 2.1：建立公共 Contracts 与内部端口命名规则 |
 | 阻塞项 | 无 |
 
 ---
@@ -101,6 +101,8 @@
 | `src/Launcher.Application/Modules/Downloads/DownloadCommandService.cs` | 新增 | Task 1.3：将命令入口迁到 Application 层 |
 | `src/Launcher.Infrastructure/DependencyInjection.cs` | 修改 | Task 1.3：DI 注册切换到 Application 层 `DownloadCommandService` 并注册 `StartDownloadUseCase` |
 | `src/Launcher.Infrastructure/Downloads/DownloadCommandService.cs` | 修改 | Task 1.3：保留旧实现并标记为迁移兼容参考 |
+| `docs/SessionContextRecord.md` | 修改 | Task 1.4：标记 Installations 编排迁移预备任务开始 |
+| `src/Launcher.Application/Modules/Installations/README_ARCH.md` | 新增 | Task 1.4：记录 Installations 编排迁移边界、Infrastructure 保留项和后续顺序 |
 
 ---
 
@@ -156,13 +158,18 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 1.3 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~DownloadCommandServiceTests"`，按预期编译失败，因为 Application 层 `DownloadCommandService` 尚不存在。
 - Task 1.3 绿灯验证已执行：同一过滤测试通过，3 个测试通过，0 个失败；存在既有 analyzer 警告。
 - Task 1.3 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
+- 已提交 Task 1.3：`8048253 refactor: 将下载命令服务迁到应用层`。
+- Task 1.4 已读取 `docs/06-ModuleDefinitions/Installations.md`。
+- Task 1.4 已确认 `InstallCommandService.InstallAsync`、`UninstallAsync`、`RepairAsync` 含有应用编排，应逐步迁到 Application。
+- Task 1.4 已确认 `InstallWorker`、`RepairFileDownloader`、`IntegrityVerifier`、`HashingService`、`InstallationRepository` 应继续留在 Infrastructure。
+- 已执行 Task 1.4 验证命令 `dotnet build .\src\Launcher.Application\Launcher.Application.csproj --no-restore`，构建成功，0 警告，0 错误。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 1.3 尚需提交 `DownloadCommandService` 迁移、DI 切换和测试。
-- Task 1.4 将梳理 Installations 编排迁移预备，开始前必须读取 `docs/06-ModuleDefinitions/Installations.md`。
+- Task 1.4 尚需提交 Installations 编排迁移预备文档。
+- Phase 2 Task 2.1 将修改 `docs/04-ModuleDependencyRules.md` 和 `docs/05-CoreInterfaces.md`，明确公共 Contracts 与内部端口命名规则。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
