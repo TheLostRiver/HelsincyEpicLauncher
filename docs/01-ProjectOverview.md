@@ -50,7 +50,7 @@ HelsincyEpicLauncher 是一款 **Windows 10/11 原生桌面客户端**，用于�
 
 - **唯一目标**：Windows 10 / Windows 11（x64）
 - **不考虑跨平台**
-- **最低系统要求**：Windows 10 1809+，.NET 8+（或当时最新 LTS）
+- **最低系统要求**：Windows 10 1809+；当前工程为 .NET 9 Windows TFM，发布策略可随后续 LTS 调整
 
 ---
 
@@ -78,7 +78,7 @@ HelsincyEpicLauncher 是一款 **Windows 10/11 原生桌面客户端**，用于�
 | 本地存储 | SQLite + JSON |
 | HTTP | HttpClient + Polly（重试/熔断） |
 | 日志 | Serilog（结构化日志） |
-| 语言 | C# 12+ / .NET 8+ |
+| 语言 | C# latest / 当前工程为 .NET 9 Windows TFM |
 
 > 详见 [11-TechStack.md](11-TechStack.md)
 

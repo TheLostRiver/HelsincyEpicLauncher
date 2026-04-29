@@ -8,7 +8,7 @@
 
 | 层面 | 选型 | 版本 | 用途 |
 |------|------|------|------|
-| **运行时** | .NET 8+ (LTS) | 最新 LTS | 应用运行时 |
+| **运行时** | .NET 9 Windows TFM | `net9.0-windows10.0.19041.0` | 当前工程运行时基线；文档原则兼容后续 LTS 策略 |
 | **语言** | C# 12+ | 随 .NET 版本 | 主要开发语言 |
 | **UI 框架** | WinUI 3 (Windows App SDK) | 最新稳定版 | 原生 Windows UI |
 | **MVVM 库** | CommunityToolkit.Mvvm | 最新稳定版 | ViewModel 基类、Command、消息 |
@@ -77,7 +77,7 @@
 - 支持重试、熔断、超时、限流、回退
 - 完美配合 HttpClientFactory
 - 下载器的 CDN 切换和重试策略直接基于 Polly 策略
-- .NET 8+ 内置 `Microsoft.Extensions.Http.Resilience` 基于 Polly
+- 现代 .NET 内置的 `Microsoft.Extensions.Http.Resilience` 基于 Polly
 
 ### 2.5 Serilog
 
@@ -151,7 +151,7 @@
 |------|------|
 | 操作系统 | Windows 10 1809 (Build 17763)+ |
 | 架构 | x64 |
-| 运行时 | 自包含部署（不要求用户安装 .NET） |
+| 运行时 | 当前源码构建需要 .NET 9 SDK；发布目标建议自包含，不要求用户安装 .NET |
 | 磁盘 | 安装本体约 50-100 MB |
 | 内存 | 建议 4GB+ |
 | 网络 | 需要网络进行 Fab 资产浏览和下载 |
@@ -169,16 +169,9 @@
 - 更接近传统桌面软件的分发方式
 - 自动更新由 Updates 模块自行实现
 
-### 6.2 自包含部署
+### 6.2 自包含部署目标
 
-```xml
-<PropertyGroup>
-    <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <PublishSingleFile>false</PublishSingleFile>
-    <PublishTrimmed>false</PublishTrimmed>
-</PropertyGroup>
-```
+当前项目文件只设置了 `RuntimeIdentifiers=win-x64`，尚未启用 `SelfContained`。后续发布配置建议采用以下目标：
 
 - 自包含：不依赖用户安装 .NET Runtime
 - 不建议 SingleFile：WinUI 3 和 Windows App SDK 有 DLL 依赖
