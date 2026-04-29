@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `e91bdd3` |
+| 当前基线提交 | `aec9f91` |
 | 当前阶段 | Phase 0：护栏和真实基线 |
-| 当前任务 | Task 0.2：同步 README 与技术栈真实基线 |
+| 当前任务 | Task 0.3：新增项目引用方向测试 |
 | 当前状态 | 已完成 |
-| 下一步 | 提交 Task 0.2；然后进入 Task 0.3：新增项目引用方向测试 |
+| 下一步 | 提交 Task 0.3；然后进入 Task 0.4：新增禁用 namespace 扫描测试 |
 | 阻塞项 | 无 |
 
 ---
@@ -87,6 +87,8 @@
 | `README.md` | 修改 | 将运行时描述同步为当前 .NET 9 Windows TFM，并修正解决方案文件名和构建命令 |
 | `docs/01-ProjectOverview.md` | 修改 | 将最低系统要求和语言基线同步为当前 .NET 9 Windows TFM |
 | `docs/11-TechStack.md` | 修改 | 将运行时基线同步为 `net9.0-windows10.0.19041.0`，将自包含部署改为发布目标建议 |
+| `docs/SessionContextRecord.md` | 修改 | Task 0.3：标记项目引用方向测试任务开始 |
+| `tests/Launcher.Tests.Unit/Architecture/ProjectReferenceRulesTests.cs` | 新增 | Task 0.3：新增项目引用方向架构测试 |
 
 ---
 
@@ -119,13 +121,17 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 0.2 已确认 `Directory.Build.props` 中真实 TFM 为 `net9.0-windows10.0.19041.0`。
 - Task 0.2 已确认当前项目文件未启用 `SelfContained`；`src/Launcher.App/Launcher.App.csproj` 仅设置 `RuntimeIdentifiers=win-x64`。
 - 已执行 Task 0.2 验证命令 `dotnet build .\HelsincyEpicLauncher.slnx --no-restore`，构建成功；存在既有 analyzer 警告，0 个错误。
+- 已提交 Task 0.2：`aec9f91 docs: 同步项目运行时基线`。
+- Task 0.3 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ProjectReferenceRulesTests"`，按预期失败在 `NotImplementedException`。
+- Task 0.3 绿灯第一次验证失败：同一命令编译失败，错误为 `CS1061 StringAssertions` 不包含 `BeAnExistingFile`；下一步改用 `File.Exists(...).Should().BeTrue(...)`。
+- Task 0.3 绿灯验证已执行：同一过滤测试通过，3 个测试通过，0 个失败；存在既有 analyzer 警告。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 0.2 尚需提交文档同步改动。
-- Task 0.3 将新增项目引用方向测试，开始前必须读取现有测试结构和项目引用文件。
+- Task 0.3 尚需提交项目引用方向测试。
+- Task 0.4 将新增禁用 namespace 扫描测试，开始前必须读取 Presentation 当前 Domain 引用并建立已知例外清单。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
