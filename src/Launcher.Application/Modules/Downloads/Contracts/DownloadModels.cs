@@ -25,6 +25,7 @@ public sealed class DownloadStatusSummary
     public required DownloadTaskId TaskId { get; init; }
     public required string AssetId { get; init; }
     public required string AssetName { get; init; }
+    public DownloadStatusKind Status { get; init; }
     public DownloadUiState UiState { get; init; }
     public double Progress { get; init; }
     public long DownloadedBytes { get; init; }
@@ -35,6 +36,21 @@ public sealed class DownloadStatusSummary
     public bool CanResume { get; init; }
     public bool CanCancel { get; init; }
     public string? ErrorMessage { get; init; }
+}
+
+/// <summary>
+/// 下载状态公共投影。由 Application Contracts 拥有，供 UI 和跨模块调用方使用。
+/// </summary>
+public enum DownloadStatusKind
+{
+    Queued,
+    Downloading,
+    Paused,
+    Verifying,
+    Installing,
+    Completed,
+    Failed,
+    Cancelled,
 }
 
 /// <summary>

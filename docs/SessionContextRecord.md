@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `ba39493` |
+| 当前基线提交 | `c363968` |
 | 当前阶段 | Phase 2：Contracts 去 Domain 泄漏 |
-| 当前任务 | Task 2.1：建立公共 Contracts 与内部端口命名规则 |
+| 当前任务 | Task 2.2：为 Downloads 增加 Contract-owned UI 类型 |
 | 当前状态 | 已完成 |
-| 下一步 | 提交 Task 2.1；然后进入 Task 2.2：为 Downloads 增加 Contract-owned UI 类型 |
+| 下一步 | 提交 Task 2.2；然后进入 Task 2.3：移除 Downloads UI 对 Domain 的直接引用 |
 | 阻塞项 | 无 |
 
 ---
@@ -106,6 +106,10 @@
 | `docs/SessionContextRecord.md` | 修改 | Task 2.1：标记公共 Contracts 与内部端口命名规则任务开始 |
 | `docs/04-ModuleDependencyRules.md` | 修改 | Task 2.1：新增 Contracts、Ports、Persistence、UseCases 命名规则 |
 | `docs/05-CoreInterfaces.md` | 修改 | Task 2.1：修正“所有接口位于 Contracts”的旧表述，增加公共接口和内部端口区分 |
+| `docs/SessionContextRecord.md` | 修改 | Task 2.2：标记 Downloads Contract-owned UI 类型任务开始 |
+| `tests/Launcher.Tests.Unit/DownloadModelsTests.cs` | 新增 | Task 2.2：验证 `DownloadStatusSummary` 暴露 Contract-owned 状态、可序列化且为 init-only 投影 |
+| `src/Launcher.Application/Modules/Downloads/Contracts/DownloadModels.cs` | 修改 | Task 2.2：新增 `DownloadStatusKind` 和 `DownloadStatusSummary.Status` 兼容字段 |
+| `src/Launcher.Infrastructure/Downloads/DownloadReadService.cs` | 修改 | Task 2.2：将旧 `DownloadUiState` 映射到新的 Contract-owned `DownloadStatusKind` |
 
 ---
 
@@ -170,13 +174,18 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 2.1 已读取 `docs/04-ModuleDependencyRules.md` 和 `docs/05-CoreInterfaces.md`。
 - Task 2.1 已明确 Repository 端口属于内部端口，不能作为 Presentation 或跨模块入口。
 - 已执行 Task 2.1 验证命令 `dotnet build .\HelsincyEpicLauncher.slnx --no-restore`，构建成功；存在既有 9 个 analyzer 警告，0 个错误。
+- 已提交 Task 2.1：`c363968 docs: 明确公共契约与内部端口规则`。
+- Task 2.2 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~DownloadModelsTests"`，按预期编译失败，因为 `DownloadStatusKind` 和 `DownloadStatusSummary.Status` 尚不存在。
+- Task 2.2 绿灯第一次验证失败：同一命令编译失败，原因是当前 Domain `DownloadUiState` 没有 `Installing` 值；下一步按真实枚举修正映射。
+- Task 2.2 绿灯验证已执行：同一过滤测试通过，4 个测试通过，0 个失败；存在既有 analyzer 警告。
+- Task 2.2 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 2.1 尚需提交公共 Contracts 与内部端口命名规则文档。
-- Task 2.2 将为 Downloads 增加 Contract-owned UI 类型，涉及公共 DTO，必须先写测试并保持兼容字段。
+- Task 2.2 尚需提交 Downloads Contract-owned UI 类型、映射和测试。
+- Task 2.3 将移除 Downloads UI 对 Domain 的直接引用，涉及 Presentation，必须先读取当前 ViewModel/Page 代码和已有 runtime store 测试。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
