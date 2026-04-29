@@ -209,4 +209,4 @@ Repository、HTTP client、WebView probe、SQLite migration、文件修复器等
 3. **先加护栏再迁移**：边界测试先于大规模移动代码。
 4. **先保留兼容层**：迁移 Contracts 时可短期保留旧成员，但必须记录移除计划。
 5. **不碰 review 文档作为架构依据**：review 目录只作为历史记录，不作为本方案的设计来源。
-6. **遇到上下文风险先记录**：详细状态写入 `docs/SessionContextRecord.md` 后再等待压缩或继续。
+6. **遇到上下文风险先记录**：AI 无法读取精确额度，因此以保守上下文风险信号代替额度检测；一旦判断可能接近限额，必须将详细状态写入 `docs/SessionContextRecord.md`，然后停止执行，等待用户继续。

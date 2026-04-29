@@ -29,7 +29,8 @@
 - 不删除任何文件，除非用户明确要求。
 - 不做一次性大重构。
 - 每个原子任务必须小、可验证、可恢复。
-- 上下文将要爆满时，必须先更新本文件。
+- AI 无法读取精确额度，因此以保守上下文风险信号代替额度检测。
+- 上下文将要爆满或判断可能接近限额时，必须先更新本文件，然后停止执行。
 
 ---
 
@@ -59,9 +60,9 @@
 | 字段 | 内容 |
 |------|------|
 | 当前阶段 | 文档规划阶段 |
-| 当前任务 | 创建架构优化方案、实现文档、SessionContextRecord |
+| 当前任务 | 补充额度风险检测替代约束 |
 | 当前状态 | 已完成 |
-| 下一步 | 等待用户确认文档结构；若进入执行阶段，从 `docs/18-ArchitectureOptimizationImplementation.md` 的 Task 0.1 开始 |
+| 下一步 | 等待用户确认是否开始执行；若进入执行阶段，从 `docs/18-ArchitectureOptimizationImplementation.md` 的 Task 0.1 开始 |
 | 阻塞项 | 无 |
 
 ---
@@ -73,6 +74,9 @@
 | `docs/17-ArchitectureOptimizationPlan.md` | 新增 | 项目架构优化总方案 |
 | `docs/18-ArchitectureOptimizationImplementation.md` | 新增 | 原子任务实现拆解 |
 | `docs/SessionContextRecord.md` | 新增 | 上下文恢复记录 |
+| `docs/17-ArchitectureOptimizationPlan.md` | 修改 | 补充额度风险触发时先记录并停止 |
+| `docs/18-ArchitectureOptimizationImplementation.md` | 修改 | 新增上下文风险信号和触发后动作 |
+| `docs/SessionContextRecord.md` | 修改 | 固化额度风险替代检测约束并记录当前任务 |
 
 ---
 
@@ -92,6 +96,10 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - 未发现未完成占位词。
 - `SessionContextRecord.md` 铁律已写入方案文档和实现文档。
 - `git status --short` 显示本轮新增 3 个文档；仓库中还存在此前未由本轮创建的既有未提交改动。
+- 已补充额度风险替代检测约束：AI 无法读取精确额度，以保守上下文风险信号作为触发条件。
+- 已执行占位词检查：无未完成占位词输出。
+- 已执行 `git diff --check -- docs/17-ArchitectureOptimizationPlan.md docs/18-ArchitectureOptimizationImplementation.md docs/SessionContextRecord.md`，无空白错误；仅出现 Git 的 LF/CRLF 提示。
+- 已确认本次补丁目标文件仅为三份文档。
 
 ---
 
