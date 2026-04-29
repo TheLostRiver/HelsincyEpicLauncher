@@ -3,6 +3,7 @@
 using Launcher.Application.Modules.Auth.Contracts;
 using Launcher.Application.Modules.Diagnostics.Contracts;
 using Launcher.Application.Modules.Downloads.Contracts;
+using Launcher.Application.Modules.Downloads.UseCases;
 using Launcher.Application.Modules.EngineVersions.Contracts;
 using Launcher.Application.Modules.FabLibrary.Contracts;
 using Launcher.Application.Modules.Installations.Contracts;
@@ -73,7 +74,8 @@ public static class DependencyInjection
         services.AddSingleton<IDownloadOrchestrator, DownloadOrchestrator>();
         services.AddSingleton<DownloadRuntimeStore>();
         services.AddSingleton<IDownloadRuntimeStore>(sp => sp.GetRequiredService<DownloadRuntimeStore>());
-        services.AddSingleton<IDownloadCommandService, DownloadCommandService>();
+        services.AddSingleton<StartDownloadUseCase>();
+        services.AddSingleton<IDownloadCommandService, Launcher.Application.Modules.Downloads.DownloadCommandService>();
         services.AddSingleton<IDownloadReadService, DownloadReadService>();
 
         // 安装
