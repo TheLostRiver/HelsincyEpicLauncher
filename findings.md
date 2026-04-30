@@ -52,7 +52,10 @@
 - Task 7.2a completed: only the failing unit test setup was changed; production DI remained unchanged.
 - Final Task 7.2 verification passed after Task 7.2a: solution build 0 warnings/0 errors, unit tests 308 passed, integration tests 7 passed.
 - Branch finishing decision: user selected option 2, meaning push `codex/architecture-optimization-implementation` and create a Pull Request targeting `main`.
-- Context-risk pause before push/PR: user explicitly requested recording task information locally before context compression. Push and PR creation are still pending.
+- Context-risk pause before push/PR: user explicitly requested recording task information locally before context compression.
+- Resume after context risk completed Option 2: `git push -u origin codex/architecture-optimization-implementation` succeeded and Draft PR #1 was created at https://github.com/TheLostRiver/HelsincyEpicLauncher/pull/1.
+- Fresh validation immediately before PR creation: solution build succeeded with 0 errors and 9 existing analyzer warnings in test files; unit tests passed 308/308; integration tests passed 7/7.
+- GitHub CLI `gh` is unavailable in this environment, so PR creation used the GitHub connector after confirming the remote owner/name and default branch.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -67,6 +70,7 @@
 | Keep XamlRoot setters on concrete shell services | `ShellPage` already wires UI-only concrete services after `Loaded`; using the same pattern keeps XamlRoot setup local to Shell composition. |
 | Keep Task 7.1 docs descriptive, not aspirational | Implementation doc requires recording only completed code reality, so remaining debts are described as compatibility or future work rather than as already-finished architecture. |
 | Treat Task 7.2 failures as stop-and-record events | The implementation doc explicitly says full verification should record failure details and stop instead of performing temporary broad fixes. |
+| Create PR as draft | The publish workflow defaults to draft PR unless the user explicitly requests ready-for-review. |
 
 ## Issues Encountered
 | Issue | Resolution |
@@ -79,6 +83,7 @@
 | Task 7.2a fix scope | Fix the stale unit test setup rather than production DI, because production `AddBackground()` correctly registers all background workers and the failing test is missing required substitutes for those workers. |
 | Phase 7 completion | Treat Phase 7 as complete after final build/unit/integration verification passes and context files are committed. |
 | Pause before push/PR due context risk | Respect the user iron rule: record exact next action to disk and stop; after resume, continue with push and PR creation only. |
+| `gh` unavailable | Use GitHub connector PR creation after the branch is pushed to the repository. |
 
 ## Resources
 - `docs/17-ArchitectureOptimizationPlan.md`
