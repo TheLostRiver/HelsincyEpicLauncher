@@ -63,10 +63,10 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `c4df093`（planning-with-files 工作区安装提交） |
+| 当前基线提交 | `ec557b3`（Task 4.1 文档提交） |
 | 当前阶段 | Phase 4：Downloads 管线闭环 |
 | 当前任务 | 无（最近完成 Task 4.1：记录当前 Scheduler 到 Worker 断点） |
-| 当前状态 | Task 4.1 已完成文档记录和验证；准备提交 |
+| 当前状态 | Task 4.1 已完成、验证并提交；本文件记录完成上下文 |
 | 下一步 | 若用户继续，从 Task 4.2：新增 DownloadWorker 端口测试开始 |
 | 阻塞项 | 无 |
 
@@ -275,6 +275,7 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 4.1 当前发现：`TaskReady +=` 只存在于 `DownloadSchedulerTests.cs`；生产代码没有订阅者，`ChunkDownloadClient` 当前仅注册于 DI，没有被调度链路消费。
 - Task 4.1 验证命令已执行：`rg "TaskReady\s*\+=" src tests -g "*.cs"`；输出仅包含 `tests\Launcher.Tests.Unit\DownloadSchedulerTests.cs` 中 6 处测试订阅，无生产代码命中。
 - Task 4.1 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 4.1 文档提交已创建：`ec557b3 docs: 记录下载调度断点`。
 
 ---
 
