@@ -59,6 +59,7 @@ BundleArtifacts/
 *.user
 *.userosscache
 *.sln.docstates
+appsettings.Local.json
 
 # Publish
 publish/

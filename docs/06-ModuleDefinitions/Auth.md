@@ -36,6 +36,14 @@
 - 若后续需要支持其他类型的回调接收方式，必须封装在 Auth 模块内部，不能把协议细节泄漏到 Shell / Settings / App；Presentation 最多只承载浏览器容器和原始结果回传
 - 回调或授权结果处理必须校验输入有效性，并在 provider 返回 `error` / `error_description` 或 token 交换 `invalid_grant` 时把失败原因准确透传回应用日志
 
+### OAuth 配置安全语义
+
+- `EpicOAuth:ClientId` 和 `EpicOAuth:ClientSecret` 当前用于 Epic 公开桌面客户端 OAuth 流程；若该 `ClientSecret` 来源是公开桌面客户端凭据，它不能被当作用户私人 secret 或服务器端机密。
+- 不要把私人、用户专属、企业内部或临时调试凭据提交到仓库；需要本机覆盖时使用 `appsettings.Local.json` 或环境变量。
+- App 启动配置加载顺序为 `appsettings.json` → 可选 `appsettings.Local.json`，后者只用于本机覆盖，并已被 `.gitignore` 忽略。
+- OAuth 字段支持以下环境变量覆盖，环境变量优先级高于配置文件：`HELSINCY_EPIC_OAUTH_CLIENT_ID`、`HELSINCY_EPIC_OAUTH_CLIENT_SECRET`、`HELSINCY_EPIC_OAUTH_REDIRECT_URI`、`HELSINCY_EPIC_OAUTH_EMBEDDED_LOGIN_USER_AGENT`。
+- 日志和错误信息不得输出 access token、refresh token、authorization code、exchange code 或包含敏感 query 的完整 URL。
+
 ### 谁可以依赖 Auth
 
 | 模块 | 用途 |

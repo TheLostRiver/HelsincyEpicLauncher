@@ -442,6 +442,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         IConfiguration configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+            .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
             .Build();
 
         // 构建 DI 容器
