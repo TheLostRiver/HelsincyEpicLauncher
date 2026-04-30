@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `98c0f51`（Task 3.4 代码提交） |
-| 当前阶段 | Phase 3：后台任务统一宿主 |
-| 当前任务 | 无（最近完成 Task 3.4：App 改为只启动后台宿主） |
-| 当前状态 | Task 3.4 已完成代码实现、验证和代码提交；本文件记录完成上下文 |
-| 下一步 | 若用户继续，从 Phase 4 Task 4.1：记录当前 Scheduler 到 Worker 断点开始；开始前必须按恢复协议读取本文件 |
+| 当前基线提交 | `c4df093`（planning-with-files 工作区安装提交） |
+| 当前阶段 | Phase 4：Downloads 管线闭环 |
+| 当前任务 | 无（最近完成 Task 4.1：记录当前 Scheduler 到 Worker 断点） |
+| 当前状态 | Task 4.1 已完成文档记录和验证；准备提交 |
+| 下一步 | 若用户继续，从 Task 4.2：新增 DownloadWorker 端口测试开始 |
 | 阻塞项 | 无 |
 
 ---
@@ -141,6 +141,8 @@
 | `src/Launcher.Background/Network/NetworkMonitorWorker.cs` | 修改 | Task 3.4：实现 `IBackgroundWorker`，避免重复订阅网络事件 |
 | `src/Launcher.Background/DependencyInjection.cs` | 修改 | Task 3.4：注册 `IBackgroundTaskHost`，并将 AutoInstall/AppUpdate/Network 注册为 `IBackgroundWorker` |
 | `src/Launcher.App/App.xaml.cs` | 修改 | Task 3.4：`StartBackgroundServicesAsync` 只解析 `IBackgroundTaskHost`，Fab 预热包装为 App 组合根 Worker |
+| `.codex/` | 新增 | 工作区安装 `planning-with-files` Codex skill 与 hooks |
+| `src/Launcher.Application/Modules/Downloads/README_ARCH.md` | 修改 | Task 4.1：记录 Scheduler 到 Worker 的当前断点、真实启动链路和后续闭环方向 |
 
 ---
 
@@ -267,13 +269,19 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 3.4 小竞态修正后已重新执行同一组验证：`BackgroundTaskHostTests` 5 个通过，App 构建 0 警告 0 错误。
 - Task 3.4 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 3.4 代码提交已创建：`98c0f51 refactor: 通过后台宿主启动 Worker`。
+- planning-with-files 工作区安装已提交：`c4df093 chore: 安装 planning-with-files Codex 工作区配置`。
+- 全局 Codex hooks 已启用：`C:\Users\14481\.codex\config.toml` 中已写入 `[features] codex_hooks = true`；该文件不属于本项目仓库，未提交到项目 git。
+- Task 4.1 已搜索 `TaskReady +=`、`TaskReady`、`QueueAsync`、`StartDownloadUseCase`、`DownloadOrchestrator`、`DownloadScheduler`、`NotifyCompleted`、`ChunkDownloadClient`。
+- Task 4.1 当前发现：`TaskReady +=` 只存在于 `DownloadSchedulerTests.cs`；生产代码没有订阅者，`ChunkDownloadClient` 当前仅注册于 DI，没有被调度链路消费。
+- Task 4.1 验证命令已执行：`rg "TaskReady\s*\+=" src tests -g "*.cs"`；输出仅包含 `tests\Launcher.Tests.Unit\DownloadSchedulerTests.cs` 中 6 处测试订阅，无生产代码命中。
+- Task 4.1 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 3.4 已完成：App 改为只启动后台宿主。
-- 下一项候选任务为 Phase 4 Task 4.1：记录当前 Scheduler 到 Worker 断点；开始前必须搜索 `TaskReady +=` 的生产代码引用，并只记录现状，不修改生产代码。
+- Task 4.1 已完成：记录当前 Scheduler 到 Worker 断点。
+- 下一项候选任务为 Task 4.2：新增 DownloadWorker 端口测试；开始前必须读取 `IDownloadScheduler`、`DownloadScheduler`、`DownloadOrchestrator` 和当前 `README_ARCH.md` 的第 5 节断点记录。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---

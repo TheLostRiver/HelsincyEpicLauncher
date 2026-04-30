@@ -94,7 +94,46 @@ public interface IChunkDownloader
 
 ---
 
-## 5. Checkpoint 边界
+## 5. 当前 Scheduler 到 Worker 断点
+
+Task 4.1 搜索结果显示，当前生产代码已经能把下载请求送入 `DownloadScheduler.QueueAsync`，但调度器事件还没有生产订阅者，因此尚未连接到真实下载执行器。
+
+当前启动链路：
+
+```text
+FabAssetCommandService / EngineVersionCommandService
+  -> IDownloadCommandService.StartAsync(StartDownloadRequest)
+  -> Application DownloadCommandService.StartAsync
+  -> StartDownloadUseCase.ExecuteAsync
+  -> IDownloadOrchestrator.EnqueueAsync
+  -> Infrastructure DownloadOrchestrator.EnqueueAsync
+  -> IDownloadTaskRepository.InsertAsync
+  -> IDownloadScheduler.QueueAsync
+  -> Infrastructure DownloadScheduler.TryScheduleNextAsync
+  -> TaskReady?.Invoke(taskId, cancellationToken)
+```
+
+当前事实：
+
+- `TaskReady +=` 只出现在 `tests/Launcher.Tests.Unit/DownloadSchedulerTests.cs`，生产代码中没有订阅者。
+- `DownloadScheduler.QueueAsync` 会把任务加入队列，并异步调用 `TryScheduleNextAsync`。
+- `TryScheduleNextAsync` 会把任务移动到 `_activeTasks`，随后仅在 `TaskReady is not null` 时触发执行。
+- 当 `TaskReady` 没有订阅者时，任务会占用活跃调度位，但不会启动 `ChunkDownloadClient`，也不会写入进度、完成或失败事件。
+- `IDownloadScheduler.NotifyCompleted` 目前只有调度器测试调用，生产代码没有下载 Worker 调用它释放活跃位。
+- `DownloadRuntimeStore.NotifyCompleted` / `NotifyFailed` 目前没有生产侧下载执行器调用，现有订阅者主要是 UI、Shell 和 `AutoInstallWorker`。
+- `ChunkDownloadClient` 当前仅在 DI 中注册，没有被 Orchestrator、Scheduler 或 Worker 消费。
+
+后续闭环方向：
+
+1. 引入明确的下载执行端口或 Worker，例如 `IDownloadTaskExecutor` / `DownloadWorker`。
+2. 由 Orchestrator 或专门后台 Worker 订阅 `IDownloadScheduler.TaskReady`。
+3. 执行器按任务 ID 读取 `DownloadTask` 和 checkpoint，调用 chunk 下载实现。
+4. 执行成功后同时更新 Repository、RuntimeStore，并调用 `IDownloadScheduler.NotifyCompleted` 释放调度位。
+5. 执行失败或取消时更新 Repository、RuntimeStore，并释放或保留调度位，语义需在 Task 4.2/4.3 中测试固化。
+
+---
+
+## 6. Checkpoint 边界
 
 设计文档中有独立的 `IDownloadCheckpointRepository`，当前实现将 checkpoint 操作合并在 `IDownloadTaskRepository` 中。
 
@@ -106,7 +145,7 @@ public interface IChunkDownloader
 
 ---
 
-## 6. 当前主要架构债务
+## 7. 当前主要架构债务
 
 | 债务 | 影响 | 后续任务 |
 |------|------|----------|
@@ -116,11 +155,12 @@ public interface IChunkDownloader
 | Repository/Scheduler/RuntimeStore 位于 `Contracts` 目录 | 公共契约和内部端口命名混淆 | Task 2.1 |
 | 公共 DTO 使用 `DownloadTaskId`、`DownloadUiState` Domain 类型 | Presentation 和跨模块调用方被 Domain 牵连 | Task 2.2 / 2.3 |
 | Chunk 下载无 Application 端口 | 用例无法依赖抽象 chunk 下载能力 | Downloads 管线闭环阶段 |
+| `DownloadScheduler.TaskReady` 无生产订阅者 | 任务能入队但不会被真实下载执行器消费，调度位也不会释放 | Task 4.2 / 4.3 |
 | `DownloadScheduler` 当前默认并发硬编码为 3 | 数据驱动不足 | Options 数据驱动阶段 |
 
 ---
 
-## 7. 迁移顺序建议
+## 8. 迁移顺序建议
 
 1. 新增小的 Application 用例壳，例如 `StartDownloadUseCase`，先只做请求校验和委托。
 2. 将命令服务从 Infrastructure 迁到 Application，Infrastructure 保留技术端口实现。
@@ -130,7 +170,7 @@ public interface IChunkDownloader
 
 ---
 
-## 8. 验收约束
+## 9. 验收约束
 
 - 新增公共 Downloads Contract 时，不能返回 `DownloadTask` 或 `DownloadState`。
 - 新增内部端口时，必须明确由 Application 定义、Infrastructure 实现。
