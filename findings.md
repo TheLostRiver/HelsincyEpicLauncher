@@ -43,6 +43,10 @@
 - Task 7.1 updated the six target docs to reflect completed code reality only: solution structure, dependency rules, core interfaces, Downloads, Installations, and FabLibrary.
 - Task 7.1 stale-name scan found old Fab examples (`FabCatalogService`, `IFabAssetRepository`, `SqliteFabAssetRepository`) and those were corrected to current ports/services (`FabCatalogReadService`, `IFabDownloadInfoProvider`, `EpicOwnedRecordsClient`, `EpicFabSummaryMapper`).
 - Task 7.1 verification passed: `dotnet build .\HelsincyEpicLauncher.slnx --no-restore` completed with 0 warnings and 0 errors.
+- Task 7.2 start: worktree is clean at `6405f88 docs: 记录 Task 7.1 完成上下文`; this task is verification-only and must not perform opportunistic fixes if a command fails.
+- Task 7.2 full build passed with 0 errors and 9 analyzer warnings in the unit test project.
+- Task 7.2 full unit test failed: `TokenRefreshBackgroundServiceTests.AddBackground_ShouldRegisterTokenRefreshAsBackgroundWorker` cannot resolve `IDownloadRuntimeStore` while activating `AutoInstallWorker` through `IBackgroundWorker` registration.
+- Task 7.2 integration test was not run because the implementation doc says to stop and record details when full verification fails.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -56,6 +60,7 @@
 | Add a dedicated Epic login dialog interface | It lets `ShellViewModel` depend on an explicit login-window capability while keeping `IDialogService` focused on ordinary dialogs. |
 | Keep XamlRoot setters on concrete shell services | `ShellPage` already wires UI-only concrete services after `Loaded`; using the same pattern keeps XamlRoot setup local to Shell composition. |
 | Keep Task 7.1 docs descriptive, not aspirational | Implementation doc requires recording only completed code reality, so remaining debts are described as compatibility or future work rather than as already-finished architecture. |
+| Treat Task 7.2 failures as stop-and-record events | The implementation doc explicitly says full verification should record failure details and stop instead of performing temporary broad fixes. |
 
 ## Issues Encountered
 | Issue | Resolution |
@@ -64,6 +69,7 @@
 | New CA1859 warnings appeared after extraction | Changed private helper signatures to concrete collection types where call sites already use concrete collections. |
 | Task 6.3 red test failed at compile time because `IEpicExchangeCodeLoginDialogService` did not exist | Added the dedicated interface/service and moved the login call site to it. |
 | Task 7.1 scan found old Fab repository/service names in architecture docs | Corrected those snippets to current implementation and re-scanned the target docs. |
+| Task 7.2 full unit test failure | Recorded the Background DI dependency-resolution failure and stopped without ad-hoc fixes, as required by Task 7.2. |
 
 ## Resources
 - `docs/17-ArchitectureOptimizationPlan.md`

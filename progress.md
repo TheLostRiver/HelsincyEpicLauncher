@@ -147,3 +147,33 @@
 | Task 7.1 whitespace check | `git diff --check` | No whitespace errors | No whitespace errors; LF/CRLF warnings only | PASS |
 
 Next step: Task 7.2 full verification only; do not start it until the Task 7.1 context commit is recorded.
+
+### Phase 7: Task 7.2 Full Verification
+- **Status:** blocked
+- **Started:** 2026-05-01
+- Actions taken:
+  - Read `docs/SessionContextRecord.md` first, per iron rule.
+  - Read `docs/17-ArchitectureOptimizationPlan.md` and `docs/18-ArchitectureOptimizationImplementation.md`.
+  - Read the user-requested `planning-with-files` skill and the `executing-plans` skill.
+  - Confirmed worktree is clean.
+  - Confirmed HEAD is `6405f88 docs: 记录 Task 7.1 完成上下文`.
+  - Ran `session-catchup.py` from the project-installed planning-with-files skill path; no unsynced context was reported.
+  - Updated `docs/SessionContextRecord.md` to mark Task 7.2 in progress.
+  - Ran full build: succeeded with 0 errors and 9 analyzer warnings in the unit test project.
+  - Ran full unit tests: failed with 1 failing test.
+  - Stopped before integration tests per Task 7.2 rule: record failures and do not perform ad-hoc fixes.
+
+## Test Results: Task 7.2
+| Test | Input | Expected | Actual | Status |
+|------|-------|----------|--------|--------|
+| Full build | `dotnet build .\HelsincyEpicLauncher.slnx --no-restore` | Build succeeds | Succeeded with 0 errors, 9 analyzer warnings in tests | PASS |
+| Full unit tests | `dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore` | All unit tests pass | 307 passed, 1 failed, 0 skipped, 308 total | FAIL |
+| Integration tests | `dotnet test .\tests\Launcher.Tests.Integration\Launcher.Tests.Integration.csproj --no-restore` | Run after unit tests pass | Not run because unit tests failed | BLOCKED |
+| Whitespace check | `git diff --check` | No whitespace errors | No whitespace errors; LF/CRLF warnings only | PASS |
+
+## Error Log: Task 7.2
+| Timestamp | Error | Attempt | Resolution |
+|-----------|-------|---------|------------|
+| 2026-05-01 | `TokenRefreshBackgroundServiceTests.AddBackground_ShouldRegisterTokenRefreshAsBackgroundWorker` failed because resolving `IBackgroundWorker` activates `AutoInstallWorker`, whose `IDownloadRuntimeStore` dependency is not registered in the test service provider. Failure points to `src\Launcher.Background\DependencyInjection.cs:25` and `tests\Launcher.Tests.Unit\TokenRefreshBackgroundServiceTests.cs:40`. | 1 | Recorded and stopped per Task 7.2; no temporary fix applied. |
+
+Next step: address the Background DI unit test failure in a new atomic task or with explicit instruction, then rerun Task 7.2 from unit tests onward.

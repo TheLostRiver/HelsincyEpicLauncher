@@ -23,7 +23,7 @@ Phase 7: Final consistency closure
 ### Phase 7: Final Consistency Closure
 - [x] Task 7.1: Update architecture documents to match completed code reality
 - [ ] Task 7.2: Run full verification and record results
-- **Status:** in_progress
+- **Status:** blocked on unit test failure
 
 ## Key Questions
 1. Does each architecture document describe only completed code reality?
@@ -47,6 +47,7 @@ Phase 7: Final consistency closure
 | Home skill path did not contain `session-catchup.py` | 1 | Used the project-installed skill path at `Q:\MyEpicLauncher\.codex\skills\planning-with-files`. |
 | CA1859 warnings after extraction | 1 | Tightened private helper parameter types to concrete collection types already used at call sites. |
 | Task 7.1 stale Fab names remained in docs | 1 | Re-scanned the target docs and replaced old `FabCatalogService` / `IFabAssetRepository` / `SqliteFabAssetRepository` examples with current Fab ports and services. |
+| Task 7.2 full unit test failed | 1 | Recorded failure and stopped; `AutoInstallWorker` cannot resolve `IDownloadRuntimeStore` when the test resolves registered `IBackgroundWorker` instances. |
 
 ## Notes
 - Do not touch `Q:\MyEpicLauncher` main workspace except reading the requested skill file.

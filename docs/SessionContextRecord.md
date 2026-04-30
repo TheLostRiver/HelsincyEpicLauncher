@@ -63,12 +63,12 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `cd76133`（Task 7.1 目标架构文档提交；本文件记录提交后 HEAD 会继续前进） |
+| 当前基线提交 | `6405f88`（Task 7.1 完成上下文提交） |
 | 当前阶段 | Phase 7：最终一致性收口 |
 | 当前任务 | Task 7.2：全量验证 |
-| 当前状态 | Task 7.1 已完成并已创建目标文档提交 `cd76133`；当前正在提交完成上下文记录，Task 7.2 尚未开始 |
-| 下一步 | 只执行 Task 7.2 全量验证：build、unit test、integration test；若失败，记录失败详情并停止，不做临时大修 |
-| 阻塞项 | 无 |
+| 当前状态 | Task 7.2 已暂停：全量 build 通过，但全量 unit test 失败；按实现文档要求已停止，不做临时大修 |
+| 下一步 | 先处理或确认 `TokenRefreshBackgroundServiceTests.AddBackground_ShouldRegisterTokenRefreshAsBackgroundWorker` 中 Background DI 测试失败；修复前不要继续 integration test |
+| 阻塞项 | `AutoInstallWorker` 在测试容器中解析 `IBackgroundWorker` 时缺少 `IDownloadRuntimeStore` |
 
 ---
 
@@ -409,8 +409,19 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 7.1 验证命令已执行：`dotnet build .\HelsincyEpicLauncher.slnx --no-restore`，构建成功，0 警告，0 错误。
 - Task 7.1 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 7.1 目标文档提交已创建：`cd76133 docs: 同步架构文档到当前实现`。
-- 当前待提交：Task 7.1 完成上下文与 planning 文件。
-- 下一项任务：Task 7.2 全量验证；开始前必须先读取本文件和实现文档，不得跳过。
+- Task 7.1 完成上下文提交已创建：`6405f88 docs: 记录 Task 7.1 完成上下文`。
+- Task 7.2 已开始：开始前已读取本文件、`docs/17-ArchitectureOptimizationPlan.md`、`docs/18-ArchitectureOptimizationImplementation.md`、`task_plan.md`、`progress.md`、`findings.md`、`planning-with-files` skill 与 `executing-plans` skill。
+- Task 7.2 起点检查已执行：`git status --short` 输出为空，`git log --oneline -5` 显示 HEAD 为 `6405f88`。
+- Task 7.2 待执行验证命令：
+  - `dotnet build .\HelsincyEpicLauncher.slnx --no-restore`
+  - `dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore`
+  - `dotnet test .\tests\Launcher.Tests.Integration\Launcher.Tests.Integration.csproj --no-restore`
+- Task 7.2 已执行全量 build：`dotnet build .\HelsincyEpicLauncher.slnx --no-restore`，构建成功，0 错误，9 个 analyzer 警告（测试项目既有 CA1816/CA1861 警告）。
+- Task 7.2 已执行全量 unit test：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore`，失败；结果为 307 通过、1 失败、0 跳过、总计 308。
+- Task 7.2 unit test 失败详情：`Launcher.Tests.Unit.TokenRefreshBackgroundServiceTests.AddBackground_ShouldRegisterTokenRefreshAsBackgroundWorker` 抛出 `System.InvalidOperationException`，消息为 `Unable to resolve service for type 'Launcher.Application.Modules.Downloads.Contracts.IDownloadRuntimeStore' while attempting to activate 'Launcher.Background.Installations.AutoInstallWorker'.`
+- Task 7.2 失败位置：`src\Launcher.Background\DependencyInjection.cs:line 25` 的 `IBackgroundWorker` 工厂解析 `AutoInstallWorker`；测试调用位置为 `tests\Launcher.Tests.Unit\TokenRefreshBackgroundServiceTests.cs:line 40`。
+- Task 7.2 integration test 尚未执行：由于 unit test 已失败，按照实现文档“若失败，停止并记录下一步，不做临时大修”的规则停止。
+- Task 7.2 失败记录补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
