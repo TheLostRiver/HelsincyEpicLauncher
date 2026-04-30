@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `70f362d` |
+| 当前基线提交 | `56f67aa`（Task 2.3 代码提交） |
 | 当前阶段 | Phase 2：Contracts 去 Domain 泄漏 |
-| 当前任务 | Task 2.3：移除 Downloads UI 对 Domain 的直接引用 |
-| 当前状态 | 验证完成，待提交 |
-| 下一步 | 检查 diff、提交 Task 2.3 |
+| 当前任务 | 无（最近完成 Task 2.3：移除 Downloads UI 对 Domain 的直接引用） |
+| 当前状态 | Task 2.3 已完成并提交；等待用户确认是否进入 Task 2.4 |
+| 下一步 | 若继续执行，先读取本文件，再从 Task 2.4：移除 Installations UI 对 Domain 的直接引用开始 |
 | 阻塞项 | 无 |
 
 ---
@@ -194,12 +194,15 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 2.3 指定测试验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ForbiddenNamespaceReferenceTests|FullyQualifiedName~DownloadRuntimeStoreTests"`，14 个测试通过，0 个失败。
 - Task 2.3 Presentation 构建验证已执行：`dotnet build .\src\Launcher.Presentation\Launcher.Presentation.csproj --no-restore`，构建成功，0 警告，0 错误。
 - Task 2.3 额外源码检查已执行：`rg -n "Launcher\.Domain" src\Launcher.Presentation\Modules\Downloads -g "*.cs"` 无匹配，退出码 1 表示未找到匹配项。
+- Task 2.3 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 2.3 代码提交已创建：`56f67aa refactor: 移除 Downloads UI 领域引用`。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 2.3 已完成验证，待提交：移除 Downloads UI 对 Domain 的直接引用。
+- Task 2.3 已完成并提交：移除 Downloads UI 对 Domain 的直接引用。
+- 下一项候选任务为 Task 2.4：移除 Installations UI 对 Domain 的直接引用；开始前必须先读取 `docs/06-ModuleDefinitions/Installations.md` 和相关源码。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
@@ -215,3 +218,57 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 5. 下一步只能做什么。
 6. 哪些文件绝对不能碰。
 7. 用户新增的最新约束。
+
+---
+
+## 9. 额度风险暂停记录（2026-04-30）
+
+用户明确提示“快限额了”，已触发铁律中的额度/上下文风险暂停流程。记录完成后必须停止继续执行，不再修改源码、不再推进下一任务。
+
+### 9.1 当前状态
+
+- 执行 worktree：`C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation`
+- 执行分支：`codex/architecture-optimization-implementation`
+- 最近代码提交：`56f67aa refactor: 移除 Downloads UI 领域引用`
+- 当前任务：Task 2.3 已完成代码实现、验证和代码提交。
+- 当前未提交内容：`docs/SessionContextRecord.md` 的收口/额度风险记录。
+- 下一项候选任务：Task 2.4：移除 Installations UI 对 Domain 的直接引用。
+- 现在必须停止：不要继续 Task 2.4，不要再做代码修改，不要删除文件。
+
+### 9.2 Task 2.3 已完成内容
+
+- 新增 `DownloadTaskKey` 作为 Application Contracts 拥有的下载任务公共标识。
+- `DownloadStatusSummary` 新增 `TaskKey` 投影，保留旧 `TaskId` 兼容字段。
+- `DownloadProgressSnapshot` 新增 `TaskKey` 和 `Status` 投影，保留旧 `TaskId` / `UiState` 兼容字段。
+- 下载完成/失败/进度事件新增 `TaskKey` 投影。
+- `DownloadsViewModel.cs` 移除 `using Launcher.Domain.Downloads`，命令参数改为 `DownloadTaskKey`，显示状态改为 `DownloadStatusKind`。
+- `DownloadsPage.xaml.cs` 移除 `using Launcher.Domain.Downloads`，按钮 Tag 类型改为 `DownloadTaskKey`。
+- `DownloadsPage.xaml` 按钮 Tag 绑定由 `TaskId` 改为 `TaskKey`。
+- `ForbiddenNamespaceReferenceTests` 中 Downloads 相关例外已移除，仅剩 `InstallationsViewModel.cs`。
+- `DownloadModelsTests` 已补充 `DownloadTaskKey` 和快照公共状态测试。
+
+### 9.3 最近验证记录
+
+- 红灯：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ForbiddenNamespaceReferenceTests"` 按预期失败，暴露 `DownloadsPage.xaml.cs` 和 `DownloadsViewModel.cs` 的 Domain 引用。
+- 红灯：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~DownloadModelsTests"` 按预期编译失败，缺少 `TaskKey` / 快照 `Status`。
+- 绿灯：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~DownloadModelsTests"` 通过，6 个测试通过。
+- 绿灯：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ForbiddenNamespaceReferenceTests"` 通过，1 个测试通过。
+- 指定验证：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ForbiddenNamespaceReferenceTests|FullyQualifiedName~DownloadRuntimeStoreTests"` 通过，14 个测试通过。
+- 构建验证：`dotnet build .\src\Launcher.Presentation\Launcher.Presentation.csproj --no-restore` 成功，0 警告，0 错误。
+- 额外检查：`rg -n "Launcher\.Domain" src\Launcher.Presentation\Modules\Downloads -g "*.cs"` 无匹配，退出码 1 表示未找到匹配项。
+- 补丁检查：`git diff --check` 无空白错误，仅有 LF/CRLF 提示。
+
+### 9.4 恢复后的唯一正确动作
+
+1. 先读取本文件。
+2. 检查 `git status --short`，预期至少会看到 `docs/SessionContextRecord.md` 未提交。
+3. 提交本记录文件，建议提交信息：`docs: 记录 Task 2.3 暂停上下文`。
+4. 等待用户明确继续后，再开始 Task 2.4。
+5. 若继续 Task 2.4，开始前必须读取 `docs/06-ModuleDefinitions/Installations.md`、`src/Launcher.Presentation/Modules/Installations/InstallationsViewModel.cs`、`src/Launcher.Application/Modules/Installations/Contracts/InstallModels.cs`。
+
+### 9.5 禁止事项
+
+- 不触碰 `Q:\MyEpicLauncher` 主工作区中的既有未提交改动。
+- 不删除任何文件。
+- 不跳过 `SessionContextRecord.md` 恢复协议。
+- 不在未得到用户继续确认前执行 Task 2.4 或更后续任务。
