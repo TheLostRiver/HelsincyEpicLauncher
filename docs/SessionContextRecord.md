@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `03da86c`（Task 3.3 代码提交） |
+| 当前基线提交 | `98c0f51`（Task 3.4 代码提交） |
 | 当前阶段 | Phase 3：后台任务统一宿主 |
-| 当前任务 | 无（最近完成 Task 3.3：迁移 TokenRefreshBackgroundService） |
-| 当前状态 | Task 3.3 已完成并提交；可继续 Task 3.4 |
-| 下一步 | 若继续执行，先读取本文件，再从 Task 3.4：App 改为只启动后台宿主开始 |
+| 当前任务 | 无（最近完成 Task 3.4：App 改为只启动后台宿主） |
+| 当前状态 | Task 3.4 已完成代码实现、验证和代码提交；本文件记录完成上下文 |
+| 下一步 | 若用户继续，从 Phase 4 Task 4.1：记录当前 Scheduler 到 Worker 断点开始；开始前必须按恢复协议读取本文件 |
 | 阻塞项 | 无 |
 
 ---
@@ -135,6 +135,12 @@
 | `tests/Launcher.Tests.Unit/TokenRefreshBackgroundServiceTests.cs` | 新增 | Task 3.3：新增 TokenRefresh Worker 生命周期和 DI 注册红灯测试 |
 | `src/Launcher.Background/Auth/TokenRefreshBackgroundService.cs` | 修改 | Task 3.3：实现 `IBackgroundWorker`，新增 `Name`、`State`、`StartAsync`、`StopAsync`，保留旧 `Start/Stop` |
 | `src/Launcher.Background/DependencyInjection.cs` | 修改 | Task 3.3：将 `TokenRefreshBackgroundService` 同时注册为 `IBackgroundWorker` |
+| `tests/Launcher.Tests.Unit/BackgroundTaskHostTests.cs` | 修改 | Task 3.4：新增 Background DI 注册和 App 只解析 Host 的红灯测试 |
+| `src/Launcher.Background/Installations/AutoInstallWorker.cs` | 修改 | Task 3.4：实现 `IBackgroundWorker`，保留旧 `Start/Stop`，纳入统一宿主 |
+| `src/Launcher.Background/Updates/AppUpdateWorker.cs` | 修改 | Task 3.4：实现 `IBackgroundWorker`，保留定时检查和主动检查行为 |
+| `src/Launcher.Background/Network/NetworkMonitorWorker.cs` | 修改 | Task 3.4：实现 `IBackgroundWorker`，避免重复订阅网络事件 |
+| `src/Launcher.Background/DependencyInjection.cs` | 修改 | Task 3.4：注册 `IBackgroundTaskHost`，并将 AutoInstall/AppUpdate/Network 注册为 `IBackgroundWorker` |
+| `src/Launcher.App/App.xaml.cs` | 修改 | Task 3.4：`StartBackgroundServicesAsync` 只解析 `IBackgroundTaskHost`，Fab 预热包装为 App 组合根 Worker |
 
 ---
 
@@ -252,13 +258,22 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 3.3 App 构建兼容验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
 - Task 3.3 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 3.3 代码提交已创建：`03da86c refactor: 迁移 Token 刷新服务到后台 Worker`。
+- Task 3.3 完成上下文提交已创建：`55392c1 docs: 记录 Task 3.3 完成上下文`。
+- Task 3.4 已读取 `src/Launcher.App/App.xaml.cs`、`src/Launcher.Background/DependencyInjection.cs`、`AutoInstallWorker.cs`、`AppUpdateWorker.cs`、`NetworkMonitorWorker.cs`、`AutoInstallWorkerTests.cs`。
+- Task 3.4 红灯第一次验证失败在测试自身类型推断，已修正 `BackgroundTaskHostTests` 中 `BeEquivalentTo` 的期望数组写法。
+- Task 3.4 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~BackgroundTaskHostTests"`，按预期失败；`IBackgroundTaskHost` 尚未在 `AddBackground` 注册，且 App 仍直接解析具体 Worker 并调用 `StartFabLibraryWarmup`。
+- Task 3.4 绿灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~BackgroundTaskHostTests"`，5 个测试通过，0 个失败。
+- Task 3.4 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 3.4 小竞态修正后已重新执行同一组验证：`BackgroundTaskHostTests` 5 个通过，App 构建 0 警告 0 错误。
+- Task 3.4 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 3.4 代码提交已创建：`98c0f51 refactor: 通过后台宿主启动 Worker`。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 3.3 已完成并提交：迁移 TokenRefreshBackgroundService。
-- 下一项候选任务为 Task 3.4：App 改为只启动后台宿主；开始前必须读取 `src/Launcher.App/App.xaml.cs`、`src/Launcher.Background/DependencyInjection.cs`、`src/Launcher.Background/Hosting` 和现有后台 Worker。
+- Task 3.4 已完成：App 改为只启动后台宿主。
+- 下一项候选任务为 Phase 4 Task 4.1：记录当前 Scheduler 到 Worker 断点；开始前必须搜索 `TaskReady +=` 的生产代码引用，并只记录现状，不修改生产代码。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
