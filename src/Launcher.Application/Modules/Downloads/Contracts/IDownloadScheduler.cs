@@ -36,3 +36,11 @@ public interface IDownloadScheduler : IDisposable
     /// <summary>任务完成时调用（释放活跃位，调度下一个）</summary>
     void NotifyCompleted(DownloadTaskId taskId);
 }
+
+/// <summary>
+/// 下载任务执行端口。调度器只分发任务 ID，具体执行器负责读取任务、下载 chunk 并回写状态。
+/// </summary>
+public interface IDownloadTaskExecutor
+{
+    Task ExecuteAsync(DownloadTaskId taskId, CancellationToken ct);
+}
