@@ -1,13 +1,13 @@
 # 解决方案结构
 
-> 本文档定义 HelsincyEpicLauncher.sln 的项目拆分、每个项目的职责边界以及完整目录树。
+> 本文档定义 HelsincyEpicLauncher.slnx 的项目拆分、每个项目的职责边界以及当前已落地的目录结构。
 
 ---
 
 ## 1. 解决方案总览
 
 ```
-HelsincyEpicLauncher.sln
+HelsincyEpicLauncher.slnx
 │
 ├─ src/
 │  ├─ Launcher.App                  // WinUI 3 启动项目（宿主壳）
@@ -73,12 +73,13 @@ Launcher.App → Launcher.Presentation
 
 **使用的库**：`CommunityToolkit.Mvvm`
 
-**引用关系**：
+**当前引用关系**：
 ```
 Launcher.Presentation → Launcher.Application
-                      → Launcher.Domain（仅 Contracts / DTO / 枚举）
                       → Launcher.Shared
 ```
+
+当前已有架构护栏测试禁止 Presentation 直接引用 `Launcher.Domain.*` 命名空间。UI 应消费 Application Contracts 中的 DTO / Summary / Event / Request，或 Shell 自身的 UI-only 服务接口。
 
 ---
 
@@ -115,11 +116,10 @@ RefreshFabCatalogUseCase
 RepairInstallationUseCase
 ```
 
-**引用关系**：
+**当前引用关系**：
 ```
 Launcher.Application → Launcher.Domain
                      → Launcher.Shared
-                     → 各模块 Contracts（接口，不引用实现）
 ```
 
 ---
@@ -161,6 +161,9 @@ Launcher.Domain → Launcher.Shared（仅基础类型）
 - `Logging/` — Serilog 适配器
 - `Configuration/` — 配置提供器、用户设置仓储
 - `Caching/` — 缩略图缓存、Manifest 缓存、搜索结果缓存
+- `FabLibrary/` — Fab API、owned records、summary mapping、预览元数据、缩略图缓存实现
+- `Downloads/` — 下载编排、调度器、运行时状态、chunk 下载与执行器实现
+- `Installations/` — 安装、校验、修复、安装记录持久化实现
 
 **铁律**：Infrastructure 实现 Contracts 中定义的接口，不向上层泄漏具体技术细节。
 
@@ -188,8 +191,11 @@ Launcher.Infrastructure → Launcher.Domain
 - 缩略图预热 Worker（`ThumbnailPreloadWorker`）
 - 自动更新检查 Worker（`AppUpdateWorker`）
 - 统一后台任务宿主（`IBackgroundTaskHost`）
+- Token 自动刷新 Worker（`TokenRefreshBackgroundService`）
+- 网络监视 Worker（`NetworkMonitorWorker`）
+- Fab 首屏预热 Worker（App 组合根包装为 `IBackgroundWorker`）
 
-**设计原则**：所有 Worker 注册到统一的 `IBackgroundTaskHost`，按"队列 + 限流 + 可取消 + 可恢复"设计。不自己偷开 `Task.Run`。
+**当前现实**：`TokenRefreshBackgroundService`、`AutoInstallWorker`、`AppUpdateWorker`、`NetworkMonitorWorker` 和 App 组合根中的 Fab 预热 Worker 已通过 `IBackgroundWorker` 注册到统一 `IBackgroundTaskHost`。App 启动后台阶段只解析 `IBackgroundTaskHost` 并调用 `StartAllAsync`。
 
 **引用关系**：
 ```
@@ -249,12 +255,15 @@ Launcher.Background → Launcher.Application
 ```
 Launcher.Presentation/
 ├─ Shell/
-│  ├─ Views/
-│  │  ├─ ShellPage.xaml
-│  │  ├─ ShellPage.xaml.cs
-│  │  └─ TitleBarView.xaml
-│  ├─ ViewModels/
-│  │  └─ ShellViewModel.cs
+│  ├─ ShellPage.xaml
+│  ├─ ShellPage.xaml.cs
+│  ├─ ShellViewModel.cs
+│  ├─ DialogService.cs
+│  ├─ IDialogService.cs
+│  ├─ EpicExchangeCodeLoginDialogService.cs
+│  ├─ EpicLoginWebViewBridge.cs
+│  ├─ NotificationService.cs
+│  ├─ ThemeService.cs
 │  └─ Navigation/
 │     ├─ INavigationService.cs
 │     ├─ NavigationService.cs
@@ -274,13 +283,9 @@ Launcher.Presentation/
 │  │     └─ FabAssetUiMapper.cs
 │  │
 │  ├─ Downloads/
-│  │  ├─ Views/
-│  │  │  ├─ DownloadsPage.xaml
-│  │  │  └─ DownloadItemControl.xaml
-│  │  ├─ ViewModels/
-│  │  │  ├─ DownloadsPageViewModel.cs
-│  │  │  └─ DownloadItemViewModel.cs
-│  │  └─ Mappers/
+│  │  ├─ DownloadsPage.xaml
+│  │  ├─ DownloadsPage.xaml.cs
+│  │  └─ DownloadsViewModel.cs
 │  │
 │  ├─ EngineVersions/
 │  │  ├─ Views/
@@ -344,15 +349,15 @@ Launcher.Application/
 │  │  │  ├─ IDownloadReadService.cs
 │  │  │  ├─ IDownloadCommandService.cs
 │  │  │  ├─ IDownloadOrchestrator.cs
-│  │  │  └─ DownloadDtos.cs
-│  │  ├─ Commands/
-│  │  │  ├─ StartDownloadCommand.cs
-│  │  │  ├─ PauseDownloadCommand.cs
-│  │  │  └─ ResumeDownloadCommand.cs
-│  │  └─ Handlers/
-│  │     ├─ StartDownloadHandler.cs
-│  │     ├─ PauseDownloadHandler.cs
-│  │     └─ ResumeDownloadHandler.cs
+│  │  │  ├─ IDownloadScheduler.cs
+│  │  │  ├─ IDownloadRuntimeStore.cs
+│  │  │  ├─ IDownloadTaskRepository.cs
+│  │  │  ├─ DownloadModels.cs
+│  │  │  └─ DownloadOptions.cs
+│  │  ├─ UseCases/
+│  │  │  └─ StartDownloadUseCase.cs
+│  │  ├─ DownloadCommandService.cs
+│  │  └─ README_ARCH.md
 │  │
 │  ├─ Installations/
 │  │  ├─ Contracts/
@@ -410,7 +415,7 @@ Launcher.Domain/
 │  │  │  └─ DownloadPriority.cs
 │  │  ├─ Enums/
 │  │  │  ├─ DownloadState.cs
-│  │  │  └─ DownloadUiState.cs  // 对外 UI 投影状态（收敛后）
+│  │  │  └─ DownloadUiState.cs  // 兼容字段仍使用的旧 UI 状态
 │  │  ├─ Services/
 │  │  │  └─ DownloadStateMachine.cs
 │  │  └─ Rules/
@@ -448,54 +453,53 @@ Launcher.Domain/
 
 ```
 Launcher.Infrastructure/
-├─ Persistence/
-│  ├─ Sqlite/
-│  │  ├─ LauncherDbContext.cs
-│  │  ├─ Repositories/
-│  │  │  ├─ SqliteDownloadTaskRepository.cs
-│  │  │  ├─ SqliteFabAssetRepository.cs
-│  │  │  └─ SqliteInstallationRepository.cs
-│  │  └─ Migrations/
-│  └─ Json/
-│     └─ JsonUserSettingsRepository.cs
+├─ Auth/
+│  ├─ AuthService.cs
+│  ├─ EpicOAuthHandler.cs
+│  ├─ EpicOAuthOptions.cs
+│  └─ *GrantExecutor.cs
+│
+├─ Configuration/
+│  ├─ AppConfigProvider.cs
+│  ├─ EpicApiOptions.cs
+│  ├─ FabApiOptions.cs
+│  └─ UpdateOptions.cs
+│
+├─ Downloads/
+│  ├─ ChunkDownloadClient.cs
+│  ├─ DownloadCommandService.cs      // 迁移兼容保留，DI 使用 Application 实现
+│  ├─ DownloadOrchestrator.cs
+│  ├─ DownloadRuntimeStore.cs
+│  ├─ DownloadScheduler.cs
+│  ├─ DownloadTaskRepository.cs
+│  └─ DownloadWorker.cs
+│
+├─ FabLibrary/
+│  ├─ EpicOwnedFabCatalogClient.cs
+│  ├─ EpicOwnedRecordsClient.cs
+│  ├─ EpicFabSummaryMapper.cs
+│  ├─ FabApiClient.cs
+│  ├─ FabCatalogReadService.cs
+│  ├─ FabDownloadInfoProvider.cs
+│  ├─ FabPreviewUrlReadService.cs
+│  └─ ThumbnailCacheService.cs
+│
+├─ Installations/
+│  ├─ InstallCommandService.cs
+│  ├─ InstallReadService.cs
+│  ├─ InstallationRepository.cs
+│  ├─ InstallWorker.cs
+│  └─ RepairFileDownloader.cs
 │
 ├─ Network/
-│  ├─ Epic/
-│  │  ├─ EpicAuthClient.cs
-│  │  └─ EpicOAuthHandler.cs
-│  ├─ Fab/
-│  │  ├─ FabCatalogApiClient.cs
-│  │  ├─ FabManifestApiClient.cs
-│  │  └─ FabModels/              // API 响应模型（内部使用）
-│  └─ Download/
-│     ├─ ChunkDownloadClient.cs
-│     └─ CdnFallbackHandler.cs
+│  ├─ HttpResiliencePipelineFactory.cs
+│  ├─ NetworkMonitor.cs
+│  └─ WebsiteChallengeDetector.cs
 │
-├─ FileSystem/
-│  ├─ FileSystemService.cs
-│  ├─ InstallLayoutService.cs
-│  ├─ DiskSpaceService.cs
-│  └─ HashingService.cs
-│
-├─ Packaging/
-│  ├─ ArchiveExtractor.cs
-│  └─ PatchApplier.cs
-│
-├─ Security/
-│  ├─ WindowsCredentialStore.cs
-│  └─ TokenRefreshService.cs
-│
-├─ Logging/
-│  └─ SerilogAdapter.cs
-│
-├─ Caching/
-│  ├─ ThumbnailCacheService.cs
-│  ├─ ManifestCacheService.cs
-│  └─ SearchResultCacheService.cs
-│
-└─ Configuration/
-   ├─ AppSettingsProvider.cs
-   └─ UserSettingsRepository.cs
+└─ Persistence/
+   └─ Sqlite/
+      ├─ SqliteConnectionFactory.cs
+      └─ Migrations/
 ```
 
 ### 3.5 Launcher.Background
@@ -504,23 +508,16 @@ Launcher.Infrastructure/
 Launcher.Background/
 ├─ Hosting/
 │  ├─ IBackgroundTaskHost.cs
+│  ├─ IBackgroundWorker.cs
+│  ├─ WorkerStatus.cs
 │  └─ BackgroundTaskHost.cs
 │
-├─ Downloads/
-│  ├─ DownloadOrchestrator.cs
-│  ├─ DownloadScheduler.cs
-│  ├─ DownloadWorker.cs
-│  ├─ VerificationWorker.cs
-│  └─ DownloadRecoveryService.cs
-│
+├─ Auth/
+│  └─ TokenRefreshBackgroundService.cs
 ├─ Installations/
-│  ├─ InstallWorker.cs
-│  └─ RepairWorker.cs
-│
-├─ FabLibrary/
-│  ├─ FabCatalogSyncWorker.cs
-│  └─ ThumbnailPreloadWorker.cs
-│
+│  └─ AutoInstallWorker.cs
+├─ Network/
+│  └─ NetworkMonitorWorker.cs
 └─ Updates/
    └─ AppUpdateWorker.cs
 ```
@@ -573,6 +570,7 @@ Launcher.Background/
 // --- Shell & 导航 ---
 services.AddSingleton<INavigationService, NavigationService>();
 services.AddSingleton<IDialogService, DialogService>();
+services.AddSingleton<IEpicExchangeCodeLoginDialogService, EpicExchangeCodeLoginDialogService>();
 services.AddSingleton<INotificationService, NotificationService>();
 
 // --- 认证 ---
@@ -580,13 +578,17 @@ services.AddSingleton<IAuthService, EpicAuthService>();
 services.AddSingleton<ITokenStore, WindowsCredentialStore>();
 
 // --- Fab 资产库 ---
-services.AddSingleton<IFabCatalogReadService, FabCatalogService>();
-services.AddSingleton<IFabAssetRepository, SqliteFabAssetRepository>();
+services.AddSingleton<EpicOwnedFabCatalogClient>();
+services.AddSingleton<IFabCatalogReadService, FabCatalogReadService>();
+services.AddSingleton<IFabAssetCommandService, FabAssetCommandService>();
+services.AddSingleton<IFabDownloadInfoProvider, FabDownloadInfoProvider>();
+services.AddSingleton<IThumbnailCacheService, ThumbnailCacheService>();
 
 // --- 下载 ---
 services.AddSingleton<IDownloadOrchestrator, DownloadOrchestrator>();
 services.AddSingleton<IDownloadScheduler, DownloadScheduler>();
 services.AddSingleton<IDownloadRuntimeStore, DownloadRuntimeStore>();
+services.AddSingleton<IDownloadTaskExecutor, DownloadWorker>();
 services.AddSingleton<IChunkDownloader, ChunkDownloadClient>();
 
 // --- 安装 ---
@@ -599,10 +601,14 @@ services.AddSingleton<IHashingService, HashingService>();
 
 // --- 后台任务 ---
 services.AddSingleton<IBackgroundTaskHost, BackgroundTaskHost>();
+services.AddSingleton<IBackgroundWorker, TokenRefreshBackgroundService>();
+services.AddSingleton<IBackgroundWorker, AutoInstallWorker>();
+services.AddSingleton<IBackgroundWorker, AppUpdateWorker>();
+services.AddSingleton<IBackgroundWorker, NetworkMonitorWorker>();
 
 // --- ViewModel ---
 services.AddTransient<FabLibraryViewModel>();
-services.AddTransient<DownloadsPageViewModel>();
+services.AddTransient<DownloadsViewModel>();
 services.AddTransient<SettingsViewModel>();
 services.AddTransient<DiagnosticsViewModel>();
 ```

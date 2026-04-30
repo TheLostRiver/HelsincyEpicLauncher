@@ -29,7 +29,23 @@ public sealed class InstallStatusSummary
     public long SizeOnDisk { get; init; }
     public DateTime InstalledAt { get; init; }
     public InstallState State { get; init; }
+    public InstallStatusKind Status { get; init; }
     public bool NeedsRepair { get; init; }
+}
+
+/// <summary>
+/// 安装状态公共投影。由 Application Contracts 拥有，供 UI 和跨模块调用方使用。
+/// </summary>
+public enum InstallStatusKind
+{
+    NotInstalled,
+    Installing,
+    Installed,
+    Verifying,
+    NeedsRepair,
+    Repairing,
+    Uninstalling,
+    Failed,
 }
 
 /// <summary>

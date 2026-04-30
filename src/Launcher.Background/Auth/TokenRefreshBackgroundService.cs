@@ -1,6 +1,7 @@
 // Copyright (c) Helsincy. All rights reserved.
 
 using Launcher.Application.Modules.Auth.Contracts;
+using Launcher.Background.Hosting;
 using Serilog;
 
 namespace Launcher.Background.Auth;
@@ -8,7 +9,7 @@ namespace Launcher.Background.Auth;
 /// <summary>
 /// Token 自动刷新后台服务。定期检查 Token 有效性，在过期前 5 分钟主动刷新。
 /// </summary>
-public sealed class TokenRefreshBackgroundService : IDisposable
+public sealed class TokenRefreshBackgroundService : IBackgroundWorker, IDisposable
 {
     private readonly ILogger _logger = Log.ForContext<TokenRefreshBackgroundService>();
     private readonly IAuthService _authService;
@@ -25,25 +26,53 @@ public sealed class TokenRefreshBackgroundService : IDisposable
         _authService = authService;
     }
 
+    public string Name => nameof(TokenRefreshBackgroundService);
+
+    public WorkerStatus State { get; private set; } = WorkerStatus.Idle;
+
     /// <summary>
     /// 启动定时刷新
     /// </summary>
     public void Start()
+        => StartAsync(CancellationToken.None).GetAwaiter().GetResult();
+
+    public Task StartAsync(CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
+
         if (_timer is not null)
-            return;
+        {
+            State = WorkerStatus.Running;
+            return Task.CompletedTask;
+        }
 
         _timer = new Timer(OnTimerTick, null, CheckInterval, CheckInterval);
+        State = WorkerStatus.Running;
         _logger.Information("Token 自动刷新服务已启动 | 间隔={Interval}秒", CheckInterval.TotalSeconds);
+        return Task.CompletedTask;
     }
 
     /// <summary>
     /// 停止定时刷新
     /// </summary>
     public void Stop()
+        => StopAsync(CancellationToken.None).GetAwaiter().GetResult();
+
+    public Task StopAsync(CancellationToken ct = default)
     {
-        _timer?.Change(Timeout.Infinite, Timeout.Infinite);
+        ct.ThrowIfCancellationRequested();
+
+        State = WorkerStatus.Stopping;
+        if (_timer is not null)
+        {
+            _timer.Change(Timeout.Infinite, Timeout.Infinite);
+            _timer.Dispose();
+            _timer = null;
+        }
+
+        State = WorkerStatus.Stopped;
         _logger.Information("Token 自动刷新服务已停止");
+        return Task.CompletedTask;
     }
 
     private async void OnTimerTick(object? state)
@@ -85,5 +114,6 @@ public sealed class TokenRefreshBackgroundService : IDisposable
         _disposed = true;
         _timer?.Dispose();
         _timer = null;
+        State = WorkerStatus.Stopped;
     }
 }

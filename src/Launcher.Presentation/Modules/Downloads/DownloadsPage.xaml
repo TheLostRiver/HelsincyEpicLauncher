@@ -102,7 +102,7 @@
                                         Padding="8,6"
                                         ToolTipService.ToolTip="暂停"
                                         Visibility="{x:Bind CanPause, Mode=OneWay}"
-                                        Tag="{x:Bind TaskId, Mode=OneWay}"
+                                        Tag="{x:Bind TaskKey, Mode=OneWay}"
                                         Click="PauseButton_Click" />
                                     <Button
                                         Content="&#xE768;"
@@ -111,7 +111,7 @@
                                         Padding="8,6"
                                         ToolTipService.ToolTip="恢复"
                                         Visibility="{x:Bind CanResume, Mode=OneWay}"
-                                        Tag="{x:Bind TaskId, Mode=OneWay}"
+                                        Tag="{x:Bind TaskKey, Mode=OneWay}"
                                         Click="ResumeButton_Click" />
                                     <Button
                                         Content="&#xE711;"
@@ -120,7 +120,7 @@
                                         Padding="8,6"
                                         ToolTipService.ToolTip="取消"
                                         Visibility="{x:Bind CanCancel, Mode=OneWay}"
-                                        Tag="{x:Bind TaskId, Mode=OneWay}"
+                                        Tag="{x:Bind TaskKey, Mode=OneWay}"
                                         Click="CancelButton_Click" />
                                 </StackPanel>
                             </Grid>

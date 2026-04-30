@@ -33,4 +33,24 @@ public interface IDownloadRuntimeStore
     /// 获取所有活跃快照
     /// </summary>
     IReadOnlyList<DownloadProgressSnapshot> GetAllSnapshots();
+
+    /// <summary>
+    /// 更新任务进度（由下载执行器调用，内部实现可做节流）。
+    /// </summary>
+    void UpdateProgress(DownloadTaskId taskId, DownloadUiState uiState, long downloadedBytes, long totalBytes);
+
+    /// <summary>
+    /// 通知下载完成。
+    /// </summary>
+    void NotifyCompleted(DownloadTaskId taskId, string assetId, string filePath);
+
+    /// <summary>
+    /// 通知下载失败。
+    /// </summary>
+    void NotifyFailed(DownloadTaskId taskId, string assetId, string errorMessage, bool canRetry);
+
+    /// <summary>
+    /// 移除任务快照。
+    /// </summary>
+    void RemoveSnapshot(DownloadTaskId taskId);
 }

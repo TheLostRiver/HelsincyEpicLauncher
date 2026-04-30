@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Launcher.Application.Modules.Downloads.Contracts;
-using Launcher.Domain.Downloads;
 using Launcher.Shared;
 using Serilog;
 
@@ -88,27 +87,27 @@ public partial class DownloadsViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private async Task PauseAsync(DownloadTaskId taskId)
+    private async Task PauseAsync(DownloadTaskKey taskKey)
     {
-        var result = await _commandService.PauseAsync(taskId, _disposalCts.Token);
+        var result = await _commandService.PauseAsync(taskKey.ToLegacyTaskId(), _disposalCts.Token);
         if (!result.IsSuccess)
-            Logger.Warning("暂停失败: {TaskId}, {Error}", taskId, result.Error?.TechnicalMessage);
+            Logger.Warning("暂停失败: {TaskId}, {Error}", taskKey, result.Error?.TechnicalMessage);
     }
 
     [RelayCommand]
-    private async Task ResumeAsync(DownloadTaskId taskId)
+    private async Task ResumeAsync(DownloadTaskKey taskKey)
     {
-        var result = await _commandService.ResumeAsync(taskId, _disposalCts.Token);
+        var result = await _commandService.ResumeAsync(taskKey.ToLegacyTaskId(), _disposalCts.Token);
         if (!result.IsSuccess)
-            Logger.Warning("恢复失败: {TaskId}, {Error}", taskId, result.Error?.TechnicalMessage);
+            Logger.Warning("恢复失败: {TaskId}, {Error}", taskKey, result.Error?.TechnicalMessage);
     }
 
     [RelayCommand]
-    private async Task CancelAsync(DownloadTaskId taskId)
+    private async Task CancelAsync(DownloadTaskKey taskKey)
     {
-        var result = await _commandService.CancelAsync(taskId, _disposalCts.Token);
+        var result = await _commandService.CancelAsync(taskKey.ToLegacyTaskId(), _disposalCts.Token);
         if (!result.IsSuccess)
-            Logger.Warning("取消失败: {TaskId}, {Error}", taskId, result.Error?.TechnicalMessage);
+            Logger.Warning("取消失败: {TaskId}, {Error}", taskKey, result.Error?.TechnicalMessage);
     }
 
     private void OnSnapshotChanged(DownloadProgressSnapshot snapshot)
@@ -120,7 +119,7 @@ public partial class DownloadsViewModel : ObservableObject, IDisposable
 
         _dispatcherQueue.TryEnqueue(() =>
         {
-            var existing = FindDownloadItem(snapshot.TaskId);
+            var existing = FindDownloadItem(snapshot.TaskKey);
             if (existing is not null)
             {
                 existing.UpdateFromSnapshot(snapshot);
@@ -133,15 +132,15 @@ public partial class DownloadsViewModel : ObservableObject, IDisposable
     {
         _dispatcherQueue.TryEnqueue(() =>
         {
-            var item = FindDownloadItem(evt.TaskId);
+            var item = FindDownloadItem(evt.TaskKey);
             if (item is not null)
             {
                 Downloads.Remove(item);
-                item.UiState = DownloadUiState.Completed;
+                item.Status = DownloadStatusKind.Completed;
                 History.Insert(0, item);
             }
             UpdateAggregates();
-            Logger.Information("UI 收到下载完成通知: {TaskId}", evt.TaskId);
+            Logger.Information("UI 收到下载完成通知: {TaskId}", evt.TaskKey);
         });
     }
 
@@ -149,20 +148,20 @@ public partial class DownloadsViewModel : ObservableObject, IDisposable
     {
         _dispatcherQueue.TryEnqueue(() =>
         {
-            var item = FindDownloadItem(evt.TaskId);
+            var item = FindDownloadItem(evt.TaskKey);
             if (item is not null)
             {
-                item.UiState = DownloadUiState.Failed;
+                item.Status = DownloadStatusKind.Failed;
                 item.ErrorMessage = evt.ErrorMessage;
             }
             UpdateAggregates();
-            Logger.Warning("UI 收到下载失败通知: {TaskId}, {Error}", evt.TaskId, evt.ErrorMessage);
+            Logger.Warning("UI 收到下载失败通知: {TaskId}, {Error}", evt.TaskKey, evt.ErrorMessage);
         });
     }
 
-    private DownloadItemViewModel? FindDownloadItem(DownloadTaskId taskId)
+    private DownloadItemViewModel? FindDownloadItem(DownloadTaskKey taskKey)
     {
-        return Downloads.FirstOrDefault(d => d.TaskId == taskId);
+        return Downloads.FirstOrDefault(d => d.TaskKey == taskKey);
     }
 
     private void UpdateAggregates()
@@ -224,9 +223,9 @@ public partial class DownloadsViewModel : ObservableObject, IDisposable
 /// </summary>
 public partial class DownloadItemViewModel : ObservableObject
 {
-    [ObservableProperty] private DownloadTaskId _taskId;
+    [ObservableProperty] private DownloadTaskKey _taskKey;
     [ObservableProperty] private string _assetName = string.Empty;
-    [ObservableProperty] private DownloadUiState _uiState;
+    [ObservableProperty] private DownloadStatusKind _status;
     [ObservableProperty] private double _progressPercent;
     [ObservableProperty] private long _downloadedBytes;
     [ObservableProperty] private long _totalBytes;
@@ -244,9 +243,9 @@ public partial class DownloadItemViewModel : ObservableObject
     {
         var vm = new DownloadItemViewModel
         {
-            TaskId = summary.TaskId,
+            TaskKey = summary.TaskKey,
             AssetName = summary.AssetName,
-            UiState = summary.UiState,
+            Status = summary.Status,
             ProgressPercent = summary.Progress * 100,
             DownloadedBytes = summary.DownloadedBytes,
             TotalBytes = summary.TotalBytes,
@@ -262,7 +261,7 @@ public partial class DownloadItemViewModel : ObservableObject
 
     public void UpdateFromSnapshot(DownloadProgressSnapshot snapshot)
     {
-        UiState = snapshot.UiState;
+        Status = snapshot.Status;
         ProgressPercent = snapshot.ProgressPercent;
         DownloadedBytes = snapshot.DownloadedBytes;
         TotalBytes = snapshot.TotalBytes;
@@ -277,15 +276,16 @@ public partial class DownloadItemViewModel : ObservableObject
             ? $"{DownloadsViewModel.FormatBytes(DownloadedBytes)} / {DownloadsViewModel.FormatBytes(TotalBytes)}"
             : DownloadsViewModel.FormatBytes(DownloadedBytes);
         EtaText = DownloadsViewModel.FormatTimeSpan(eta);
-        StatusText = UiState switch
+        StatusText = Status switch
         {
-            DownloadUiState.Queued => "排队中",
-            DownloadUiState.Downloading => SpeedText.Length > 0 ? $"{SpeedText} · 剩余 {EtaText}" : "下载中...",
-            DownloadUiState.Paused => "已暂停",
-            DownloadUiState.Verifying => "校验中...",
-            DownloadUiState.Completed => "已完成",
-            DownloadUiState.Failed => ErrorMessage ?? "下载失败",
-            DownloadUiState.Cancelled => "已取消",
+            DownloadStatusKind.Queued => "排队中",
+            DownloadStatusKind.Downloading => SpeedText.Length > 0 ? $"{SpeedText} · 剩余 {EtaText}" : "下载中...",
+            DownloadStatusKind.Paused => "已暂停",
+            DownloadStatusKind.Verifying => "校验中...",
+            DownloadStatusKind.Installing => "安装中...",
+            DownloadStatusKind.Completed => "已完成",
+            DownloadStatusKind.Failed => ErrorMessage ?? "下载失败",
+            DownloadStatusKind.Cancelled => "已取消",
             _ => string.Empty,
         };
     }

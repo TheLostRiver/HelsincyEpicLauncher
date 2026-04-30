@@ -61,6 +61,7 @@ public sealed class DownloadReadService : IDownloadReadService
             TaskId = task.Id,
             AssetId = task.AssetId,
             AssetName = task.DisplayName,
+            Status = MapStatus(uiState),
             UiState = uiState,
             Progress = totalBytes > 0 ? (double)downloadedBytes / totalBytes : 0,
             DownloadedBytes = downloadedBytes,
@@ -76,4 +77,16 @@ public sealed class DownloadReadService : IDownloadReadService
             ErrorMessage = task.LastError,
         };
     }
+
+    private static DownloadStatusKind MapStatus(DownloadUiState uiState) => uiState switch
+    {
+        DownloadUiState.Queued => DownloadStatusKind.Queued,
+        DownloadUiState.Downloading => DownloadStatusKind.Downloading,
+        DownloadUiState.Paused => DownloadStatusKind.Paused,
+        DownloadUiState.Verifying => DownloadStatusKind.Verifying,
+        DownloadUiState.Completed => DownloadStatusKind.Completed,
+        DownloadUiState.Failed => DownloadStatusKind.Failed,
+        DownloadUiState.Cancelled => DownloadStatusKind.Cancelled,
+        _ => DownloadStatusKind.Failed,
+    };
 }

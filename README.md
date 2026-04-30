@@ -1,6 +1,6 @@
 # HelsincyEpicLauncher
 
-Epic Games 启动器替代客户端，基于 WinUI 3 + .NET 8 构建。
+Epic Games 启动器替代客户端，基于 WinUI 3 + .NET 9 Windows TFM 构建。
 
 ## 项目概述
 
@@ -20,7 +20,7 @@ Epic Games 启动器替代客户端，基于 WinUI 3 + .NET 8 构建。
 | 类别 | 技术 |
 |------|------|
 | UI 框架 | WinUI 3 (Windows App SDK) |
-| 运行时 | .NET 8+ / C# 12+ |
+| 运行时 | 当前工程为 .NET 9 Windows TFM / C# latest；文档原则兼容后续 LTS 策略 |
 | MVVM | CommunityToolkit.Mvvm |
 | DI | Microsoft.Extensions.DependencyInjection |
 | 日志 | Serilog |
@@ -31,7 +31,7 @@ Epic Games 启动器替代客户端，基于 WinUI 3 + .NET 8 构建。
 ## 项目结构
 
 ```
-HelsincyEpicLauncher.sln
+HelsincyEpicLauncher.slnx
 ├─ src/
 │  ├─ Launcher.App              → WinUI 3 入口 + DI 注册
 │  ├─ Launcher.Presentation     → 页面、ViewModel、控件
@@ -52,15 +52,15 @@ HelsincyEpicLauncher.sln
 ## 系统要求
 
 - Windows 10 1809+ / Windows 11
-- .NET 8 Runtime
+- 源码构建需要 .NET 9 SDK；最终发布目标建议自包含，不要求用户预装 .NET Runtime
 - 4GB+ RAM
 - 1GB+ 磁盘空间（不含下载内容）
 
 ## 构建
 
 ```bash
-dotnet build
-dotnet test
+dotnet build .\HelsincyEpicLauncher.slnx
+dotnet test .\HelsincyEpicLauncher.slnx
 ```
 
 ## 许可证

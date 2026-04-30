@@ -75,9 +75,16 @@ public sealed partial class MainWindow : Window
         var navigationService = App.Services.GetRequiredService<NavigationService>();
         var notificationService = App.Services.GetRequiredService<NotificationService>();
         var dialogService = App.Services.GetRequiredService<DialogService>();
+        var epicLoginDialogService = App.Services.GetRequiredService<EpicExchangeCodeLoginDialogService>();
         var themeService = App.Services.GetRequiredService<ThemeService>();
 
-        var shellPage = new ShellPage(viewModel, navigationService, notificationService, dialogService, themeService);
+        var shellPage = new ShellPage(
+            viewModel,
+            navigationService,
+            notificationService,
+            dialogService,
+            epicLoginDialogService,
+            themeService);
         ContentArea.Children.Add(shellPage);
 
         Log.Debug("ShellPage 已加载到 MainWindow");

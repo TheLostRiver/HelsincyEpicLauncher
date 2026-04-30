@@ -28,7 +28,7 @@
 | 依赖目标 | 用途 |
 |---------|------|
 | `Auth.Contracts` | 获取 Download Token |
-| `Settings.Contracts` | 读取并发数、chunk 大小等配置 |
+| `IDownloadOptionsProvider` | 读取任务并发、chunk 并发、chunk size、重试次数、checkpoint 周期 |
 | `Launcher.Shared` | Result 模型 |
 
 ### 谁可以依赖 Downloads
@@ -53,7 +53,9 @@
        ↓
 [IDownloadScheduler]        ← 队列 + 并发控制
        ↓
-[DownloadWorker]            ← 单任务执行
+[IDownloadTaskExecutor]
+       ↓
+[DownloadWorker]            ← 单任务执行（当前 Infrastructure 实现）
        ↓
 [IChunkDownloader]          ← 分块 HTTP 下载
        ↓
@@ -82,7 +84,7 @@ Failed
 Cancelled
 ```
 
-**对外 UI 状态**（`DownloadUiState`，对其他模块和 UI 暴露）：
+**对外 UI 状态**（`DownloadStatusKind`，由 Application Contracts 拥有，对其他模块和 UI 暴露）：
 
 ```
 Queued
@@ -97,6 +99,8 @@ Cancelled
 
 > 映射规则：`Preparing/FetchingManifest/AllocatingDisk/DownloadingChunks/RetryingChunk` → `Downloading`  
 > 其他一一对应。
+
+当前 DTO 中仍保留 `DownloadUiState` 和 `DownloadTaskId` 作为兼容字段；Presentation 和新增跨模块消费应优先使用 `DownloadStatusKind` 与 `DownloadTaskKey`。
 
 ---
 
@@ -135,26 +139,32 @@ public sealed record DownloadProgressChangedEvent(
 
 ```
 1. FabLibrary 调用 IDownloadCommandService.StartAsync(request)
-2. StartDownloadHandler：
-   a. 验证参数（路径合法性、磁盘空间）
+2. Application DownloadCommandService：
+   a. 调用 StartDownloadUseCase 做请求前置校验
+   b. 委托 IDownloadOrchestrator.EnqueueAsync()
+3. Infrastructure DownloadOrchestrator：
+   a. 验证路径、磁盘空间和重复活跃任务
    b. 创建 DownloadTask 领域实体
    c. 持久化到 IDownloadTaskRepository
    d. 推入 IDownloadScheduler 队列
    e. 返回 DownloadTaskId
-3. DownloadScheduler：
+4. DownloadScheduler：
    a. 检查当前并发数
    b. 如果有空位 → 立即调度
    c. 如果已满 → 等待，按优先级排队
-4. DownloadWorker 被调度执行：
+5. DownloadOrchestrator 已订阅 TaskReady：
+   a. 将任务 ID 委托给 IDownloadTaskExecutor.ExecuteAsync()
+6. DownloadWorker 被调度执行：
    a. 获取 manifest（文件列表、chunk 信息）
    b. 检查已有 checkpoint（断点恢复）
    c. 并行下载各 chunk（受限于 chunk 并发数）
    d. 每个 chunk 完成 → 更新 checkpoint
    e. 定期聚合进度 → 更新 IDownloadRuntimeStore
-5. 全部 chunk 完成：
+7. 全部 chunk 完成：
    a. 状态转为 Finalizing
    b. 发布 DownloadCompletedEvent
    c. 状态转为 Completed
+   d. 调用 IDownloadScheduler.NotifyCompleted() 释放调度位
 ```
 
 ### 暂停/恢复
@@ -186,3 +196,15 @@ public sealed record DownloadProgressChangedEvent(
    c. 推入 Scheduler 队列
 5. Scheduler 按优先级重新调度
 ```
+
+---
+
+## 当前已落地的架构现实
+
+- `DownloadCommandService` 已位于 Application 层，并委托 `StartDownloadUseCase` 与 `IDownloadOrchestrator`。
+- `StartDownloadUseCase` 当前只做开始下载请求的参数前置校验，不触碰 HTTP、SQLite 或文件系统。
+- `DownloadOrchestrator`、`DownloadScheduler`、`DownloadRuntimeStore`、`DownloadTaskRepository` 和 `DownloadWorker` 当前仍在 Infrastructure。
+- `DownloadOrchestrator` 已在构造时订阅 `IDownloadScheduler.TaskReady`，并委托 `IDownloadTaskExecutor.ExecuteAsync()`；调度器到执行器的生产断点已闭合。
+- `IChunkDownloader` 由 `ChunkDownloadClient` 实现；它仍属于下载内部执行能力，不是 UI/跨模块公共 Contract。
+- 下载配置已通过 `DownloadOptions` / `IDownloadOptionsProvider` 数据驱动：任务并发、chunk 并发、chunk size、重试次数和 checkpoint 周期均来自配置或默认值。
+- 目录命名仍存在迁移期债务：Repository、Scheduler、RuntimeStore、Executor 等内部端口还位于 `Contracts` 目录中，但语义上应视作内部端口。

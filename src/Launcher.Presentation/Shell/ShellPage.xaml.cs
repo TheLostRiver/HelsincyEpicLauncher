@@ -15,17 +15,25 @@ public sealed partial class ShellPage : UserControl
     private static readonly ILogger Logger = Log.ForContext<ShellPage>();
     private readonly NavigationService _navigationService;
     private readonly DialogService _dialogService;
+    private readonly EpicExchangeCodeLoginDialogService _epicLoginDialogService;
     private readonly ThemeService _themeService;
 
     public ShellViewModel ViewModel { get; }
 
-    public ShellPage(ShellViewModel viewModel, NavigationService navigationService, NotificationService notificationService, DialogService dialogService, ThemeService themeService)
+    public ShellPage(
+        ShellViewModel viewModel,
+        NavigationService navigationService,
+        NotificationService notificationService,
+        DialogService dialogService,
+        EpicExchangeCodeLoginDialogService epicLoginDialogService,
+        ThemeService themeService)
     {
         this.InitializeComponent();
 
         ViewModel = viewModel;
         _navigationService = navigationService;
         _dialogService = dialogService;
+        _epicLoginDialogService = epicLoginDialogService;
         _themeService = themeService;
 
         // 将 ContentFrame 设置为导航宿主
@@ -42,8 +50,9 @@ public sealed partial class ShellPage : UserControl
     /// </summary>
     private async void ShellPage_Loaded(object sender, RoutedEventArgs e)
     {
-        // 设置 DialogService 的 XamlRoot（Loaded 后 XamlRoot 才有效）
+        // 设置对话框服务的 XamlRoot（Loaded 后 XamlRoot 才有效）
         _dialogService.SetXamlRoot(this.XamlRoot);
+        _epicLoginDialogService.SetXamlRoot(this.XamlRoot);
 
         // 初始化主题服务（加载保存的主题并应用）
         _themeService.Initialize(this);

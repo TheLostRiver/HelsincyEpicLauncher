@@ -73,6 +73,8 @@ public sealed record UninstallCompletedEvent(string AssetId);
 public sealed record RepairCompletedEvent(string AssetId, int RepairedFileCount);
 ```
 
+当前 `InstallStatusSummary` 已提供 `InstallStatusKind Status` 作为 Application Contracts 拥有的公共状态投影；`InstallState State` 仍作为兼容字段保留，新增 UI 和跨模块消费应优先使用 `Status`。
+
 ---
 
 ## 关键流程
@@ -82,11 +84,11 @@ public sealed record RepairCompletedEvent(string AssetId, int RepairedFileCount)
 ```
 1. DownloadCompletedEvent 触发 或 用户手动点击"安装"
 2. IInstallCommandService.InstallAsync(request)
-3. InstallHandler：
+3. 当前 Infrastructure InstallCommandService：
    a. 验证源文件存在
    b. 验证目标路径（磁盘空间、权限）
-   c. 创建 InstallJob 领域实体
-   d. 交由 InstallWorker（后台）执行
+   c. 创建或更新安装记录
+   d. 委托 InstallWorker 执行文件系统安装
 4. InstallWorker：
    a. 解压/复制文件到安装目录
    b. 逐文件写入
@@ -153,6 +155,22 @@ public enum InstallState
 }
 ```
 
+对外 UI/跨模块状态优先使用 `InstallStatusKind`：
+
+```csharp
+public enum InstallStatusKind
+{
+    NotInstalled,
+    Installing,
+    Installed,
+    Verifying,
+    NeedsRepair,
+    Repairing,
+    Uninstalling,
+    Failed
+}
+```
+
 状态转换：
 
 ```
@@ -163,3 +181,13 @@ NeedsRepair → Repairing → Installed
 Installed → Uninstalling → NotInstalled
 Installing → Failed → NotInstalled（重试） 
 ```
+
+---
+
+## 当前已落地的架构现实
+
+- Installations 的公共 DTO 已提供 Contract-owned `InstallStatusKind Status`，Presentation 不再需要直接引用 `Launcher.Domain.Installations`。
+- `InstallCommandService` 当前仍位于 Infrastructure，承担安装、卸载和修复编排；这是后续迁移债务，不在本轮已完成范围内。
+- `InstallWorker`、`RepairFileDownloader`、`IntegrityVerifier`、`HashingService` 和 `InstallationRepository` 当前仍位于 Infrastructure。
+- `AutoInstallWorker` 已实现统一 `IBackgroundWorker`，通过 Background 的 `IBackgroundTaskHost` 启动，并订阅下载完成事件触发自动安装。
+- `IInstallationRepository`、`IIntegrityVerifier`、`IHashingService`、`IRepairDownloadUrlProvider` 当前仍位于 `Contracts` 目录中，但语义上属于模块内部端口或技术能力端口。

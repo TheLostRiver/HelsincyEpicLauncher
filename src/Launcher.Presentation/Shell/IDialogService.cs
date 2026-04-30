@@ -1,8 +1,5 @@
 // Copyright (c) Helsincy. All rights reserved.
 
-using Launcher.Application.Modules.Auth.Contracts;
-using Launcher.Shared;
-
 namespace Launcher.Presentation.Shell;
 
 /// <summary>
@@ -21,9 +18,6 @@ public interface IDialogService
 
     /// <summary>显示单文本输入对话框</summary>
     Task<string?> ShowTextInputAsync(string title, string message, string placeholder = "", string confirmText = "确认", string cancelText = "取消");
-
-    /// <summary>显示 Epic 嵌入式登录对话框，并返回捕获到的 exchange code</summary>
-    Task<Result<string>> ShowEpicExchangeCodeLoginAsync(AuthExchangeCodeLoginContext loginContext, CancellationToken ct = default);
 
     /// <summary>显示自定义内容对话框（后续任务中实现）</summary>
     Task<TResult?> ShowCustomAsync<TResult>(object dialogViewModel);

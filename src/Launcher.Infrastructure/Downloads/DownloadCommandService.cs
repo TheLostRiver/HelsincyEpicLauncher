@@ -8,7 +8,7 @@ using Serilog;
 namespace Launcher.Infrastructure.Downloads;
 
 /// <summary>
-/// 下载命令服务。对外命令入口，委托给 Orchestrator。
+/// 下载命令服务旧实现。当前 DI 已切换到 Application 层实现，本类暂时保留作为迁移兼容参考。
 /// </summary>
 public sealed class DownloadCommandService : IDownloadCommandService
 {

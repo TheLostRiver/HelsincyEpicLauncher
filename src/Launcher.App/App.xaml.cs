@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Launcher.Application;
 using Launcher.Background;
+using Launcher.Background.Hosting;
 using Launcher.Domain;
 using Launcher.Infrastructure;
 using Launcher.Presentation;
@@ -127,25 +128,14 @@ public partial class App : Microsoft.UI.Xaml.Application
     /// <summary>
     /// Phase 3：在后台线程启动所有后台 Worker
     /// </summary>
-    private static Task StartBackgroundServicesAsync(CancellationToken ct)
+    private static async Task StartBackgroundServicesAsync(CancellationToken ct)
     {
         try
         {
             using var _ = new OperationTimer(Log.Logger, "后台服务启动");
 
-            var tokenRefresh = Services.GetRequiredService<Launcher.Background.Auth.TokenRefreshBackgroundService>();
-            tokenRefresh.Start();
-
-            var autoInstall = Services.GetRequiredService<Launcher.Background.Installations.AutoInstallWorker>();
-            autoInstall.Start();
-
-            var updateWorker = Services.GetRequiredService<Launcher.Background.Updates.AppUpdateWorker>();
-            updateWorker.Start();
-
-            var networkWorker = Services.GetRequiredService<Launcher.Background.Network.NetworkMonitorWorker>();
-            networkWorker.Start();
-
-            StartFabLibraryWarmup(ct);
+            var backgroundTaskHost = Services.GetRequiredService<IBackgroundTaskHost>();
+            await backgroundTaskHost.StartAllAsync(ct).ConfigureAwait(false);
 
             Log.Information("所有后台服务已启动");
 
@@ -158,28 +148,96 @@ public partial class App : Microsoft.UI.Xaml.Application
         {
             Log.Error(ex, "后台服务启动失败");
         }
-
-        return Task.CompletedTask;
     }
 
-    private static void StartFabLibraryWarmup(CancellationToken ct)
+    private sealed class FabLibraryWarmupWorker : IBackgroundWorker, IDisposable
     {
-        var warmupCoordinator = Services.GetRequiredService<FabLibraryWarmupCoordinator>();
+        private readonly FabLibraryWarmupCoordinator _warmupCoordinator;
+        private CancellationTokenSource? _cts;
+        private Task? _warmupTask;
+        private bool _disposed;
 
-        _ = Task.Run(async () =>
+        public FabLibraryWarmupWorker(FabLibraryWarmupCoordinator warmupCoordinator)
+        {
+            _warmupCoordinator = warmupCoordinator;
+        }
+
+        public string Name => nameof(FabLibraryWarmupWorker);
+
+        public WorkerStatus State { get; private set; } = WorkerStatus.Idle;
+
+        public Task StartAsync(CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (_warmupTask is not null && !_warmupTask.IsCompleted)
+            {
+                State = WorkerStatus.Running;
+                return Task.CompletedTask;
+            }
+
+            _cts?.Dispose();
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            _cts = linkedCts;
+            State = WorkerStatus.Running;
+            _warmupTask = Task.Run(() => RunWarmupAsync(linkedCts.Token), linkedCts.Token);
+            return Task.CompletedTask;
+        }
+
+        public async Task StopAsync(CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            State = WorkerStatus.Stopping;
+            _cts?.Cancel();
+
+            if (_warmupTask is not null)
+            {
+                try
+                {
+                    await _warmupTask.WaitAsync(ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+            }
+
+            State = WorkerStatus.Stopped;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _cts?.Cancel();
+            _cts?.Dispose();
+            _cts = null;
+            State = WorkerStatus.Stopped;
+        }
+
+        private async Task RunWarmupAsync(CancellationToken ct)
         {
             try
             {
-                await warmupCoordinator.WarmAsync(ct).ConfigureAwait(false);
+                await _warmupCoordinator.WarmAsync(ct).ConfigureAwait(false);
+                if (!_disposed)
+                {
+                    State = WorkerStatus.Stopped;
+                }
             }
             catch (OperationCanceledException)
             {
+                if (!_disposed)
+                {
+                    State = WorkerStatus.Stopped;
+                }
             }
             catch (Exception ex)
             {
+                State = WorkerStatus.Faulted;
                 Log.Error(ex, "Fab 启动预热失败");
             }
-        }, ct);
+        }
     }
 
     /// <summary>
@@ -384,6 +442,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         IConfiguration configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+            .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false)
             .Build();
 
         // 构建 DI 容器
@@ -396,6 +455,7 @@ public partial class App : Microsoft.UI.Xaml.Application
         services.AddInfrastructure();
         services.AddPresentation();
         services.AddBackground();
+        services.AddSingleton<IBackgroundWorker, FabLibraryWarmupWorker>();
         services.AddSingleton<MainWindowHandleProvider>();
         services.AddSingleton<IWindowHandleProvider>(sp => sp.GetRequiredService<MainWindowHandleProvider>());
 

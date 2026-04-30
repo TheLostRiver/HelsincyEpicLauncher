@@ -3,6 +3,7 @@
 using Launcher.Application.Modules.Auth.Contracts;
 using Launcher.Application.Modules.Diagnostics.Contracts;
 using Launcher.Application.Modules.Downloads.Contracts;
+using Launcher.Application.Modules.Downloads.UseCases;
 using Launcher.Application.Modules.EngineVersions.Contracts;
 using Launcher.Application.Modules.FabLibrary.Contracts;
 using Launcher.Application.Modules.Installations.Contracts;
@@ -25,6 +26,7 @@ using Launcher.Infrastructure.Persistence.Sqlite.Migrations;
 using Launcher.Infrastructure.Settings;
 using Launcher.Infrastructure.Updates;
 using Launcher.Shared.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Launcher.Infrastructure;
@@ -37,7 +39,12 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
         // 配置
-        services.AddSingleton<IAppConfigProvider, AppConfigProvider>();
+        services.AddSingleton<AppConfigProvider>();
+        services.AddSingleton<IAppConfigProvider>(sp => sp.GetRequiredService<AppConfigProvider>());
+        services.AddSingleton<IDownloadOptionsProvider>(sp => sp.GetRequiredService<AppConfigProvider>());
+        services.AddSingleton(sp => FabApiOptions.FromConfiguration(sp.GetRequiredService<IConfiguration>()));
+        services.AddSingleton(sp => EpicApiOptions.FromConfiguration(sp.GetRequiredService<IConfiguration>()));
+        services.AddSingleton(sp => UpdateOptions.FromConfiguration(sp.GetRequiredService<IConfiguration>()));
 
         // 用户设置（注册具体类型 + 双接口）
         services.AddSingleton<SettingsService>();
@@ -68,12 +75,15 @@ public static class DependencyInjection
         // 下载
         services.AddHttpClient("ChunkDownload");
         services.AddSingleton<ChunkDownloadClient>();
+        services.AddSingleton<IChunkDownloader>(sp => sp.GetRequiredService<ChunkDownloadClient>());
         services.AddSingleton<IDownloadTaskRepository, DownloadTaskRepository>();
         services.AddSingleton<IDownloadScheduler, DownloadScheduler>();
+        services.AddSingleton<IDownloadTaskExecutor, DownloadWorker>();
         services.AddSingleton<IDownloadOrchestrator, DownloadOrchestrator>();
         services.AddSingleton<DownloadRuntimeStore>();
         services.AddSingleton<IDownloadRuntimeStore>(sp => sp.GetRequiredService<DownloadRuntimeStore>());
-        services.AddSingleton<IDownloadCommandService, DownloadCommandService>();
+        services.AddSingleton<StartDownloadUseCase>();
+        services.AddSingleton<IDownloadCommandService, Launcher.Application.Modules.Downloads.DownloadCommandService>();
         services.AddSingleton<IDownloadReadService, DownloadReadService>();
 
         // 安装
@@ -87,23 +97,26 @@ public static class DependencyInjection
         services.AddSingleton<IInstallReadService, InstallReadService>();
 
         // Fab 资产库
-        services.AddHttpClient("FabApi", client =>
+        services.AddHttpClient("FabApi", (sp, client) =>
         {
-            client.BaseAddress = new Uri("https://www.fab.com/api");
+            var options = sp.GetRequiredService<FabApiOptions>();
+            client.BaseAddress = options.BaseAddress;
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             EnsureHttps(client.BaseAddress);
         });
-        services.AddHttpClient("EpicLibraryApi", client =>
+        services.AddHttpClient("EpicLibraryApi", (sp, client) =>
         {
-            client.BaseAddress = new Uri("https://library-service.live.use1a.on.epicgames.com");
+            var options = sp.GetRequiredService<EpicApiOptions>();
+            client.BaseAddress = options.LibraryBaseAddress;
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             client.DefaultRequestHeaders.AcceptEncoding.Clear();
             client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("identity");
             EnsureHttps(client.BaseAddress);
         });
-        services.AddHttpClient("EpicCatalogApi", client =>
+        services.AddHttpClient("EpicCatalogApi", (sp, client) =>
         {
-            client.BaseAddress = new Uri("https://catalog-public-service-prod06.ol.epicgames.com");
+            var options = sp.GetRequiredService<EpicApiOptions>();
+            client.BaseAddress = options.CatalogBaseAddress;
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             client.DefaultRequestHeaders.AcceptEncoding.Clear();
             client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("identity");
@@ -140,9 +153,10 @@ public static class DependencyInjection
         services.AddSingleton<IFabAssetCommandService, FabAssetCommandService>();
 
         // 引擎版本
-        services.AddHttpClient("EngineVersionApi", client =>
+        services.AddHttpClient("EngineVersionApi", (sp, client) =>
         {
-            client.BaseAddress = new Uri("https://www.unrealengine.com/api");
+            var options = sp.GetRequiredService<EpicApiOptions>();
+            client.BaseAddress = options.EngineVersionBaseAddress;
             client.DefaultRequestHeaders.Add("Accept", "application/json");
             EnsureHttps(client.BaseAddress);
         });
@@ -155,9 +169,10 @@ public static class DependencyInjection
         services.AddSingleton<IPluginCommandService, PluginCommandService>();
 
         // 自动更新
-        services.AddHttpClient("UpdateApi", client =>
+        services.AddHttpClient("UpdateApi", (sp, client) =>
         {
-            client.BaseAddress = new Uri("https://api.github.com");
+            var options = sp.GetRequiredService<UpdateOptions>();
+            client.BaseAddress = options.BaseAddress;
             client.DefaultRequestHeaders.Add("Accept", "application/vnd.github+json");
             client.DefaultRequestHeaders.Add("User-Agent", Launcher.Shared.AppConstants.AppName);
             EnsureHttps(client.BaseAddress);
@@ -176,6 +191,11 @@ public static class DependencyInjection
     private static void EnsureHttps(Uri? baseAddress)
     {
         if (baseAddress is not null && !string.Equals(baseAddress.Scheme, "https", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException($"API 端点必须使用 HTTPS: {baseAddress}");
+        {
+            throw new InvalidOperationException($"API 端点必须使用 HTTPS: {SanitizeEndpointForLog(baseAddress)}");
+        }
     }
+
+    private static string SanitizeEndpointForLog(Uri endpoint) =>
+        $"{endpoint.Scheme}://{endpoint.Authority}{endpoint.AbsolutePath}";
 }
