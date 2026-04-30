@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `9e16267`（Task 5.2 代码提交） |
+| 当前基线提交 | `818d81a`（Task 5.3 代码提交） |
 | 当前阶段 | Phase 5：Options 数据驱动 |
-| 当前任务 | Task 5.2：新增 API Options |
+| 当前任务 | Task 5.3：处理 OAuth 配置安全语义 |
 | 当前状态 | 已完成代码实现、验证和代码提交；等待提交本上下文记录 |
-| 下一步 | 提交本上下文记录后，若用户继续，从 Task 5.3：处理 OAuth 配置安全语义开始；先读取 `EpicOAuthOptions.cs`、`Auth.md`、`appsettings.json` |
+| 下一步 | 提交本上下文记录后暂停在 Phase 5 / Phase 6 边界；若用户继续，从 Task 6.1：拆分 EpicOwnedFabCatalogClient 的 owned records 加载开始 |
 | 阻塞项 | 无 |
 
 ---
@@ -165,6 +165,17 @@
 | `src/Launcher.Infrastructure/Configuration/UpdateOptions.cs` | 新增 | Task 5.2：GitHub update API BaseAddress Options，默认保留现有端点 |
 | `src/Launcher.Infrastructure/DependencyInjection.cs` | 修改 | Task 5.2：命名 HttpClient 从 Options 读取 BaseAddress，并将 HTTPS 校验错误中的 query/userinfo 脱敏 |
 | `src/Launcher.App/appsettings.json` | 修改 | Task 5.2：新增 `FabApi`、`EpicApi`、`UpdateApi` 配置段 |
+| `docs/SessionContextRecord.md` | 修改中 | Task 5.3：标记 OAuth 配置安全语义任务开始 |
+| `src/Launcher.App/App.xaml.cs` | 待修改 | Task 5.3：需要可选加载 `appsettings.Local.json` 以支持本地覆盖 |
+| `src/Launcher.App/Launcher.App.csproj` | 待修改 | Task 5.3：需要在本地文件存在时复制 `appsettings.Local.json` |
+| `.gitignore` | 待修改 | Task 5.3：需要忽略 `appsettings.Local.json`，避免私人凭据误提交 |
+| `tests/Launcher.Tests.Unit/EpicOAuthOptionsTests.cs` | 新增 | Task 5.3：红灯验证 OAuth 环境变量覆盖仓库配置 |
+| `src/Launcher.Infrastructure/Auth/EpicOAuthOptions.cs` | 修改 | Task 5.3：新增 OAuth 环境变量覆盖和公开桌面客户端凭据语义注释 |
+| `src/Launcher.App/App.xaml.cs` | 修改 | Task 5.3：配置链可选加载 `appsettings.Local.json` |
+| `src/Launcher.App/Launcher.App.csproj` | 修改 | Task 5.3：本地配置文件存在时复制到输出目录 |
+| `src/Launcher.App/appsettings.json` | 修改 | Task 5.3：显式配置 `EmbeddedLoginUserAgent`，减少 Auth 默认硬编码 |
+| `docs/06-ModuleDefinitions/Auth.md` | 修改 | Task 5.3：补充 OAuth 配置安全语义、环境变量和 local settings 规则 |
+| `.gitignore` | 修改 | Task 5.3：忽略 `appsettings.Local.json`，避免私人凭据误提交 |
 
 ---
 
@@ -325,13 +336,21 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 5.2 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
 - Task 5.2 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 5.2 代码提交已创建：`9e16267 feat: 添加 API 端点配置 Options`。
+- Task 5.2 完成上下文提交已创建：`e53a703 docs: 记录 Task 5.2 完成上下文`。
+- Task 5.3 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~EpicOAuthOptionsTests"`，按预期编译失败；`EpicOAuthOptions` 尚无环境变量常量和覆盖逻辑。
+- Task 5.3 绿灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~EpicOAuthOptionsTests"`，1 个测试通过，0 个失败；存在既有 analyzer 警告。
+- Task 5.3 计划验证已执行：`dotnet build .\src\Launcher.Infrastructure\Launcher.Infrastructure.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 5.3 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 5.3 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 5.3 代码提交已创建：`818d81a feat: 支持 OAuth 配置安全覆盖`。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 5.2 已完成：新增 API Options，并让 Fab/Epic/EngineVersion/Update 命名 HttpClient 从配置读取 BaseAddress。
-- 下一项候选任务为 Phase 5 Task 5.3：处理 OAuth 配置安全语义；开始前必须读取 `src/Launcher.Infrastructure/Auth/EpicOAuthOptions.cs`、`docs/06-ModuleDefinitions/Auth.md`、`src/Launcher.App/appsettings.json`。
+- Task 5.3 已完成：OAuth 配置支持环境变量覆盖和 `appsettings.Local.json` 本机覆盖，Auth 文档已补充安全语义。
+- Phase 5 已完成。下一项候选任务为 Phase 6 Task 6.1：拆分 `EpicOwnedFabCatalogClient` 的 owned records 加载。
+- Task 6.1 开始前必须读取 `src/Launcher.Infrastructure/FabLibrary/EpicOwnedFabCatalogClient.cs`、`tests/Launcher.Tests.Unit/EpicOwnedFabCatalogClientTests.cs`，并只迁移 owned records 拉取、分页、cursor、缓存相关代码，不同时迁移 summary mapping。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
