@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `1e58ecf`（Task 2.3 暂停上下文提交） |
+| 当前基线提交 | `508ff02`（Task 2.4 代码提交） |
 | 当前阶段 | Phase 2：Contracts 去 Domain 泄漏 |
-| 当前任务 | Task 2.4：移除 Installations UI 对 Domain 的直接引用 |
-| 当前状态 | 验证完成，待提交 |
-| 下一步 | 执行 `git diff --check`、暂存并提交 Task 2.4 |
+| 当前任务 | 无（最近完成 Task 2.4：移除 Installations UI 对 Domain 的直接引用） |
+| 当前状态 | Task 2.4 已完成并提交；等待用户确认是否进入 Phase 3 |
+| 下一步 | 若继续执行，先读取本文件，再从 Task 3.1：新增后台 Worker 抽象开始 |
 | 阻塞项 | 无 |
 
 ---
@@ -215,12 +215,14 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 2.4 额外源码检查已执行：`rg -n "Launcher\.Domain" src\Launcher.Presentation -g "*.cs"` 无匹配，退出码 1 表示未找到匹配项。
 - Task 2.4 初始化点检查已执行：`rg -n "new InstallStatusSummary" src tests -g "*.cs"` 仅发现 `InstallReadService.cs` 和本任务新增测试两个初始化点，均已设置 `Status`。
 - Task 2.4 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 2.4 代码提交已创建：`508ff02 refactor: 移除 Installations UI 领域引用`。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 2.4 已完成验证，待提交：移除 Installations UI 对 Domain 的直接引用。
+- Task 2.4 已完成并提交：移除 Installations UI 对 Domain 的直接引用。
+- 下一项候选任务为 Task 3.1：新增后台 Worker 抽象；开始前必须读取 `src/Launcher.Background` 现有结构和相关后台服务测试。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
