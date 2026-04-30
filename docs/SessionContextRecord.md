@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `171c28b`（Task 4.2 代码/测试提交） |
+| 当前基线提交 | `2efe224`（Task 4.3 代码提交） |
 | 当前阶段 | Phase 4：Downloads 管线闭环 |
-| 当前任务 | 无（最近完成 Task 4.2：新增 DownloadWorker 端口测试） |
-| 当前状态 | Task 4.2 已完成代码实现、验证和代码提交；本文件记录完成上下文 |
-| 下一步 | 若用户继续，从 Task 4.3：连接 Scheduler 与下载执行器开始 |
+| 当前任务 | 无（最近完成 Task 4.3：连接 Scheduler 与下载执行器） |
+| 当前状态 | Task 4.3 已完成代码实现、验证和代码提交；本文件记录完成上下文 |
+| 下一步 | 若用户继续，从 Phase 5 Task 5.1：新增 DownloadOptions 开始 |
 | 阻塞项 | 无 |
 
 ---
@@ -145,6 +145,12 @@
 | `src/Launcher.Application/Modules/Downloads/README_ARCH.md` | 修改 | Task 4.1：记录 Scheduler 到 Worker 的当前断点、真实启动链路和后续闭环方向 |
 | `tests/Launcher.Tests.Unit/DownloadWorkerContractTests.cs` | 新增 | Task 4.2：下载执行端口契约和 Scheduler 分发测试 |
 | `src/Launcher.Application/Modules/Downloads/Contracts/IDownloadScheduler.cs` | 修改 | Task 4.2：新增 `IDownloadTaskExecutor` 内部执行端口契约 |
+| `src/Launcher.Infrastructure/Downloads/DownloadOrchestrator.cs` | 修改 | Task 4.3：订阅 Scheduler 分发事件并委托下载执行端口 |
+| `src/Launcher.Infrastructure/Downloads/DownloadWorker.cs` | 新增 | Task 4.3：最小下载任务执行器，处理单个任务的成功、失败和取消收口 |
+| `tests/Launcher.Tests.Unit/DownloadOrchestratorTests.cs` | 修改 | Task 4.3：验证 Scheduler 分发后执行器被调用、完成/失败语义 |
+| `src/Launcher.Application/Modules/Downloads/Contracts/IDownloadRuntimeStore.cs` | 修改 | Task 4.3：补充执行器写入进度、完成、失败和移除快照所需端口 |
+| `src/Launcher.Infrastructure/Downloads/ChunkDownloadClient.cs` | 修改 | Task 4.3：新增 `IChunkDownloader` 抽象并由现有客户端实现 |
+| `src/Launcher.Infrastructure/DependencyInjection.cs` | 修改 | Task 4.3：注册 `IChunkDownloader` 和 `IDownloadTaskExecutor` |
 
 ---
 
@@ -283,13 +289,21 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 4.2 绿灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~DownloadWorkerContractTests|FullyQualifiedName~DownloadSchedulerTests"`，9 个测试通过，0 个失败；存在既有 analyzer 警告。
 - Task 4.2 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 4.2 代码/测试提交已创建：`171c28b test: 添加下载执行端口契约`。
+- Task 4.2 完成上下文提交已创建：`b16ab93 docs: 记录 Task 4.2 完成上下文`。
+- Task 4.3 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~DownloadOrchestratorTests"`，按预期失败；缺少 3 参数 Orchestrator 构造、`IChunkDownloader`、`DownloadWorker` 和 RuntimeStore 写入端口。
+- Task 4.3 第一次绿灯验证失败：同一指定过滤命令中 `IChunkDownloader` 为 internal，NSubstitute 无法代理；随后改为 public 端口。
+- Task 4.3 绿灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~DownloadOrchestratorTests|FullyQualifiedName~DownloadSchedulerTests"`，20 个测试通过，0 个失败；存在既有 analyzer 警告。
+- Task 4.3 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 4.3 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 4.3 代码提交已创建：`2efe224 feat: 连接下载调度器与执行器`。
+- Task 4.2 完成上下文提交已创建：`b16ab93 docs: 记录 Task 4.2 完成上下文`。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 4.2 已完成：新增 DownloadWorker 端口测试。
-- 下一项候选任务为 Task 4.3：连接 Scheduler 与下载执行器；开始前必须读取 `DownloadOrchestrator.cs`、`DownloadScheduler.cs`、`ChunkDownloadClient.cs`、`DownloadRuntimeStore.cs`、`DownloadTaskRepository.cs` 和新增的 `IDownloadTaskExecutor` 契约。
+- Task 4.3 已完成：连接 Scheduler 与下载执行器。
+- 下一项候选任务为 Phase 5 Task 5.1：新增 DownloadOptions；开始前必须读取 `appsettings.json`、`AppConfigProvider.cs`、`IDownloadScheduler.cs` 和当前下载并发/重试相关硬编码。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
