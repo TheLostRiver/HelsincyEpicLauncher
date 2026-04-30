@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `ec557b3`（Task 4.1 文档提交） |
+| 当前基线提交 | `171c28b`（Task 4.2 代码/测试提交） |
 | 当前阶段 | Phase 4：Downloads 管线闭环 |
-| 当前任务 | 无（最近完成 Task 4.1：记录当前 Scheduler 到 Worker 断点） |
-| 当前状态 | Task 4.1 已完成、验证并提交；本文件记录完成上下文 |
-| 下一步 | 若用户继续，从 Task 4.2：新增 DownloadWorker 端口测试开始 |
+| 当前任务 | 无（最近完成 Task 4.2：新增 DownloadWorker 端口测试） |
+| 当前状态 | Task 4.2 已完成代码实现、验证和代码提交；本文件记录完成上下文 |
+| 下一步 | 若用户继续，从 Task 4.3：连接 Scheduler 与下载执行器开始 |
 | 阻塞项 | 无 |
 
 ---
@@ -143,6 +143,8 @@
 | `src/Launcher.App/App.xaml.cs` | 修改 | Task 3.4：`StartBackgroundServicesAsync` 只解析 `IBackgroundTaskHost`，Fab 预热包装为 App 组合根 Worker |
 | `.codex/` | 新增 | 工作区安装 `planning-with-files` Codex skill 与 hooks |
 | `src/Launcher.Application/Modules/Downloads/README_ARCH.md` | 修改 | Task 4.1：记录 Scheduler 到 Worker 的当前断点、真实启动链路和后续闭环方向 |
+| `tests/Launcher.Tests.Unit/DownloadWorkerContractTests.cs` | 新增 | Task 4.2：下载执行端口契约和 Scheduler 分发测试 |
+| `src/Launcher.Application/Modules/Downloads/Contracts/IDownloadScheduler.cs` | 修改 | Task 4.2：新增 `IDownloadTaskExecutor` 内部执行端口契约 |
 
 ---
 
@@ -276,13 +278,18 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 4.1 验证命令已执行：`rg "TaskReady\s*\+=" src tests -g "*.cs"`；输出仅包含 `tests\Launcher.Tests.Unit\DownloadSchedulerTests.cs` 中 6 处测试订阅，无生产代码命中。
 - Task 4.1 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 4.1 文档提交已创建：`ec557b3 docs: 记录下载调度断点`。
+- Task 4.1 完成上下文提交已创建：`d3cdd88 docs: 记录 Task 4.1 完成上下文`。
+- Task 4.2 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~DownloadWorkerContractTests"`，按预期编译失败；缺少 `IDownloadTaskExecutor`。
+- Task 4.2 绿灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~DownloadWorkerContractTests|FullyQualifiedName~DownloadSchedulerTests"`，9 个测试通过，0 个失败；存在既有 analyzer 警告。
+- Task 4.2 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 4.2 代码/测试提交已创建：`171c28b test: 添加下载执行端口契约`。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 4.1 已完成：记录当前 Scheduler 到 Worker 断点。
-- 下一项候选任务为 Task 4.2：新增 DownloadWorker 端口测试；开始前必须读取 `IDownloadScheduler`、`DownloadScheduler`、`DownloadOrchestrator` 和当前 `README_ARCH.md` 的第 5 节断点记录。
+- Task 4.2 已完成：新增 DownloadWorker 端口测试。
+- 下一项候选任务为 Task 4.3：连接 Scheduler 与下载执行器；开始前必须读取 `DownloadOrchestrator.cs`、`DownloadScheduler.cs`、`ChunkDownloadClient.cs`、`DownloadRuntimeStore.cs`、`DownloadTaskRepository.cs` 和新增的 `IDownloadTaskExecutor` 契约。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
