@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `4f76b58`（Task 2.4 完成上下文提交） |
+| 当前基线提交 | `39423c6`（Task 3.1 代码提交） |
 | 当前阶段 | Phase 3：后台任务统一宿主 |
-| 当前任务 | Task 3.1：新增后台 Worker 抽象 |
-| 当前状态 | 验证完成，待提交 |
-| 下一步 | 执行 `git diff --check`、暂存并提交 Task 3.1 |
+| 当前任务 | 无（最近完成 Task 3.1：新增后台 Worker 抽象） |
+| 当前状态 | Task 3.1 已完成并提交；可继续 Task 3.2 |
+| 下一步 | 若继续执行，先读取本文件，再从 Task 3.2：新增 BackgroundTaskHost 开始 |
 | 阻塞项 | 无 |
 
 ---
@@ -227,12 +227,14 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 3.1 绿灯验证已执行：同一 `BackgroundWorkerContractTests` 过滤命令通过，2 个测试通过，0 个失败；存在既有 analyzer 警告。
 - Task 3.1 Background 构建验证已执行：`dotnet build .\src\Launcher.Background\Launcher.Background.csproj --no-restore`，构建成功，0 警告，0 错误。
 - Task 3.1 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 3.1 代码提交已创建：`39423c6 feat: 添加后台 Worker 生命周期契约`。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 3.1 已完成验证，待提交：新增后台 Worker 抽象。
+- Task 3.1 已完成并提交：新增后台 Worker 抽象。
+- 下一项候选任务为 Task 3.2：新增 BackgroundTaskHost；开始前必须读取 `src/Launcher.Background/Hosting` 和 `tests/Launcher.Tests.Unit/BackgroundWorkerContractTests.cs`。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
