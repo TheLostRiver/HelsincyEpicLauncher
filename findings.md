@@ -33,6 +33,16 @@
 - `DialogService` now only contains ordinary confirm/info/error/text input/custom dialog responsibilities.
 - `EpicExchangeCodeLoginDialogService` owns WebView2 setup, window sizing, exchange-code message handling, external Epic link launch, cancellation, and temporary WebView2 user-data cleanup.
 - `ShellViewModel` now depends on both `IDialogService` and `IEpicExchangeCodeLoginDialogService`, so auth login no longer expands the ordinary dialog contract.
+- Task 7.1 start: worktree is clean at `6065a17 docs: 记录 Task 6.3 完成上下文`.
+- `Launcher.Presentation.csproj` now references only `Launcher.Application` and `Launcher.Shared`, not `Launcher.Domain`.
+- Downloads completed realities: `DownloadCommandService` lives in Application, `StartDownloadUseCase` exists, `DownloadOrchestrator` subscribes `IDownloadScheduler.TaskReady` to `IDownloadTaskExecutor.ExecuteAsync`, and `DownloadWorker` exists in Infrastructure.
+- Contracts completed realities: `DownloadTaskKey`, `DownloadStatusKind`, and `InstallStatusKind` are Contract-owned projections; legacy Domain fields remain for compatibility.
+- Options completed realities: `DownloadOptions`/`IDownloadOptionsProvider`, `EpicApiOptions`, `FabApiOptions`, `UpdateOptions`, OAuth env/local override, and configured API base addresses exist.
+- Background completed realities: `IBackgroundWorker`, `WorkerStatus`, `IBackgroundTaskHost`, and `BackgroundTaskHost` exist; TokenRefresh, AutoInstall, AppUpdate, NetworkMonitor, and Fab warmup are registered/started through the unified host.
+- Fab completed realities: owned-record retrieval is in `EpicOwnedRecordsClient`; pure summary/category/image/format/listing mapping is in `EpicFabSummaryMapper`.
+- Task 7.1 updated the six target docs to reflect completed code reality only: solution structure, dependency rules, core interfaces, Downloads, Installations, and FabLibrary.
+- Task 7.1 stale-name scan found old Fab examples (`FabCatalogService`, `IFabAssetRepository`, `SqliteFabAssetRepository`) and those were corrected to current ports/services (`FabCatalogReadService`, `IFabDownloadInfoProvider`, `EpicOwnedRecordsClient`, `EpicFabSummaryMapper`).
+- Task 7.1 verification passed: `dotnet build .\HelsincyEpicLauncher.slnx --no-restore` completed with 0 warnings and 0 errors.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -45,6 +55,7 @@
 | Move Epic catalog DTOs to internal namespace-level types | Both `EpicOwnedFabCatalogClient` and `EpicFabSummaryMapper` need the same deserialization model without widening it outside Infrastructure. |
 | Add a dedicated Epic login dialog interface | It lets `ShellViewModel` depend on an explicit login-window capability while keeping `IDialogService` focused on ordinary dialogs. |
 | Keep XamlRoot setters on concrete shell services | `ShellPage` already wires UI-only concrete services after `Loaded`; using the same pattern keeps XamlRoot setup local to Shell composition. |
+| Keep Task 7.1 docs descriptive, not aspirational | Implementation doc requires recording only completed code reality, so remaining debts are described as compatibility or future work rather than as already-finished architecture. |
 
 ## Issues Encountered
 | Issue | Resolution |
@@ -52,6 +63,7 @@
 | `SessionContextRecord.md` current-status table still describes the state before the Task 5.3 context commit | Update it before beginning Task 6.1. |
 | New CA1859 warnings appeared after extraction | Changed private helper signatures to concrete collection types where call sites already use concrete collections. |
 | Task 6.3 red test failed at compile time because `IEpicExchangeCodeLoginDialogService` did not exist | Added the dedicated interface/service and moved the login call site to it. |
+| Task 7.1 scan found old Fab repository/service names in architecture docs | Corrected those snippets to current implementation and re-scanned the target docs. |
 
 ## Resources
 - `docs/17-ArchitectureOptimizationPlan.md`

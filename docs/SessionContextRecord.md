@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `355ce60`（Task 6.3 代码提交） |
-| 当前阶段 | Phase 6：大类拆分 |
-| 当前任务 | Task 6.3：拆分 `DialogService` 的 Epic 登录窗口 |
-| 当前状态 | 已完成代码实现、验证和代码提交；正在提交上下文记录 |
-| 下一步 | 上下文提交完成后，下一项候选任务是 Phase 7 Task 7.1：更新架构文档与模块定义；开始前必须只记录已完成的代码现实，不预写未完成状态 |
+| 当前基线提交 | `cd76133`（Task 7.1 目标架构文档提交；本文件记录提交后 HEAD 会继续前进） |
+| 当前阶段 | Phase 7：最终一致性收口 |
+| 当前任务 | Task 7.2：全量验证 |
+| 当前状态 | Task 7.1 已完成并已创建目标文档提交 `cd76133`；当前正在提交完成上下文记录，Task 7.2 尚未开始 |
+| 下一步 | 只执行 Task 7.2 全量验证：build、unit test、integration test；若失败，记录失败详情并停止，不做临时大修 |
 | 阻塞项 | 无 |
 
 ---
@@ -200,6 +200,7 @@
 | `task_plan.md` | 修改 | Task 6.3：标记 Phase 6 完成，Phase 7 待开始 |
 | `findings.md` | 修改 | Task 6.3：记录 DialogService 拆分边界、DI/XamlRoot 决策和红灯结果 |
 | `progress.md` | 修改 | Task 6.3：记录红灯、绿灯、构建和代码提交 |
+| `docs/SessionContextRecord.md` | 修改中 | Task 7.1：标记架构文档收口任务开始 |
 
 ---
 
@@ -390,6 +391,9 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 6.3 调用边界核验已执行：`rg -n "ShowEpicExchangeCodeLoginAsync|IEpicExchangeCodeLoginDialogService|EpicExchangeCodeLoginDialogService|AuthExchangeCodeLoginContext|CoreWebView2|WebView2|ProcessStartInfo|ClearBrowsingDataAsync" ...`；`ShowEpicExchangeCodeLoginAsync` 已从 `IDialogService`/`DialogService` 移出，WebView2 登录逻辑集中在 `EpicExchangeCodeLoginDialogService`。
 - Task 6.3 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 6.3 代码提交已创建：`355ce60 refactor: 拆分 Epic 登录对话服务`。
+- Task 6.3 完成上下文提交已创建：`6065a17 docs: 记录 Task 6.3 完成上下文`。
+- Task 7.1 开始前恢复检查已执行：`git status --short` 输出为空，worktree 干净；`git log --oneline -3` 显示 HEAD 为 `6065a17`。
+- Task 7.1 已读取指定文档：`docs/03-SolutionStructure.md`、`docs/04-ModuleDependencyRules.md`、`docs/05-CoreInterfaces.md`、`docs/06-ModuleDefinitions/Downloads.md`、`docs/06-ModuleDefinitions/Installations.md`、`docs/06-ModuleDefinitions/FabLibrary.md`。
 
 ---
 
@@ -399,8 +403,14 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 6.2 已完成：`EpicFabSummaryMapper` 已承接 summary/category/image/format/listing 等纯映射逻辑；`EpicOwnedFabCatalogClient` 保留 HTTP catalog 获取、catalog cache、detail preview metadata enrichment 和公共接口。
 - Task 6.3 已完成：`EpicExchangeCodeLoginDialogService` 已承接 WebView2 exchange-code 登录窗口；`IDialogService` 收窄为普通对话框契约；`ShellViewModel` 通过专用接口调用登录窗口。
 - Phase 6 已完成。
-- 下一项候选任务为 Phase 7 Task 7.1：更新架构文档与模块定义。
-- Task 7.1 开始前必须读取 `docs/03-SolutionStructure.md`、`docs/04-ModuleDependencyRules.md`、`docs/05-CoreInterfaces.md`、`docs/06-ModuleDefinitions/Downloads.md`、`docs/06-ModuleDefinitions/Installations.md`、`docs/06-ModuleDefinitions/FabLibrary.md`，且只记录已经完成的代码现实，不预写未完成状态。
+- Task 7.1 已完成：`docs/03-SolutionStructure.md`、`docs/04-ModuleDependencyRules.md`、`docs/05-CoreInterfaces.md`、`docs/06-ModuleDefinitions/Downloads.md`、`docs/06-ModuleDefinitions/Installations.md`、`docs/06-ModuleDefinitions/FabLibrary.md` 已同步为已完成代码现实。
+- Task 7.1 已记录的现实包括：Presentation 不再引用 Domain 项目；Downloads 命令入口在 Application，Scheduler 已订阅 `IDownloadTaskExecutor`；Download/Install 公共状态已有 Contract-owned 投影但仍保留 Domain 兼容字段；Background 统一宿主已落地；API/Download/OAuth Options 已落地；Fab owned records 和 summary mapping 已拆分；Epic 登录窗口已从普通 DialogService 拆出。
+- Task 7.1 旧名称扫描已执行并修正：`FabCatalogService`、`IFabAssetRepository`、`SqliteFabAssetRepository` 等旧 Fab 示例已从当前实现描述中清理；仅保留“当前没有公开 IFabAssetRepository”的兼容说明。
+- Task 7.1 验证命令已执行：`dotnet build .\HelsincyEpicLauncher.slnx --no-restore`，构建成功，0 警告，0 错误。
+- Task 7.1 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 7.1 目标文档提交已创建：`cd76133 docs: 同步架构文档到当前实现`。
+- 当前待提交：Task 7.1 完成上下文与 planning 文件。
+- 下一项任务：Task 7.2 全量验证；开始前必须先读取本文件和实现文档，不得跳过。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---

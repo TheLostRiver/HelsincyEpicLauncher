@@ -4,7 +4,7 @@
 Continue the architecture optimization implementation in small, verified, recoverable tasks, while keeping `SessionContextRecord.md` as the primary recovery anchor.
 
 ## Current Phase
-Phase 6: Large-class split and performance convergence
+Phase 7: Final consistency closure
 
 ## Phases
 
@@ -21,14 +21,14 @@ Phase 6: Large-class split and performance convergence
 - **Status:** complete
 
 ### Phase 7: Final Consistency Closure
-- [ ] Task 7.1: Update architecture documents to match completed code reality
+- [x] Task 7.1: Update architecture documents to match completed code reality
 - [ ] Task 7.2: Run full verification and record results
-- **Status:** pending
+- **Status:** in_progress
 
 ## Key Questions
-1. Which parts of `EpicOwnedFabCatalogClient` are strictly owned-record retrieval, paging, cursor, and cache behavior?
-2. How can Task 6.1 preserve public behavior without also moving summary mapping?
-3. Which tests already cover `EpicOwnedFabCatalogClient` behavior and can protect the extraction?
+1. Does each architecture document describe only completed code reality?
+2. Are remaining compatibility fields clearly marked as compatibility debt rather than target architecture?
+3. Is the next task limited to full verification and result recording?
 
 ## Decisions Made
 | Decision | Rationale |
@@ -39,12 +39,14 @@ Phase 6: Large-class split and performance convergence
 | Stop Task 6.1 at owned-record extraction | Task 6.2 owns mapping extraction, so mapping remains in `EpicOwnedFabCatalogClient` for now. |
 | Keep Task 6.2 limited to pure mapping | `MapToDetailAsync` still performs async preview metadata resolution, so only pure helpers moved into `EpicFabSummaryMapper`. |
 | Keep ordinary dialogs and Epic login dialogs behind separate interfaces | `IDialogService` now owns ContentDialog-style UI, while `IEpicExchangeCodeLoginDialogService` owns the WebView2 exchange-code login window. |
+| Mark Task 7.1 complete after docs-only build verification | The six target architecture/module docs now describe completed code reality, and `dotnet build .\HelsincyEpicLauncher.slnx --no-restore` passed with 0 warnings and 0 errors. |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |
 |-------|---------|------------|
 | Home skill path did not contain `session-catchup.py` | 1 | Used the project-installed skill path at `Q:\MyEpicLauncher\.codex\skills\planning-with-files`. |
 | CA1859 warnings after extraction | 1 | Tightened private helper parameter types to concrete collection types already used at call sites. |
+| Task 7.1 stale Fab names remained in docs | 1 | Re-scanned the target docs and replaced old `FabCatalogService` / `IFabAssetRepository` / `SqliteFabAssetRepository` examples with current Fab ports and services. |
 
 ## Notes
 - Do not touch `Q:\MyEpicLauncher` main workspace except reading the requested skill file.

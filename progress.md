@@ -121,3 +121,29 @@
 | Task 6.3 Presentation build | `dotnet build .\src\Launcher.Presentation\Launcher.Presentation.csproj --no-restore` | Build succeeds | 0 warnings, 0 errors | PASS |
 | Task 6.3 App build | `dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore` | Build succeeds | 0 warnings, 0 errors | PASS |
 | Task 6.3 whitespace check | `git diff --check` | No whitespace errors | No whitespace errors | PASS |
+
+### Phase 7: Task 7.1 Architecture Document Closure
+- **Status:** complete
+- **Started:** 2026-05-01
+- Actions taken:
+  - Read `docs/SessionContextRecord.md` first, per iron rule.
+  - Read the user-requested `planning-with-files` skill and `executing-plans` skill.
+  - Confirmed worktree is clean and HEAD is `6065a17 docs: 记录 Task 6.3 完成上下文`.
+  - Read `docs/17-ArchitectureOptimizationPlan.md`, `docs/18-ArchitectureOptimizationImplementation.md`, `task_plan.md`, `findings.md`, and `progress.md`.
+  - Ran `session-catchup.py` from the project-installed planning-with-files skill path.
+  - Read Task 7.1 target docs: `03-SolutionStructure`, `04-ModuleDependencyRules`, `05-CoreInterfaces`, `Downloads`, `Installations`, and `FabLibrary`.
+  - Read current source reality for project references, Downloads contracts/options/orchestrator, Installations contracts, FabLibrary contracts, Background host interfaces/DI, and Shell Epic login split.
+  - Updated `docs/SessionContextRecord.md`, `task_plan.md`, and `findings.md` to mark Task 7.1 in progress.
+  - Updated the six Task 7.1 target docs to reflect completed code reality only.
+  - Re-scanned the target docs for stale architecture names and fixed old Fab service/repository examples.
+  - Ran Task 7.1 verification build: 0 warnings, 0 errors.
+  - Created Task 7.1 target docs commit `cd76133 docs: 同步架构文档到当前实现`.
+
+## Test Results: Task 7.1
+| Test | Input | Expected | Actual | Status |
+|------|-------|----------|--------|--------|
+| Stale architecture-name scan | `rg -n "FabCatalogService|IFabAssetRepository|SqliteFabAssetRepository|DownloadsPageViewModel|Launcher\\.Infrastructure\\.Network\\.Download|StartDownloadHandler|InstallHandler|WorkerState|TaskReady 无生产|HelsincyEpicLauncher\\.sln\\b|review/" ...` | No stale references except explicit compatibility notes | Only the explicit note that `IFabAssetRepository` is not a current public contract remained | PASS |
+| Task 7.1 build | `dotnet build .\HelsincyEpicLauncher.slnx --no-restore` | Build succeeds | 0 warnings, 0 errors | PASS |
+| Task 7.1 whitespace check | `git diff --check` | No whitespace errors | No whitespace errors; LF/CRLF warnings only | PASS |
+
+Next step: Task 7.2 full verification only; do not start it until the Task 7.1 context commit is recorded.
