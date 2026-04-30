@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `508ff02`（Task 2.4 代码提交） |
-| 当前阶段 | Phase 2：Contracts 去 Domain 泄漏 |
-| 当前任务 | 无（最近完成 Task 2.4：移除 Installations UI 对 Domain 的直接引用） |
-| 当前状态 | Task 2.4 已完成并提交；等待用户确认是否进入 Phase 3 |
-| 下一步 | 若继续执行，先读取本文件，再从 Task 3.1：新增后台 Worker 抽象开始 |
+| 当前基线提交 | `4f76b58`（Task 2.4 完成上下文提交） |
+| 当前阶段 | Phase 3：后台任务统一宿主 |
+| 当前任务 | Task 3.1：新增后台 Worker 抽象 |
+| 当前状态 | 验证完成，待提交 |
+| 下一步 | 执行 `git diff --check`、暂存并提交 Task 3.1 |
 | 阻塞项 | 无 |
 
 ---
@@ -123,6 +123,10 @@
 | `src/Launcher.Application/Modules/Installations/Contracts/InstallModels.cs` | 修改 | Task 2.4：新增 `InstallStatusKind` 和 `InstallStatusSummary.Status` 兼容字段 |
 | `src/Launcher.Infrastructure/Installations/InstallReadService.cs` | 修改 | Task 2.4：将旧 `InstallState` 映射到新的 Contract-owned `InstallStatusKind` |
 | `src/Launcher.Presentation/Modules/Installations/InstallationsViewModel.cs` | 修改 | Task 2.4：ViewModel 改用 `InstallStatusKind`，移除 Domain using |
+| `docs/SessionContextRecord.md` | 修改 | Task 3.1：标记后台 Worker 抽象任务开始 |
+| `tests/Launcher.Tests.Unit/BackgroundWorkerContractTests.cs` | 新增 | Task 3.1：新增后台 Worker 抽象红灯测试 |
+| `src/Launcher.Background/Hosting/WorkerStatus.cs` | 新增 | Task 3.1：后台 Worker 生命周期状态枚举 |
+| `src/Launcher.Background/Hosting/IBackgroundWorker.cs` | 新增 | Task 3.1：后台 Worker 统一生命周期契约 |
 
 ---
 
@@ -216,13 +220,19 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 2.4 初始化点检查已执行：`rg -n "new InstallStatusSummary" src tests -g "*.cs"` 仅发现 `InstallReadService.cs` 和本任务新增测试两个初始化点，均已设置 `Status`。
 - Task 2.4 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 2.4 代码提交已创建：`508ff02 refactor: 移除 Installations UI 领域引用`。
+- Task 2.4 完成上下文提交已创建：`4f76b58 docs: 记录 Task 2.4 完成上下文`。
+- Task 3.1 已执行 `rg --files src\Launcher.Background tests\Launcher.Tests.Unit | sort`，确认当前 Background 文件为 Auth/TokenRefresh、Installations/AutoInstall、Network/NetworkMonitor、Updates/AppUpdate、DependencyInjection 和项目文件。
+- Task 3.1 已读取 `src/Launcher.Background/Launcher.Background.csproj`、`DependencyInjection.cs`、`TokenRefreshBackgroundService.cs`、`AutoInstallWorker.cs`、`NetworkMonitorWorker.cs`、`AppUpdateWorker.cs`。
+- Task 3.1 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~BackgroundWorkerContractTests"`，按预期编译失败；`Launcher.Background.Hosting` 命名空间尚不存在。
+- Task 3.1 绿灯验证已执行：同一 `BackgroundWorkerContractTests` 过滤命令通过，2 个测试通过，0 个失败；存在既有 analyzer 警告。
+- Task 3.1 Background 构建验证已执行：`dotnet build .\src\Launcher.Background\Launcher.Background.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 3.1 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 2.4 已完成并提交：移除 Installations UI 对 Domain 的直接引用。
-- 下一项候选任务为 Task 3.1：新增后台 Worker 抽象；开始前必须读取 `src/Launcher.Background` 现有结构和相关后台服务测试。
+- Task 3.1 已完成验证，待提交：新增后台 Worker 抽象。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
