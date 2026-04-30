@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `955ff02`（Task 6.2 代码提交） |
+| 当前基线提交 | `355ce60`（Task 6.3 代码提交） |
 | 当前阶段 | Phase 6：大类拆分 |
-| 当前任务 | Task 6.2：拆分 Fab summary mapping |
+| 当前任务 | Task 6.3：拆分 `DialogService` 的 Epic 登录窗口 |
 | 当前状态 | 已完成代码实现、验证和代码提交；正在提交上下文记录 |
-| 下一步 | 上下文提交完成后，下一项候选任务是 Task 6.3：拆分 `DialogService` 的 Epic 登录窗口；开始前必须先读取相关 Shell 文档、`DialogService.cs`、`IDialogService.cs` 和 `EpicLoginWebViewBridgeTests.cs` |
+| 下一步 | 上下文提交完成后，下一项候选任务是 Phase 7 Task 7.1：更新架构文档与模块定义；开始前必须只记录已完成的代码现实，不预写未完成状态 |
 | 阻塞项 | 无 |
 
 ---
@@ -188,6 +188,18 @@
 | `task_plan.md` | 修改 | Task 6.2：标记 mapping 拆分完成并记录边界决策 |
 | `findings.md` | 修改 | Task 6.2：记录 mapper 边界、DTO internal 化和副作用扫描结果 |
 | `progress.md` | 修改 | Task 6.2：记录验证命令、结果和代码提交 |
+| `docs/SessionContextRecord.md` | 修改中 | Task 6.3：标记 Epic 登录窗口拆分任务开始 |
+| `tests/Launcher.Tests.Unit/EpicLoginWebViewBridgeTests.cs` | 修改 | Task 6.3：新增接口边界测试，确认普通 `IDialogService` 不暴露 Epic 登录窗口，专用接口暴露登录能力 |
+| `src/Launcher.Presentation/Shell/EpicExchangeCodeLoginDialogService.cs` | 新增 | Task 6.3：承接 WebView2 exchange-code 登录窗口、消息处理、外链启动、取消和临时 WebView2 数据清理 |
+| `src/Launcher.Presentation/Shell/DialogService.cs` | 修改 | Task 6.3：移除 Epic 登录窗口逻辑，只保留普通 Confirm/Info/Error/TextInput/Custom 对话框职责 |
+| `src/Launcher.Presentation/Shell/IDialogService.cs` | 修改 | Task 6.3：移除 `ShowEpicExchangeCodeLoginAsync`，收窄普通对话框契约 |
+| `src/Launcher.Presentation/Shell/ShellViewModel.cs` | 修改 | Task 6.3：通过 `IEpicExchangeCodeLoginDialogService` 调用嵌入式登录窗口 |
+| `src/Launcher.Presentation/Shell/ShellPage.xaml.cs` | 修改 | Task 6.3：为普通对话框服务和 Epic 登录对话框服务分别设置 `XamlRoot` |
+| `src/Launcher.Presentation/DependencyInjection.cs` | 修改 | Task 6.3：注册 `EpicExchangeCodeLoginDialogService` 和 `IEpicExchangeCodeLoginDialogService` |
+| `src/Launcher.App/MainWindow.xaml.cs` | 修改 | Task 6.3：解析并传入 Epic 登录对话框服务 |
+| `task_plan.md` | 修改 | Task 6.3：标记 Phase 6 完成，Phase 7 待开始 |
+| `findings.md` | 修改 | Task 6.3：记录 DialogService 拆分边界、DI/XamlRoot 决策和红灯结果 |
+| `progress.md` | 修改 | Task 6.3：记录红灯、绿灯、构建和代码提交 |
 
 ---
 
@@ -369,6 +381,15 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 6.2 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
 - Task 6.2 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 6.2 代码提交已创建：`955ff02 refactor: 拆分 Epic Fab summary mapper`。
+- Task 6.2 完成上下文提交已创建：`ef2cf48 docs: 记录 Task 6.2 完成上下文`。
+- Task 6.3 开始前恢复检查已执行：`git status --short` 输出为空，worktree 干净；`git log --oneline -3` 显示 HEAD 为 `ef2cf48`。
+- Task 6.3 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~EpicLoginWebViewBridgeTests"`，按预期编译失败；缺少 `IEpicExchangeCodeLoginDialogService`。
+- Task 6.3 目标验证已执行：同一 `EpicLoginWebViewBridgeTests` 过滤命令通过，12 个测试通过，0 个失败；存在既有测试 analyzer 警告。
+- Task 6.3 Presentation 构建验证已执行：`dotnet build .\src\Launcher.Presentation\Launcher.Presentation.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 6.3 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 6.3 调用边界核验已执行：`rg -n "ShowEpicExchangeCodeLoginAsync|IEpicExchangeCodeLoginDialogService|EpicExchangeCodeLoginDialogService|AuthExchangeCodeLoginContext|CoreWebView2|WebView2|ProcessStartInfo|ClearBrowsingDataAsync" ...`；`ShowEpicExchangeCodeLoginAsync` 已从 `IDialogService`/`DialogService` 移出，WebView2 登录逻辑集中在 `EpicExchangeCodeLoginDialogService`。
+- Task 6.3 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 6.3 代码提交已创建：`355ce60 refactor: 拆分 Epic 登录对话服务`。
 
 ---
 
@@ -376,8 +397,10 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 
 - Task 6.1 已完成：`EpicOwnedRecordsClient` 已承接 owned records 拉取、分页、cursor 和缓存。
 - Task 6.2 已完成：`EpicFabSummaryMapper` 已承接 summary/category/image/format/listing 等纯映射逻辑；`EpicOwnedFabCatalogClient` 保留 HTTP catalog 获取、catalog cache、detail preview metadata enrichment 和公共接口。
-- 下一项候选任务为 Phase 6 Task 6.3：拆分 `DialogService` 的 Epic exchange-code 登录窗口。
-- Task 6.3 开始前必须读取 `src/Launcher.Presentation/Shell/DialogService.cs`、`src/Launcher.Presentation/Shell/IDialogService.cs`、`tests/Launcher.Tests.Unit/EpicLoginWebViewBridgeTests.cs`，并搜索 Shell/ViewModel 中登录窗口调用点；普通 Confirm/Info/Error/TextInput 仍归 `DialogService`，WebView2 登录窗口迁到独立服务。
+- Task 6.3 已完成：`EpicExchangeCodeLoginDialogService` 已承接 WebView2 exchange-code 登录窗口；`IDialogService` 收窄为普通对话框契约；`ShellViewModel` 通过专用接口调用登录窗口。
+- Phase 6 已完成。
+- 下一项候选任务为 Phase 7 Task 7.1：更新架构文档与模块定义。
+- Task 7.1 开始前必须读取 `docs/03-SolutionStructure.md`、`docs/04-ModuleDependencyRules.md`、`docs/05-CoreInterfaces.md`、`docs/06-ModuleDefinitions/Downloads.md`、`docs/06-ModuleDefinitions/Installations.md`、`docs/06-ModuleDefinitions/FabLibrary.md`，且只记录已经完成的代码现实，不预写未完成状态。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---

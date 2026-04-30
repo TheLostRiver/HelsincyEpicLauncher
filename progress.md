@@ -49,8 +49,8 @@
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Phase 6, Task 6.2 complete; context recording is being committed. |
-| Where am I going? | Task 6.3: extract the Epic exchange-code login dialog service from `DialogService`. |
+| Where am I? | Phase 6 complete; Task 6.3 code is committed and context recording is being committed. |
+| Where am I going? | Phase 7 Task 7.1: update architecture documents to match completed code reality. |
 | What's the goal? | Continue architecture optimization through small, verified, recoverable tasks. |
 | What have I learned? | See `findings.md`. |
 | What have I done? | See above. |
@@ -87,3 +87,37 @@
 | Task 6.2 Infrastructure build | `dotnet build .\src\Launcher.Infrastructure\Launcher.Infrastructure.csproj --no-restore` | Build succeeds | 0 warnings, 0 errors | PASS |
 | Task 6.2 App build | `dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore` | Build succeeds | 0 warnings, 0 errors | PASS |
 | Task 6.2 whitespace check | `git diff --check` | No whitespace errors | No whitespace errors | PASS |
+
+### Phase 6: Task 6.3 Epic Login Dialog Extraction
+- **Status:** complete
+- **Started:** 2026-05-01
+- Actions taken:
+  - Read `docs/SessionContextRecord.md` first, per iron rule.
+  - Read the user-requested `planning-with-files` skill and `executing-plans` skill.
+  - Read `docs/17-ArchitectureOptimizationPlan.md` and `docs/18-ArchitectureOptimizationImplementation.md`.
+  - Confirmed worktree is clean and HEAD is `ef2cf48 docs: 记录 Task 6.2 完成上下文`.
+  - Ran `session-catchup.py` from the project-installed planning-with-files skill path.
+  - Updated `docs/SessionContextRecord.md` to mark Task 6.3 in progress.
+  - Read `docs/06-ModuleDefinitions/Shell.md` and `docs/06-ModuleDefinitions/Auth.md`.
+  - Read `DialogService`, `IDialogService`, `ShellViewModel`, `EpicLoginWebViewBridge`, `ShellPage`, `MainWindow`, Presentation DI, and `EpicLoginWebViewBridgeTests`.
+  - Found that `DialogService` mixes ordinary ContentDialog methods with the WebView2 exchange-code login window.
+  - Found that `ShellViewModel` currently calls the Epic login window through `IDialogService`, and `ShellPage` currently sets only `DialogService` XamlRoot.
+  - Added red tests asserting `IDialogService` no longer exposes Epic login and a dedicated `IEpicExchangeCodeLoginDialogService` does.
+  - Red test failed as expected because `IEpicExchangeCodeLoginDialogService` did not exist.
+  - Added `EpicExchangeCodeLoginDialogService` and moved the WebView2 exchange-code login window code out of `DialogService`.
+  - Updated `ShellViewModel` to call the dedicated login dialog interface.
+  - Wired the dedicated service through Presentation DI, `ShellPage`, and `MainWindow`, including XamlRoot setup.
+  - Ran Task 6.3 target tests: 12 passed, 0 failed.
+  - Ran Presentation build: 0 warnings, 0 errors.
+  - Ran App build: 0 warnings, 0 errors.
+  - Ran `git diff --check`: no whitespace errors.
+  - Created code commit `355ce60 refactor: 拆分 Epic 登录对话服务`.
+
+## Test Results: Task 6.3
+| Test | Input | Expected | Actual | Status |
+|------|-------|----------|--------|--------|
+| Task 6.3 red test | `dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~EpicLoginWebViewBridgeTests"` | Fails before implementation | Compile failed because `IEpicExchangeCodeLoginDialogService` was missing | PASS |
+| Task 6.3 target tests | Same command | Existing and new tests pass | 12 passed, 0 failed | PASS |
+| Task 6.3 Presentation build | `dotnet build .\src\Launcher.Presentation\Launcher.Presentation.csproj --no-restore` | Build succeeds | 0 warnings, 0 errors | PASS |
+| Task 6.3 App build | `dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore` | Build succeeds | 0 warnings, 0 errors | PASS |
+| Task 6.3 whitespace check | `git diff --check` | No whitespace errors | No whitespace errors | PASS |

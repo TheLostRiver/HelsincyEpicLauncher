@@ -25,6 +25,14 @@
 - Task 6.2 completed: `EpicFabSummaryMapper` now owns `MapToSummary`, screenshot URL extraction, listing identifier extraction, category normalization, thumbnail selection, and format extraction.
 - `EpicOwnedFabCatalogClient` now delegates summary/detail pure mapping helpers to `EpicFabSummaryMapper`; catalog loading, catalog cache, and preview metadata enrichment remain in the catalog client.
 - A side-effect scan of `EpicFabSummaryMapper.cs` for `HttpClient`, send calls, file/directory APIs, process start APIs, and curl found no matches.
+- Task 6.3 boundary: `DialogService` currently mixes ordinary `ContentDialog` methods with the WebView2 exchange-code login window.
+- `ShellViewModel` currently calls `_dialogService.ShowEpicExchangeCodeLoginAsync(...)`; Task 6.3 should move that call behind a dedicated login-dialog interface.
+- `ShellPage` currently injects the concrete `DialogService` only to call `SetXamlRoot(this.XamlRoot)` after `Loaded`; the extracted Epic login dialog service also needs a XamlRoot setter because it creates the login window from Presentation.
+- `MainWindow` currently resolves the concrete `DialogService` to construct `ShellPage`; after extraction it should resolve both concrete dialog services or otherwise pass both XamlRoot-aware shell services into ShellPage.
+- Task 6.3 completed: `IDialogService` no longer exposes `ShowEpicExchangeCodeLoginAsync`; `IEpicExchangeCodeLoginDialogService` exposes the dedicated Epic exchange-code login capability.
+- `DialogService` now only contains ordinary confirm/info/error/text input/custom dialog responsibilities.
+- `EpicExchangeCodeLoginDialogService` owns WebView2 setup, window sizing, exchange-code message handling, external Epic link launch, cancellation, and temporary WebView2 user-data cleanup.
+- `ShellViewModel` now depends on both `IDialogService` and `IEpicExchangeCodeLoginDialogService`, so auth login no longer expands the ordinary dialog contract.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -35,12 +43,15 @@
 | Use internal namespace-level owned-record records | They preserve the existing internal boundary while allowing the extracted records client and original catalog client to share the record model. |
 | Keep `MapToDetailAsync` in the catalog client for Task 6.2 | It performs async preview metadata resolution, while Task 6.2 is limited to pure mapping logic. |
 | Move Epic catalog DTOs to internal namespace-level types | Both `EpicOwnedFabCatalogClient` and `EpicFabSummaryMapper` need the same deserialization model without widening it outside Infrastructure. |
+| Add a dedicated Epic login dialog interface | It lets `ShellViewModel` depend on an explicit login-window capability while keeping `IDialogService` focused on ordinary dialogs. |
+| Keep XamlRoot setters on concrete shell services | `ShellPage` already wires UI-only concrete services after `Loaded`; using the same pattern keeps XamlRoot setup local to Shell composition. |
 
 ## Issues Encountered
 | Issue | Resolution |
 |-------|------------|
 | `SessionContextRecord.md` current-status table still describes the state before the Task 5.3 context commit | Update it before beginning Task 6.1. |
 | New CA1859 warnings appeared after extraction | Changed private helper signatures to concrete collection types where call sites already use concrete collections. |
+| Task 6.3 red test failed at compile time because `IEpicExchangeCodeLoginDialogService` did not exist | Added the dedicated interface/service and moved the login call site to it. |
 
 ## Resources
 - `docs/17-ArchitectureOptimizationPlan.md`

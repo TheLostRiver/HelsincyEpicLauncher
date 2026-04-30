@@ -17,8 +17,8 @@ Phase 6: Large-class split and performance convergence
 ### Phase 6: Large-Class Split
 - [x] Task 6.1: Extract owned-record loading from `EpicOwnedFabCatalogClient`
 - [x] Task 6.2: Extract Fab summary mapping
-- [ ] Task 6.3: Extract Epic exchange-code login dialog service
-- **Status:** in_progress
+- [x] Task 6.3: Extract Epic exchange-code login dialog service
+- **Status:** complete
 
 ### Phase 7: Final Consistency Closure
 - [ ] Task 7.1: Update architecture documents to match completed code reality
@@ -38,6 +38,7 @@ Phase 6: Large-class split and performance convergence
 | Start from Task 6.1 only | Implementation document says one task at a time, and SessionContextRecord identifies Task 6.1 as the next task. |
 | Stop Task 6.1 at owned-record extraction | Task 6.2 owns mapping extraction, so mapping remains in `EpicOwnedFabCatalogClient` for now. |
 | Keep Task 6.2 limited to pure mapping | `MapToDetailAsync` still performs async preview metadata resolution, so only pure helpers moved into `EpicFabSummaryMapper`. |
+| Keep ordinary dialogs and Epic login dialogs behind separate interfaces | `IDialogService` now owns ContentDialog-style UI, while `IEpicExchangeCodeLoginDialogService` owns the WebView2 exchange-code login window. |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |
