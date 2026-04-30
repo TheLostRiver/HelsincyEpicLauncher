@@ -67,10 +67,33 @@ public interface IDialogService
     /// <summary>显示错误对话框</summary>
     Task ShowErrorAsync(string title, string message, bool canRetry = false);
 
+    /// <summary>显示单文本输入对话框</summary>
+    Task<string?> ShowTextInputAsync(
+        string title,
+        string message,
+        string placeholder = "",
+        string confirmText = "确认",
+        string cancelText = "取消");
+
     /// <summary>显示自定义内容对话框</summary>
     Task<TResult?> ShowCustomAsync<TResult>(object dialogViewModel);
 }
 ```
+
+Epic exchange-code 登录窗口不再挂在普通 `IDialogService` 上。它由 Presentation 的专用接口承载：
+
+```csharp
+namespace Launcher.Presentation.Shell;
+
+public interface IEpicExchangeCodeLoginDialogService
+{
+    Task<Result<string>> ShowEpicExchangeCodeLoginAsync(
+        AuthExchangeCodeLoginContext loginContext,
+        CancellationToken ct = default);
+}
+```
+
+`DialogService` 仅处理普通 ContentDialog；`EpicExchangeCodeLoginDialogService` 承载 WebView2 登录窗口、exchange code 捕获、可信 Epic 外链启动和临时 WebView2 用户数据清理。
 
 ---
 
@@ -285,9 +308,11 @@ public sealed class StartDownloadRequest
 public sealed class DownloadStatusSummary
 {
     public DownloadTaskId TaskId { get; init; }
+    public DownloadTaskKey TaskKey { get; }
     public string AssetId { get; init; } = default!;
     public string AssetName { get; init; } = default!;
-    public DownloadUiState UiState { get; init; }
+    public DownloadStatusKind Status { get; init; }
+    public DownloadUiState UiState { get; init; }    // 兼容字段
     public double Progress { get; init; }           // 0.0 ~ 1.0
     public long DownloadedBytes { get; init; }
     public long TotalBytes { get; init; }
@@ -299,8 +324,11 @@ public sealed class DownloadStatusSummary
     public string? ErrorMessage { get; init; }
 }
 
-/// <summary>对外 UI 状态枚举（收敛后）</summary>
-public enum DownloadUiState
+/// <summary>下载任务公共标识。UI 和跨模块调用方优先使用该类型。</summary>
+public readonly record struct DownloadTaskKey(Guid Value);
+
+/// <summary>对外 UI 状态枚举，由 Application Contracts 拥有。</summary>
+public enum DownloadStatusKind
 {
     Queued,
     Downloading,
@@ -312,6 +340,8 @@ public enum DownloadUiState
     Cancelled
 }
 ```
+
+当前兼容层仍保留 `DownloadTaskId` / `DownloadUiState` 字段，新增 UI 和跨模块消费应优先使用 `DownloadTaskKey` / `DownloadStatusKind`。
 
 ---
 
@@ -334,17 +364,34 @@ public interface IDownloadScheduler
     /// <summary>获取当前活跃任务列表</summary>
     Task<IReadOnlyList<DownloadTaskId>> GetActiveTaskIdsAsync(CancellationToken ct);
 
+    /// <summary>当有空位可调度时触发，由 Orchestrator 订阅并委托执行器</summary>
+    event Func<DownloadTaskId, CancellationToken, Task>? TaskReady;
+
     /// <summary>当前最大并发数</summary>
     int MaxConcurrency { get; set; }
+
+    /// <summary>当前活跃任务数</summary>
+    int ActiveCount { get; }
+
+    void Dequeue(DownloadTaskId taskId);
+    void RequestPause(DownloadTaskId taskId);
+    void NotifyCompleted(DownloadTaskId taskId);
+}
+
+public interface IDownloadTaskExecutor
+{
+    Task ExecuteAsync(DownloadTaskId taskId, CancellationToken ct);
 }
 ```
+
+当前下载执行链路已经闭环到最小生产实现：`DownloadOrchestrator` 在构造时订阅 `IDownloadScheduler.TaskReady`，并把任务 ID 委托给 `IDownloadTaskExecutor.ExecuteAsync`；Infrastructure 的 `DownloadWorker` 是当前执行器实现。
 
 ---
 
 ## 7. Chunk 下载器
 
 ```csharp
-namespace Launcher.Infrastructure.Network.Download;
+namespace Launcher.Infrastructure.Downloads;
 
 /// <summary>
 /// 分块下载器。负责单个 Chunk 的 HTTP 下载。
@@ -463,7 +510,21 @@ public sealed class InstallStatusSummary
     public string Version { get; init; } = default!;
     public long SizeOnDisk { get; init; }
     public DateTime InstalledAt { get; init; }
+    public InstallState State { get; init; }         // 兼容字段
+    public InstallStatusKind Status { get; init; }   // Contract-owned UI 状态
     public bool NeedsRepair { get; init; }
+}
+
+public enum InstallStatusKind
+{
+    NotInstalled,
+    Installing,
+    Installed,
+    Verifying,
+    NeedsRepair,
+    Repairing,
+    Uninstalling,
+    Failed
 }
 ```
 
@@ -499,10 +560,18 @@ public interface IFabCatalogReadService
 public interface IFabAssetCommandService
 {
     /// <summary>发起资产下载（会调用 Downloads 模块）</summary>
-    Task<Result<DownloadTaskId>> DownloadAssetAsync(string assetId, string installPath, CancellationToken ct);
+    Task<Result<Guid>> DownloadAssetAsync(string assetId, string installPath, CancellationToken ct);
 
     /// <summary>刷新本地资产缓存</summary>
     Task<Result> RefreshCacheAsync(CancellationToken ct);
+}
+
+/// <summary>
+/// Fab 资产下载信息提供者。供 Installations 等跨模块调用方获取最新 CDN 链接。
+/// </summary>
+public interface IFabDownloadInfoProvider
+{
+    Task<Result<FabDownloadInfo>> GetDownloadInfoAsync(string assetId, CancellationToken ct);
 }
 
 public sealed class FabSearchQuery
@@ -529,6 +598,8 @@ public sealed class FabAssetSummary
     public string AssetId { get; init; } = default!;
     public string Title { get; init; } = default!;
     public string ThumbnailUrl { get; init; } = default!;
+    public string PreviewListingId { get; init; } = string.Empty;
+    public string PreviewProductId { get; init; } = string.Empty;
     public string Category { get; init; } = default!;
     public string Author { get; init; } = default!;
     public decimal Price { get; init; }
@@ -550,7 +621,9 @@ public sealed class FabAssetDetail
     public long DownloadSize { get; init; }
     public string LatestVersion { get; init; } = default!;
     public DateTime UpdatedAt { get; init; }
+    public DateTime? PublishedAt { get; init; }
     public IReadOnlyList<string> Screenshots { get; init; } = [];
+    public IReadOnlyList<string> Formats { get; init; } = [];
     public IReadOnlyList<string> SupportedEngineVersions { get; init; } = [];
     public IReadOnlyList<string> Tags { get; init; } = [];
     public string? TechnicalDetails { get; init; }
@@ -564,7 +637,18 @@ public sealed class AssetCategoryInfo
     public string Name { get; init; } = default!;
     public int AssetCount { get; init; }
 }
+
+public sealed class FabDownloadInfo
+{
+    public string AssetId { get; init; } = default!;
+    public string DownloadUrl { get; init; } = default!;
+    public string FileName { get; init; } = string.Empty;
+    public long FileSize { get; init; }
+    public string Version { get; init; } = string.Empty;
+}
 ```
+
+当前 Fab owned fallback 的实现已拆分为 `EpicOwnedRecordsClient`（owned records 拉取、分页、cursor、缓存）和 `EpicFabSummaryMapper`（纯 summary/category/image/format/listing 映射）；`EpicOwnedFabCatalogClient` 保留 catalog 获取、缓存和详情预览元数据 enrichment。
 
 ---
 
@@ -662,23 +746,9 @@ public interface IDownloadTaskRepository
 }
 ```
 
-### 14.2 Fab 资产仓储
+### 14.2 Fab 资产库公共端口
 
-```csharp
-namespace Launcher.Application.Modules.FabLibrary.Contracts;
-
-/// <summary>
-/// Fab 资产本地缓存仓储。
-/// </summary>
-public interface IFabAssetRepository
-{
-    Task<FabAssetSummary?> GetByIdAsync(string assetId, CancellationToken ct);
-    Task<IReadOnlyList<FabAssetSummary>> GetOwnedAsync(CancellationToken ct);
-    Task SaveAsync(FabAssetSummary asset, CancellationToken ct);
-    Task SaveBatchAsync(IReadOnlyList<FabAssetSummary> assets, CancellationToken ct);
-    Task<DateTime?> GetLastSyncTimeAsync(CancellationToken ct);
-}
-```
+当前代码没有独立公开 `IFabAssetRepository` 仓储契约；Fab Library 的跨模块入口是第 10 节中的 `IFabCatalogReadService`、`IFabAssetCommandService`、`IFabDownloadInfoProvider`、`IFabPreviewUrlReadService`、`IFabListingPageReadService` 和 `IThumbnailCacheService`。`EpicOwnedRecordsClient`、`EpicFabSummaryMapper`、预览 metadata resolver 等属于 Infrastructure 内部实现。
 
 ### 14.3 安装记录仓储
 
@@ -710,17 +780,13 @@ namespace Launcher.Background.Hosting;
 /// </summary>
 public interface IBackgroundTaskHost
 {
-    /// <summary>注册一个后台 Worker</summary>
-    void Register(IBackgroundWorker worker);
+    IReadOnlyList<IBackgroundWorker> Workers { get; }
 
-    /// <summary>启动所有已注册的 Worker</summary>
-    Task StartAllAsync(CancellationToken ct);
+    IReadOnlyDictionary<string, Exception> Faults { get; }
 
-    /// <summary>优雅停止所有 Worker</summary>
-    Task StopAllAsync(CancellationToken ct);
+    Task StartAllAsync(CancellationToken ct = default);
 
-    /// <summary>获取 Worker 运行状态</summary>
-    IReadOnlyList<WorkerStatus> GetStatuses();
+    Task StopAllAsync(CancellationToken ct = default);
 }
 
 /// <summary>
@@ -729,12 +795,12 @@ public interface IBackgroundTaskHost
 public interface IBackgroundWorker
 {
     string Name { get; }
-    Task StartAsync(CancellationToken ct);
-    Task StopAsync(CancellationToken ct);
-    WorkerState State { get; }
+    WorkerStatus State { get; }
+    Task StartAsync(CancellationToken ct = default);
+    Task StopAsync(CancellationToken ct = default);
 }
 
-public enum WorkerState
+public enum WorkerStatus
 {
     Idle,
     Running,
@@ -742,15 +808,9 @@ public enum WorkerState
     Stopped,
     Faulted
 }
-
-public sealed class WorkerStatus
-{
-    public string Name { get; init; } = default!;
-    public WorkerState State { get; init; }
-    public DateTime? LastRunAt { get; init; }
-    public string? LastError { get; init; }
-}
 ```
+
+当前已接入统一宿主的 Worker：Token 自动刷新、下载完成后自动安装、应用更新检查、网络监视，以及 App 组合根包装的 Fab 首屏预热 Worker。
 
 ---
 
@@ -798,3 +858,25 @@ public sealed class NetworkConfig
     public bool UseCdnFallback { get; set; } = true;
 }
 ```
+
+下载运行时配置已拆出独立 Application 端口：
+
+```csharp
+namespace Launcher.Application.Modules.Downloads.Contracts;
+
+public sealed class DownloadOptions
+{
+    public int MaxConcurrentTasks { get; init; } = 3;
+    public int MaxConcurrentChunksPerTask { get; init; } = 4;
+    public long ChunkSizeBytes { get; init; } = 10L * 1024 * 1024;
+    public int MaxRetryAttempts { get; init; } = 5;
+    public TimeSpan CheckpointInterval { get; init; } = TimeSpan.FromSeconds(30);
+}
+
+public interface IDownloadOptionsProvider
+{
+    DownloadOptions DownloadOptions { get; }
+}
+```
+
+Infrastructure 还提供 `EpicApiOptions`、`FabApiOptions`、`UpdateOptions`，用于把 Epic/Fab/GitHub API BaseAddress 从配置注入命名 `HttpClient`；OAuth 配置支持 `appsettings.Local.json` 和环境变量覆盖。

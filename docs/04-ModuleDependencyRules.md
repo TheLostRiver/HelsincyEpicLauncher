@@ -28,16 +28,14 @@
 
 ```
 Presentation  →  Application  →  Domain  →  Shared
-                      ↕
-                  Contracts（接口定义）
                       ↑
-               Infrastructure（实现接口）
-               Background（调用 Application / 实现 Contracts）
+               Infrastructure（实现 Application Contracts / 内部端口）
+               Background（调用 Application Contracts / 承载后台生命周期）
 ```
 
 | 源 | 可以依赖 | 说明 |
 |----|---------|------|
-| Presentation | Application, Domain(仅 Contracts/DTO/枚举), Shared | 通过 ViewModel 调用用例 |
+| Presentation | Application, Shared | 通过 ViewModel 调用用例和公共 Contracts；不得直接引用 Domain |
 | Application | Domain, Shared, 各模块 Contracts | 编排业务流程 |
 | Domain | Shared | 纯业务规则，零外部依赖 |
 | Infrastructure | Domain, Shared, 各模块 Contracts | 实现接口 |
@@ -89,6 +87,13 @@ Presentation  →  Application  →  Domain  →  Shared
 
 当前代码中部分 Repository、Scheduler、RuntimeStore 接口仍位于 `Contracts` 目录，这是迁移期债务。新增接口必须按上述规则放置，旧接口后续按原子任务逐步迁移。
 
+已完成的收口现实：
+
+- Presentation 项目当前只引用 `Launcher.Application` 和 `Launcher.Shared`，并已有架构测试防止 `Launcher.Domain` 命名空间回流。
+- Downloads UI 已改用 `DownloadTaskKey` / `DownloadStatusKind` 等 Application Contracts 投影；旧 `DownloadTaskId` / `DownloadUiState` 字段仍保留在部分 DTO 中作为兼容层。
+- Installations UI 已改用 `InstallStatusKind`；`InstallStatusSummary.State` 仍作为兼容字段保留。
+- Background 已通过 `IBackgroundTaskHost` 统一启动已注册 Worker；App 不再逐个直接启动具体 Worker。
+
 ---
 
 ## 3. 硬性禁止项
@@ -98,10 +103,10 @@ Presentation  →  Application  →  Domain  →  Shared
 ```
 ❌ FabLibrary → Downloads.Infrastructure.ChunkDownloadClient
 ❌ Settings → Downloads.Domain.DownloadStateMachine
-❌ Installations → FabLibrary.Infrastructure.SqliteFabAssetRepository
+❌ Installations → FabLibrary.Infrastructure.EpicOwnedRecordsClient
 ```
 
-**正确做法**：通过 `Downloads.Contracts.IDownloadReadService` 查询。
+**正确做法**：通过对应模块的 Application Contracts 查询或下发命令，例如 `Downloads.Contracts.IDownloadReadService`、`FabLibrary.Contracts.IFabDownloadInfoProvider`。
 
 ### 禁止 P-02：跨模块直接操作 ViewModel
 
@@ -205,7 +210,7 @@ public sealed record DownloadCompletedEvent(DownloadTaskId TaskId, string AssetI
 public sealed class DownloadStatusSummary
 {
     public string AssetId { get; init; } = default!;
-    public DownloadUiState UiState { get; init; }  // 收敛后的 UI 状态
+    public DownloadStatusKind Status { get; init; }  // Contract-owned UI 状态
     public double Progress { get; init; }
     public long DownloadedBytes { get; init; }
     public long TotalBytes { get; init; }
@@ -237,16 +242,20 @@ Finalizing
 ### 5.2 对外 UI 状态（收敛后，稳定）
 
 ```csharp
-public enum DownloadUiState
+public enum DownloadStatusKind
 {
     Queued,
     Downloading,
     Paused,
+    Verifying,
     Installing,
     Completed,
-    Failed
+    Failed,
+    Cancelled
 }
 ```
+
+当前 DTO 仍保留 `DownloadUiState UiState` 作为兼容字段，但 UI 和跨模块新增消费应优先使用 `DownloadStatusKind Status`。
 
 **好处**：
 - UI 稳定，不因内部状态机重构而变化
@@ -263,7 +272,7 @@ FabLibrary 模块只能依赖：
 - `IDownloadReadService`
 - `IDownloadCommandService`
 - `DownloadStatusSummary`
-- `DownloadUiState`
+- `DownloadStatusKind`
 - `DownloadCompletedEvent`
 
 这意味着：

@@ -13,11 +13,7 @@
 - 发起资产下载（委托给 Downloads 模块）
 - 本地资产缓存/索引维护
 - 缩略图懒加载与缓存
-
-> Fab 详情富内容（介绍图、格式信息、详情元数据）的一期设计见 [16-FabDetailRichContentDesign.md](../review/16-FabDetailRichContentDesign.md)。
-> 如需防上下文丢失的细粒度实施拆解，请看 [17-FabDetailImplementationSlices.md](../review/17-FabDetailImplementationSlices.md)。
-> Fab 列表页热恢复与分层缓存策略见 [18-FabLibraryWarmResumeStrategy.md](../review/18-FabLibraryWarmResumeStrategy.md)。
-> 如需把热恢复方案拆成可单步落地的原子任务，请看 [19-FabLibraryWarmResumeImplementationSlices.md](../review/19-FabLibraryWarmResumeImplementationSlices.md)。
+- 已拥有资产回退链路的 owned records 拉取、catalog enrichment 和详情 preview metadata enrichment
 
 ### 不负责
 
@@ -43,6 +39,15 @@
 | Shell | 路由到 Fab 页面 |
 
 ---
+
+## 当前实现边界
+
+- 公共接口位于 `Launcher.Application.Modules.FabLibrary.Contracts`，包括 `IFabCatalogReadService`、`IFabAssetCommandService`、`IFabDownloadInfoProvider`、`IFabListingPageReadService`、`IFabPreviewUrlReadService` 和 `IThumbnailCacheService`。
+- `FabAssetSummary` 当前包含 `PreviewListingId` 和 `PreviewProductId`，用于从已拥有资产回退链路继续解析详情预览。
+- `FabAssetDetail` 当前包含 `PublishedAt` 和 `Formats`，用于展示详情页富内容。
+- Infrastructure 中 `EpicOwnedFabCatalogClient` 已拆分：`EpicOwnedRecordsClient` 负责 owned records 拉取、分页、cursor 和短期缓存；`EpicFabSummaryMapper` 负责纯 summary/category/image/format/listing 映射；原 catalog client 保留 HTTP catalog 获取、catalog cache 和详情 preview metadata enrichment。
+- Fab listing 页面 HTML 读取当前由 Presentation 的 `FabListingPageReadService` 通过受控 WebView2 上下文完成，属于 UI-only probe 能力，不作为跨模块公共契约暴露。
+- `FabLibraryViewModel` 仍是后续可继续拆分的大类；本轮已完成的是 Infrastructure catalog fallback 拆分，不预写 ViewModel 已完成拆分。
 
 ## API 定义
 
@@ -104,10 +109,10 @@ public enum AssetOwnershipState
 1. 用户在资产详情页点击"下载"
 2. FabAssetDetailViewModel 调用 IFabAssetCommandService.DownloadAssetAsync()
 3. FabAssetCommandService 内部：
-   a. 通过 IAuthService 获取 access token
-   b. 通过 Fab API 获取资产 manifest / 下载链接
+   a. 通过 FabApiClient.GetDownloadInfoAsync() 获取下载链接、文件名和大小
+   b. 通过 IFabCatalogReadService.GetDetailAsync() 获取资产标题
    c. 调用 IDownloadCommandService.StartAsync() 创建下载任务
-4. 返回 DownloadTaskId
+4. 返回下载任务 Guid
 5. 页面 UI 切换为"下载中"状态
 6. 通过 IDownloadReadService 订阅进度更新
 ```
@@ -115,11 +120,11 @@ public enum AssetOwnershipState
 ### 刷新已拥有资产
 
 ```
-1. 启动时 Phase 3 或用户手动刷新
+1. 启动预热或用户手动刷新
 2. 调用 IFabCatalogReadService.GetOwnedAssetsAsync()
-3. 对比本地缓存，更新差异
-4. 保存到 IFabAssetRepository
-5. 通知 UI 刷新列表
+3. FabCatalogReadService 优先走 Fab API，遇到浏览器挑战时回退到 EpicOwnedFabCatalogClient
+4. EpicOwnedRecordsClient 负责 owned-record 分页、cursor 和短期缓存
+5. 返回 FabAssetSummary 投影并通知 UI 刷新列表
 ```
 
 ---
