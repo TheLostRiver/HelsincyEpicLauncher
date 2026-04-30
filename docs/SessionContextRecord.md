@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `fb545af`（Task 3.2 完成上下文提交） |
+| 当前基线提交 | `03da86c`（Task 3.3 代码提交） |
 | 当前阶段 | Phase 3：后台任务统一宿主 |
-| 当前任务 | Task 3.3：迁移 TokenRefreshBackgroundService |
-| 当前状态 | 验证完成，待提交 |
-| 下一步 | 执行 `git diff --check`、暂存并提交 Task 3.3 |
+| 当前任务 | 无（最近完成 Task 3.3：迁移 TokenRefreshBackgroundService） |
+| 当前状态 | Task 3.3 已完成并提交；可继续 Task 3.4 |
+| 下一步 | 若继续执行，先读取本文件，再从 Task 3.4：App 改为只启动后台宿主开始 |
 | 阻塞项 | 无 |
 
 ---
@@ -251,12 +251,14 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 3.3 Background 构建验证已执行：`dotnet build .\src\Launcher.Background\Launcher.Background.csproj --no-restore`，构建成功，0 警告，0 错误。
 - Task 3.3 App 构建兼容验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
 - Task 3.3 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 3.3 代码提交已创建：`03da86c refactor: 迁移 Token 刷新服务到后台 Worker`。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 3.3 已完成验证，待提交：迁移 TokenRefreshBackgroundService。
+- Task 3.3 已完成并提交：迁移 TokenRefreshBackgroundService。
+- 下一项候选任务为 Task 3.4：App 改为只启动后台宿主；开始前必须读取 `src/Launcher.App/App.xaml.cs`、`src/Launcher.Background/DependencyInjection.cs`、`src/Launcher.Background/Hosting` 和现有后台 Worker。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
