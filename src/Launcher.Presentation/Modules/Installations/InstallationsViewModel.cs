@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Launcher.Application.Modules.Installations.Contracts;
-using Launcher.Domain.Installations;
 using Launcher.Presentation.Shell;
 using Serilog;
 
@@ -144,7 +143,7 @@ public partial class InstallationsViewModel : ObservableObject
         {
             item.StatusText = "修复完成";
             item.NeedsRepair = false;
-            item.State = InstallState.Installed;
+            item.Status = InstallStatusKind.Installed;
             Logger.Information("修复完成 {AssetId}", assetId);
         }
         else
@@ -209,7 +208,7 @@ public partial class InstallItemViewModel : ObservableObject
     public long SizeOnDisk { get; init; }
     public DateTime InstalledAt { get; init; }
 
-    [ObservableProperty] private InstallState _state;
+    [ObservableProperty] private InstallStatusKind _status;
     [ObservableProperty] private bool _needsRepair;
     [ObservableProperty] private string _statusText = string.Empty;
     [ObservableProperty] private bool _isVerifying;
@@ -226,8 +225,8 @@ public partial class InstallItemViewModel : ObservableObject
             Version = summary.Version,
             SizeOnDisk = summary.SizeOnDisk,
             InstalledAt = summary.InstalledAt,
-            State = summary.State,
+            Status = summary.Status,
             NeedsRepair = summary.NeedsRepair,
-            StatusText = summary.NeedsRepair ? "需要修复" : summary.State.ToString(),
+            StatusText = summary.NeedsRepair ? "需要修复" : summary.Status.ToString(),
         };
 }

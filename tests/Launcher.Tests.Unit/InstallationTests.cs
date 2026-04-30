@@ -1,6 +1,7 @@
 // Copyright (c) Helsincy. All rights reserved.
 
 using FluentAssertions;
+using Launcher.Application.Modules.Installations.Contracts;
 using Launcher.Domain.Installations;
 
 namespace Launcher.Tests.Unit;
@@ -88,5 +89,25 @@ public sealed class InstallationTests
 
         install.ClearError();
         install.LastError.Should().BeNull();
+    }
+
+    [Fact]
+    public void InstallStatusSummary_ShouldExposeContractOwnedStatusAlongsideLegacyState()
+    {
+        var summary = new InstallStatusSummary
+        {
+            AssetId = "asset-1",
+            AssetName = "Test Asset",
+            InstallPath = @"C:\Games\Test",
+            Version = "1.0.0",
+            State = InstallState.NeedsRepair,
+            Status = InstallStatusKind.NeedsRepair,
+            NeedsRepair = true,
+        };
+
+        summary.Status.Should().Be(InstallStatusKind.NeedsRepair);
+        summary.State.Should().Be(InstallState.NeedsRepair);
+        typeof(InstallStatusSummary).GetProperty(nameof(InstallStatusSummary.Status))!
+            .PropertyType.Should().Be<InstallStatusKind>();
     }
 }

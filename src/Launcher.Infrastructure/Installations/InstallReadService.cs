@@ -42,7 +42,21 @@ public sealed class InstallReadService : IInstallReadService
             SizeOnDisk = entity.SizeBytes,
             InstalledAt = entity.InstalledAt.UtcDateTime,
             State = entity.State,
+            Status = MapStatus(entity.State),
             NeedsRepair = entity.State == InstallState.NeedsRepair,
         };
     }
+
+    private static InstallStatusKind MapStatus(InstallState state) => state switch
+    {
+        InstallState.NotInstalled => InstallStatusKind.NotInstalled,
+        InstallState.Installing => InstallStatusKind.Installing,
+        InstallState.Installed => InstallStatusKind.Installed,
+        InstallState.Verifying => InstallStatusKind.Verifying,
+        InstallState.NeedsRepair => InstallStatusKind.NeedsRepair,
+        InstallState.Repairing => InstallStatusKind.Repairing,
+        InstallState.Uninstalling => InstallStatusKind.Uninstalling,
+        InstallState.Failed => InstallStatusKind.Failed,
+        _ => InstallStatusKind.Failed,
+    };
 }

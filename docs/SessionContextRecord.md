@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `56f67aa`（Task 2.3 代码提交） |
+| 当前基线提交 | `1e58ecf`（Task 2.3 暂停上下文提交） |
 | 当前阶段 | Phase 2：Contracts 去 Domain 泄漏 |
-| 当前任务 | 无（最近完成 Task 2.3：移除 Downloads UI 对 Domain 的直接引用） |
-| 当前状态 | Task 2.3 已完成并提交；等待用户确认是否进入 Task 2.4 |
-| 下一步 | 若继续执行，先读取本文件，再从 Task 2.4：移除 Installations UI 对 Domain 的直接引用开始 |
+| 当前任务 | Task 2.4：移除 Installations UI 对 Domain 的直接引用 |
+| 当前状态 | 验证完成，待提交 |
+| 下一步 | 执行 `git diff --check`、暂存并提交 Task 2.4 |
 | 阻塞项 | 无 |
 
 ---
@@ -117,6 +117,12 @@
 | `src/Launcher.Presentation/Modules/Downloads/DownloadsViewModel.cs` | 修改 | Task 2.3：ViewModel 改用 `DownloadTaskKey` 和 `DownloadStatusKind`，移除 Domain using |
 | `src/Launcher.Presentation/Modules/Downloads/DownloadsPage.xaml.cs` | 修改 | Task 2.3：按钮 Tag 类型改为 `DownloadTaskKey`，移除 Domain using |
 | `src/Launcher.Presentation/Modules/Downloads/DownloadsPage.xaml` | 修改 | Task 2.3：按钮 Tag 绑定由 `TaskId` 改为 `TaskKey` |
+| `docs/SessionContextRecord.md` | 修改 | Task 2.4：标记 Installations UI 去 Domain 引用任务开始 |
+| `tests/Launcher.Tests.Unit/Architecture/ForbiddenNamespaceReferenceTests.cs` | 修改 | Task 2.4：移除 Installations 例外，触发 Presentation 禁用 Domain 引用红灯 |
+| `tests/Launcher.Tests.Unit/InstallationTests.cs` | 修改 | Task 2.4：新增 `InstallStatusSummary.Status` 公共状态红灯测试 |
+| `src/Launcher.Application/Modules/Installations/Contracts/InstallModels.cs` | 修改 | Task 2.4：新增 `InstallStatusKind` 和 `InstallStatusSummary.Status` 兼容字段 |
+| `src/Launcher.Infrastructure/Installations/InstallReadService.cs` | 修改 | Task 2.4：将旧 `InstallState` 映射到新的 Contract-owned `InstallStatusKind` |
+| `src/Launcher.Presentation/Modules/Installations/InstallationsViewModel.cs` | 修改 | Task 2.4：ViewModel 改用 `InstallStatusKind`，移除 Domain using |
 
 ---
 
@@ -196,13 +202,25 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 2.3 额外源码检查已执行：`rg -n "Launcher\.Domain" src\Launcher.Presentation\Modules\Downloads -g "*.cs"` 无匹配，退出码 1 表示未找到匹配项。
 - Task 2.3 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 2.3 代码提交已创建：`56f67aa refactor: 移除 Downloads UI 领域引用`。
+- Task 2.3 暂停上下文提交已创建：`1e58ecf docs: 记录 Task 2.3 暂停上下文`。
+- Task 2.4 已按恢复协议读取 `docs/SessionContextRecord.md`、`docs/17-ArchitectureOptimizationPlan.md`、`docs/18-ArchitectureOptimizationImplementation.md`。
+- Task 2.4 已读取 `docs/06-ModuleDefinitions/Installations.md`、`src/Launcher.Presentation/Modules/Installations/InstallationsViewModel.cs`、`src/Launcher.Application/Modules/Installations/Contracts/InstallModels.cs`。
+- Task 2.4 已确认当前唯一剩余 Presentation -> Domain 例外为 `src/Launcher.Presentation/Modules/Installations/InstallationsViewModel.cs`。
+- Task 2.4 架构红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ForbiddenNamespaceReferenceTests"`，按预期失败；失败输出显示 `InstallationsViewModel.cs` 仍直接引用 `Launcher.Domain`。
+- Task 2.4 Contract 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~InstallationTests"`，按预期编译失败；缺少 `InstallStatusKind` 和 `InstallStatusSummary.Status`。
+- Task 2.4 Contract 绿灯验证已执行：同一 `InstallationTests` 过滤命令通过，9 个测试通过，0 个失败；存在既有 analyzer 警告。
+- Task 2.4 namespace 绿灯验证已执行：同一 `ForbiddenNamespaceReferenceTests` 过滤命令通过，1 个测试通过，0 个失败。
+- Task 2.4 指定测试验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ForbiddenNamespaceReferenceTests|FullyQualifiedName~InstallationTests"`，10 个测试通过，0 个失败。
+- Task 2.4 Presentation 构建验证已执行：`dotnet build .\src\Launcher.Presentation\Launcher.Presentation.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 2.4 额外源码检查已执行：`rg -n "Launcher\.Domain" src\Launcher.Presentation -g "*.cs"` 无匹配，退出码 1 表示未找到匹配项。
+- Task 2.4 初始化点检查已执行：`rg -n "new InstallStatusSummary" src tests -g "*.cs"` 仅发现 `InstallReadService.cs` 和本任务新增测试两个初始化点，均已设置 `Status`。
+- Task 2.4 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 2.3 已完成并提交：移除 Downloads UI 对 Domain 的直接引用。
-- 下一项候选任务为 Task 2.4：移除 Installations UI 对 Domain 的直接引用；开始前必须先读取 `docs/06-ModuleDefinitions/Installations.md` 和相关源码。
+- Task 2.4 已完成验证，待提交：移除 Installations UI 对 Domain 的直接引用。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
