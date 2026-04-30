@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `bc42520`（Task 5.1 代码提交） |
+| 当前基线提交 | `9e16267`（Task 5.2 代码提交） |
 | 当前阶段 | Phase 5：Options 数据驱动 |
-| 当前任务 | Task 5.1：新增 DownloadOptions |
+| 当前任务 | Task 5.2：新增 API Options |
 | 当前状态 | 已完成代码实现、验证和代码提交；等待提交本上下文记录 |
-| 下一步 | 提交本上下文记录后，若用户继续，从 Task 5.2：新增 API Options 开始；先读取 `DependencyInjection.cs`、`appsettings.json` 和现有 HTTP client 注册 |
+| 下一步 | 提交本上下文记录后，若用户继续，从 Task 5.3：处理 OAuth 配置安全语义开始；先读取 `EpicOAuthOptions.cs`、`Auth.md`、`appsettings.json` |
 | 阻塞项 | 无 |
 
 ---
@@ -158,6 +158,13 @@
 | `src/Launcher.Infrastructure/DependencyInjection.cs` | 修改 | Task 5.1：以同一 `AppConfigProvider` 实例注册 `IAppConfigProvider` 和 `IDownloadOptionsProvider` |
 | `src/Launcher.App/appsettings.json` | 修改 | Task 5.1：下载配置改为数据驱动键：任务并发、chunk 并发、chunk size、重试次数、checkpoint 周期 |
 | `tests/Launcher.Tests.Unit/SettingsServiceFabLibraryConfigTests.cs` | 修改 | Task 5.1：验证配置值、文档默认值和旧兼容属性 |
+| `docs/SessionContextRecord.md` | 修改中 | Task 5.2：标记 API Options 数据驱动任务开始 |
+| `tests/Launcher.Tests.Unit/ApiOptionsTests.cs` | 新增 | Task 5.2：红灯验证命名 HttpClient 使用配置 BaseAddress，并验证非 HTTPS 错误信息不泄漏敏感 query |
+| `src/Launcher.Infrastructure/Configuration/FabApiOptions.cs` | 新增 | Task 5.2：Fab API BaseAddress Options，默认保留现有端点 |
+| `src/Launcher.Infrastructure/Configuration/EpicApiOptions.cs` | 新增 | Task 5.2：Epic library、catalog、EngineVersion BaseAddress Options，默认保留现有端点 |
+| `src/Launcher.Infrastructure/Configuration/UpdateOptions.cs` | 新增 | Task 5.2：GitHub update API BaseAddress Options，默认保留现有端点 |
+| `src/Launcher.Infrastructure/DependencyInjection.cs` | 修改 | Task 5.2：命名 HttpClient 从 Options 读取 BaseAddress，并将 HTTPS 校验错误中的 query/userinfo 脱敏 |
+| `src/Launcher.App/appsettings.json` | 修改 | Task 5.2：新增 `FabApi`、`EpicApi`、`UpdateApi` 配置段 |
 
 ---
 
@@ -311,13 +318,20 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 5.1 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
 - Task 5.1 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 5.1 代码提交已创建：`bc42520 feat: 添加下载配置 Options`。
+- Task 5.1 完成上下文提交已创建：`00cc581 docs: 记录 Task 5.1 完成上下文`。
+- Task 5.2 红灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ApiOptionsTests"`，按预期失败 2 个测试：配置 BaseAddress 未生效；非 HTTPS 配置未触发异常。
+- Task 5.2 绿灯验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~ApiOptionsTests"`，2 个测试通过，0 个失败；存在既有 analyzer 警告。
+- Task 5.2 计划验证已执行：`dotnet build .\src\Launcher.Infrastructure\Launcher.Infrastructure.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 5.2 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 5.2 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 5.2 代码提交已创建：`9e16267 feat: 添加 API 端点配置 Options`。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 5.1 已完成：新增 DownloadOptions 和 Application 下载配置端口。
-- 下一项候选任务为 Phase 5 Task 5.2：新增 API Options；开始前必须读取 `src/Launcher.Infrastructure/DependencyInjection.cs`、`src/Launcher.App/appsettings.json` 和现有 HTTP client 注册。
+- Task 5.2 已完成：新增 API Options，并让 Fab/Epic/EngineVersion/Update 命名 HttpClient 从配置读取 BaseAddress。
+- 下一项候选任务为 Phase 5 Task 5.3：处理 OAuth 配置安全语义；开始前必须读取 `src/Launcher.Infrastructure/Auth/EpicOAuthOptions.cs`、`docs/06-ModuleDefinitions/Auth.md`、`src/Launcher.App/appsettings.json`。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
