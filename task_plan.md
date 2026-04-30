@@ -22,8 +22,8 @@ Phase 7: Final consistency closure
 
 ### Phase 7: Final Consistency Closure
 - [x] Task 7.1: Update architecture documents to match completed code reality
-- [ ] Task 7.2: Run full verification and record results
-- **Status:** blocked on unit test failure
+- [x] Task 7.2: Run full verification and record results
+- **Status:** complete
 
 ## Key Questions
 1. Does each architecture document describe only completed code reality?
@@ -40,6 +40,7 @@ Phase 7: Final consistency closure
 | Keep Task 6.2 limited to pure mapping | `MapToDetailAsync` still performs async preview metadata resolution, so only pure helpers moved into `EpicFabSummaryMapper`. |
 | Keep ordinary dialogs and Epic login dialogs behind separate interfaces | `IDialogService` now owns ContentDialog-style UI, while `IEpicExchangeCodeLoginDialogService` owns the WebView2 exchange-code login window. |
 | Mark Task 7.1 complete after docs-only build verification | The six target architecture/module docs now describe completed code reality, and `dotnet build .\HelsincyEpicLauncher.slnx --no-restore` passed with 0 warnings and 0 errors. |
+| Fix Task 7.2 failure in the stale unit test setup | `AddBackground()` correctly registers all workers; the failing test needed substitutes for the non-token workers before resolving `IBackgroundWorker` instances. |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |

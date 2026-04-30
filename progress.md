@@ -149,7 +149,7 @@
 Next step: Task 7.2 full verification only; do not start it until the Task 7.1 context commit is recorded.
 
 ### Phase 7: Task 7.2 Full Verification
-- **Status:** blocked
+- **Status:** complete
 - **Started:** 2026-05-01
 - Actions taken:
   - Read `docs/SessionContextRecord.md` first, per iron rule.
@@ -162,6 +162,7 @@ Next step: Task 7.2 full verification only; do not start it until the Task 7.1 c
   - Ran full build: succeeded with 0 errors and 9 analyzer warnings in the unit test project.
   - Ran full unit tests: failed with 1 failing test.
   - Stopped before integration tests per Task 7.2 rule: record failures and do not perform ad-hoc fixes.
+  - After Task 7.2a fixed the stale Background DI test setup, reran full build, full unit tests, and integration tests successfully.
 
 ## Test Results: Task 7.2
 | Test | Input | Expected | Actual | Status |
@@ -171,9 +172,32 @@ Next step: Task 7.2 full verification only; do not start it until the Task 7.1 c
 | Integration tests | `dotnet test .\tests\Launcher.Tests.Integration\Launcher.Tests.Integration.csproj --no-restore` | Run after unit tests pass | Not run because unit tests failed | BLOCKED |
 | Whitespace check | `git diff --check` | No whitespace errors | No whitespace errors; LF/CRLF warnings only | PASS |
 
+## Retest Results: Task 7.2
+| Test | Input | Expected | Actual | Status |
+|------|-------|----------|--------|--------|
+| Full build | `dotnet build .\HelsincyEpicLauncher.slnx --no-restore` | Build succeeds | 0 warnings, 0 errors | PASS |
+| Full unit tests | `dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore` | All unit tests pass | 308 passed, 0 failed, 0 skipped | PASS |
+| Integration tests | `dotnet test .\tests\Launcher.Tests.Integration\Launcher.Tests.Integration.csproj --no-restore` | All integration tests pass | 7 passed, 0 failed, 0 skipped | PASS |
+| Final whitespace check | `git diff --check` | No whitespace errors | No whitespace errors; LF/CRLF warnings only | PASS |
+
 ## Error Log: Task 7.2
 | Timestamp | Error | Attempt | Resolution |
 |-----------|-------|---------|------------|
 | 2026-05-01 | `TokenRefreshBackgroundServiceTests.AddBackground_ShouldRegisterTokenRefreshAsBackgroundWorker` failed because resolving `IBackgroundWorker` activates `AutoInstallWorker`, whose `IDownloadRuntimeStore` dependency is not registered in the test service provider. Failure points to `src\Launcher.Background\DependencyInjection.cs:25` and `tests\Launcher.Tests.Unit\TokenRefreshBackgroundServiceTests.cs:40`. | 1 | Recorded and stopped per Task 7.2; no temporary fix applied. |
 
 Next step: address the Background DI unit test failure in a new atomic task or with explicit instruction, then rerun Task 7.2 from unit tests onward.
+
+### Phase 7: Task 7.2a Background DI Test Setup Fix
+- **Status:** complete
+- **Started:** 2026-05-01
+- Actions taken:
+  - Read `docs/SessionContextRecord.md` first, per iron rule.
+  - Read the user-requested `planning-with-files` skill, `systematic-debugging`, and `test-driven-development`.
+  - Re-read `docs/17-ArchitectureOptimizationPlan.md`, `docs/18-ArchitectureOptimizationImplementation.md`, and `task_plan.md`.
+  - Ran `session-catchup.py`; no unsynced context was reported.
+  - Read the failing `TokenRefreshBackgroundServiceTests`, `Launcher.Background/DependencyInjection.cs`, `AutoInstallWorker`, `AppUpdateWorker`, `NetworkMonitorWorker`, and the working `BackgroundTaskHostTests` DI setup.
+  - Reproduced the RED target failure with `dotnet test ... --filter "FullyQualifiedName~TokenRefreshBackgroundServiceTests"`; 1 of 2 tests failed because `IDownloadRuntimeStore` was missing while resolving all `IBackgroundWorker` registrations.
+  - Identified root cause: the test only registered `IAuthService`, but `AddBackground()` now registers four workers and `GetServices<IBackgroundWorker>()` instantiates all of them.
+  - Updated only the failing test setup to register dependencies required by the other background workers.
+  - Ran target test: 2 passed, 0 failed.
+  - Created test fix commit `1bdda6e test: 补齐后台 Worker DI 测试依赖`.

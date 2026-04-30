@@ -47,6 +47,10 @@
 - Task 7.2 full build passed with 0 errors and 9 analyzer warnings in the unit test project.
 - Task 7.2 full unit test failed: `TokenRefreshBackgroundServiceTests.AddBackground_ShouldRegisterTokenRefreshAsBackgroundWorker` cannot resolve `IDownloadRuntimeStore` while activating `AutoInstallWorker` through `IBackgroundWorker` registration.
 - Task 7.2 integration test was not run because the implementation doc says to stop and record details when full verification fails.
+- Task 7.2a root cause: `TokenRefreshBackgroundServiceTests` has stale test setup. It calls `GetServices<IBackgroundWorker>()`, which instantiates all workers registered by `AddBackground()`, but the test registered only `IAuthService`; current `AddBackground()` also registers `AutoInstallWorker`, `AppUpdateWorker`, and `NetworkMonitorWorker`.
+- Task 7.2a working reference: `BackgroundTaskHostTests.RegisterBackgroundDependencies` registers all Application Contracts dependencies needed by the four background workers.
+- Task 7.2a completed: only the failing unit test setup was changed; production DI remained unchanged.
+- Final Task 7.2 verification passed after Task 7.2a: solution build 0 warnings/0 errors, unit tests 308 passed, integration tests 7 passed.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -70,6 +74,8 @@
 | Task 6.3 red test failed at compile time because `IEpicExchangeCodeLoginDialogService` did not exist | Added the dedicated interface/service and moved the login call site to it. |
 | Task 7.1 scan found old Fab repository/service names in architecture docs | Corrected those snippets to current implementation and re-scanned the target docs. |
 | Task 7.2 full unit test failure | Recorded the Background DI dependency-resolution failure and stopped without ad-hoc fixes, as required by Task 7.2. |
+| Task 7.2a fix scope | Fix the stale unit test setup rather than production DI, because production `AddBackground()` correctly registers all background workers and the failing test is missing required substitutes for those workers. |
+| Phase 7 completion | Treat Phase 7 as complete after final build/unit/integration verification passes and context files are committed. |
 
 ## Resources
 - `docs/17-ArchitectureOptimizationPlan.md`
