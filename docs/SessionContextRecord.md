@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `818d81a`（Task 5.3 代码提交） |
-| 当前阶段 | Phase 5：Options 数据驱动 |
-| 当前任务 | Task 5.3：处理 OAuth 配置安全语义 |
-| 当前状态 | 已完成代码实现、验证和代码提交；等待提交本上下文记录 |
-| 下一步 | 提交本上下文记录后暂停在 Phase 5 / Phase 6 边界；若用户继续，从 Task 6.1：拆分 EpicOwnedFabCatalogClient 的 owned records 加载开始 |
+| 当前基线提交 | `dd77406`（Task 6.1 代码提交） |
+| 当前阶段 | Phase 6：大类拆分 |
+| 当前任务 | Task 6.1：拆分 EpicOwnedFabCatalogClient 的 owned records 加载 |
+| 当前状态 | 已完成代码实现、验证和代码提交；等待提交本上下文记录和 planning-with-files 文件 |
+| 下一步 | 提交本上下文记录后，若用户继续，从 Task 6.2：拆分 Fab summary mapping 开始；只迁移纯映射逻辑，不做 HTTP/文件/进程操作 |
 | 阻塞项 | 无 |
 
 ---
@@ -176,6 +176,12 @@
 | `src/Launcher.App/appsettings.json` | 修改 | Task 5.3：显式配置 `EmbeddedLoginUserAgent`，减少 Auth 默认硬编码 |
 | `docs/06-ModuleDefinitions/Auth.md` | 修改 | Task 5.3：补充 OAuth 配置安全语义、环境变量和 local settings 规则 |
 | `.gitignore` | 修改 | Task 5.3：忽略 `appsettings.Local.json`，避免私人凭据误提交 |
+| `task_plan.md` | 新增 | planning-with-files：记录当前架构优化执行阶段和 Task 6.1 任务边界 |
+| `findings.md` | 新增 | planning-with-files：记录恢复发现、约束和 Task 6.1 决策 |
+| `progress.md` | 新增 | planning-with-files：记录本会话恢复、catchup 和准备进度 |
+| `docs/SessionContextRecord.md` | 修改中 | Task 6.1：修正当前基线到 `1093e58` 并标记 Task 6.1 开始 |
+| `src/Launcher.Infrastructure/FabLibrary/EpicOwnedRecordsClient.cs` | 新增 | Task 6.1：承接 Epic library owned records 拉取、预览流解析、cursor 分页、curl fallback 和短期缓存 |
+| `src/Launcher.Infrastructure/FabLibrary/EpicOwnedFabCatalogClient.cs` | 修改 | Task 6.1：移除 owned-record 加载细节，改为委托 `EpicOwnedRecordsClient`；summary/detail mapping 保留在原类 |
 
 ---
 
@@ -343,14 +349,22 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 5.3 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
 - Task 5.3 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 5.3 代码提交已创建：`818d81a feat: 支持 OAuth 配置安全覆盖`。
+- Task 5.3 完成上下文提交已创建：`1093e58 docs: 记录 Task 5.3 完成上下文`。
+- Task 6.1 baseline 验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~EpicOwnedFabCatalogClientTests"`，5 个测试通过，0 个失败；存在既有 analyzer 警告。
+- Task 6.1 首次抽取后目标测试通过，但测试构建输出新增 3 个 CA1859 警告；已通过收紧私有 helper 参数类型为实际 `Dictionary` / `List` 解决。
+- Task 6.1 目标验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~EpicOwnedFabCatalogClientTests"`，5 个测试通过，0 个失败；仅剩既有测试 analyzer 警告。
+- Task 6.1 Infrastructure 构建验证已执行：`dotnet build .\src\Launcher.Infrastructure\Launcher.Infrastructure.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 6.1 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 6.1 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 6.1 代码提交已创建：`dd77406 refactor: 拆分 Epic owned records 客户端`。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 5.3 已完成：OAuth 配置支持环境变量覆盖和 `appsettings.Local.json` 本机覆盖，Auth 文档已补充安全语义。
-- Phase 5 已完成。下一项候选任务为 Phase 6 Task 6.1：拆分 `EpicOwnedFabCatalogClient` 的 owned records 加载。
-- Task 6.1 开始前必须读取 `src/Launcher.Infrastructure/FabLibrary/EpicOwnedFabCatalogClient.cs`、`tests/Launcher.Tests.Unit/EpicOwnedFabCatalogClientTests.cs`，并只迁移 owned records 拉取、分页、cursor、缓存相关代码，不同时迁移 summary mapping。
+- Task 6.1 已完成：`EpicOwnedRecordsClient` 已承接 owned records 拉取、分页、cursor 和缓存；`EpicOwnedFabCatalogClient` 保留公共行为和 summary/detail mapping。
+- 下一项候选任务为 Phase 6 Task 6.2：拆分 Fab summary mapping。
+- Task 6.2 开始前必须读取 `src/Launcher.Infrastructure/FabLibrary/EpicOwnedFabCatalogClient.cs`、`tests/Launcher.Tests.Unit/EpicOwnedFabCatalogClientTests.cs`；只迁移 `MapToSummary`、分类规范化、图片选择、格式提取等纯映射逻辑，Mapper 不做 HTTP、不读文件、不启动进程。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---
