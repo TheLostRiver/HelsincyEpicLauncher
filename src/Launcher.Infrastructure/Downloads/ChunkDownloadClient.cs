@@ -10,10 +10,18 @@ using Serilog;
 
 namespace Launcher.Infrastructure.Downloads;
 
+public interface IChunkDownloader
+{
+    Task<Result<ChunkDownloadResult>> DownloadChunkAsync(
+        ChunkDownloadRequest request,
+        IProgress<long>? progress,
+        CancellationToken ct);
+}
+
 /// <summary>
 /// 分块下载客户端。HTTP Range 请求 + Polly 重试/断路器。
 /// </summary>
-public sealed class ChunkDownloadClient
+public sealed class ChunkDownloadClient : IChunkDownloader
 {
     private const int BufferSize = 81920; // 80KB 读写缓冲
     private readonly IHttpClientFactory _httpClientFactory;

@@ -14,14 +14,18 @@ internal sealed class DownloadOrchestrator : IDownloadOrchestrator
 {
     private readonly IDownloadTaskRepository _repository;
     private readonly IDownloadScheduler _scheduler;
+    private readonly IDownloadTaskExecutor _executor;
     private readonly ILogger _logger = Log.ForContext<DownloadOrchestrator>();
 
     public DownloadOrchestrator(
         IDownloadTaskRepository repository,
-        IDownloadScheduler scheduler)
+        IDownloadScheduler scheduler,
+        IDownloadTaskExecutor executor)
     {
         _repository = repository;
         _scheduler = scheduler;
+        _executor = executor;
+        _scheduler.TaskReady += _executor.ExecuteAsync;
     }
 
     /// <summary>

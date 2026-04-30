@@ -11,11 +11,12 @@ public class DownloadOrchestratorTests
 {
     private readonly IDownloadTaskRepository _repository = Substitute.For<IDownloadTaskRepository>();
     private readonly IDownloadScheduler _scheduler = Substitute.For<IDownloadScheduler>();
+    private readonly IDownloadTaskExecutor _executor = Substitute.For<IDownloadTaskExecutor>();
     private readonly DownloadOrchestrator _sut;
 
     public DownloadOrchestratorTests()
     {
-        _sut = new DownloadOrchestrator(_repository, _scheduler);
+        _sut = new DownloadOrchestrator(_repository, _scheduler, _executor);
     }
 
     private static StartDownloadRequest CreateRequest(string assetId = "asset-1", long totalBytes = 0) => new()
@@ -29,6 +30,28 @@ public class DownloadOrchestratorTests
     };
 
     // ── EnqueueAsync ──
+
+    [Fact]
+    public async Task Constructor_SchedulerTaskReady_DelegatesToDownloadTaskExecutor()
+    {
+        var scheduler = Substitute.For<IDownloadScheduler>();
+        var executor = Substitute.For<IDownloadTaskExecutor>();
+        Func<DownloadTaskId, CancellationToken, Task>? taskReadyHandler = null;
+        scheduler
+            .When(x => x.TaskReady += Arg.Any<Func<DownloadTaskId, CancellationToken, Task>>())
+            .Do(call => taskReadyHandler = call.Arg<Func<DownloadTaskId, CancellationToken, Task>>());
+        executor
+            .ExecuteAsync(Arg.Any<DownloadTaskId>(), Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        _ = new DownloadOrchestrator(_repository, scheduler, executor);
+        var taskId = DownloadTaskId.New();
+
+        taskReadyHandler.Should().NotBeNull();
+        await taskReadyHandler!(taskId, CancellationToken.None);
+
+        await executor.Received(1).ExecuteAsync(taskId, Arg.Any<CancellationToken>());
+    }
 
     [Fact]
     public async Task EnqueueAsync_NewAsset_ReturnsTaskId()
@@ -184,5 +207,61 @@ public class DownloadOrchestratorTests
         var result = await _sut.SetPriorityAsync(DownloadTaskId.New(), 5, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
+    }
+
+    // ── DownloadWorker ──
+
+    [Fact]
+    public async Task DownloadWorker_SuccessfulChunk_UpdatesRepositoryRuntimeStoreAndReleasesScheduler()
+    {
+        var taskId = DownloadTaskId.New();
+        var task = new DownloadTask(taskId, "asset-1", "Asset", "https://cdn.example.com/a.zip", @"C:\Downloads\a.zip", 100);
+        var runtimeStore = Substitute.For<IDownloadRuntimeStore>();
+        var chunkDownloader = Substitute.For<IChunkDownloader>();
+        _repository.GetByIdAsync(taskId, Arg.Any<CancellationToken>()).Returns(task);
+        chunkDownloader
+            .DownloadChunkAsync(Arg.Any<ChunkDownloadRequest>(), Arg.Any<IProgress<long>>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Ok(new ChunkDownloadResult { BytesDownloaded = 100, HashMatch = true }));
+        var worker = new DownloadWorker(_repository, _scheduler, runtimeStore, chunkDownloader);
+
+        await worker.ExecuteAsync(taskId, CancellationToken.None);
+
+        task.State.Should().Be(DownloadState.Completed);
+        await _repository.Received().UpdateAsync(
+            Arg.Is<DownloadTask>(candidate => candidate.Id == taskId && candidate.State == DownloadState.Completed),
+            Arg.Any<CancellationToken>());
+        runtimeStore.Received(1).NotifyCompleted(taskId, "asset-1", @"C:\Downloads\a.zip");
+        _scheduler.Received(1).NotifyCompleted(taskId);
+    }
+
+    [Fact]
+    public async Task DownloadWorker_FailedChunk_UpdatesRepositoryRuntimeStoreAndReleasesScheduler()
+    {
+        var taskId = DownloadTaskId.New();
+        var task = new DownloadTask(taskId, "asset-2", "Asset", "https://cdn.example.com/b.zip", @"C:\Downloads\b.zip", 100);
+        var runtimeStore = Substitute.For<IDownloadRuntimeStore>();
+        var chunkDownloader = Substitute.For<IChunkDownloader>();
+        var error = new Error
+        {
+            Code = "DL_TEST",
+            UserMessage = "测试下载失败",
+            TechnicalMessage = "chunk failed",
+            CanRetry = true,
+        };
+        _repository.GetByIdAsync(taskId, Arg.Any<CancellationToken>()).Returns(task);
+        chunkDownloader
+            .DownloadChunkAsync(Arg.Any<ChunkDownloadRequest>(), Arg.Any<IProgress<long>>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Fail<ChunkDownloadResult>(error));
+        var worker = new DownloadWorker(_repository, _scheduler, runtimeStore, chunkDownloader);
+
+        await worker.ExecuteAsync(taskId, CancellationToken.None);
+
+        task.State.Should().Be(DownloadState.Failed);
+        task.LastError.Should().Contain("chunk failed");
+        await _repository.Received().UpdateAsync(
+            Arg.Is<DownloadTask>(candidate => candidate.Id == taskId && candidate.State == DownloadState.Failed),
+            Arg.Any<CancellationToken>());
+        runtimeStore.Received(1).NotifyFailed(taskId, "asset-2", Arg.Is<string>(message => message.Contains("chunk failed")), true);
+        _scheduler.Received(1).NotifyCompleted(taskId);
     }
 }

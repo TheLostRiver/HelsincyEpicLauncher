@@ -69,8 +69,10 @@ public static class DependencyInjection
         // 下载
         services.AddHttpClient("ChunkDownload");
         services.AddSingleton<ChunkDownloadClient>();
+        services.AddSingleton<IChunkDownloader>(sp => sp.GetRequiredService<ChunkDownloadClient>());
         services.AddSingleton<IDownloadTaskRepository, DownloadTaskRepository>();
         services.AddSingleton<IDownloadScheduler, DownloadScheduler>();
+        services.AddSingleton<IDownloadTaskExecutor, DownloadWorker>();
         services.AddSingleton<IDownloadOrchestrator, DownloadOrchestrator>();
         services.AddSingleton<DownloadRuntimeStore>();
         services.AddSingleton<IDownloadRuntimeStore>(sp => sp.GetRequiredService<DownloadRuntimeStore>());
