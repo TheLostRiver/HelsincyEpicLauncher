@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `5e3312a`（Task 3.1 完成上下文提交） |
+| 当前基线提交 | `9fa1623`（Task 3.2 代码提交） |
 | 当前阶段 | Phase 3：后台任务统一宿主 |
-| 当前任务 | Task 3.2：新增 BackgroundTaskHost |
-| 当前状态 | 验证完成，待提交 |
-| 下一步 | 执行 `git diff --check`、暂存并提交 Task 3.2 |
+| 当前任务 | 无（最近完成 Task 3.2：新增 BackgroundTaskHost） |
+| 当前状态 | Task 3.2 已完成并提交；因本轮已连续完成多个原子任务，记录上下文后暂停 |
+| 下一步 | 若继续执行，先读取本文件，再从 Task 3.3：迁移 TokenRefreshBackgroundService 开始 |
 | 阻塞项 | 无 |
 
 ---
@@ -238,13 +238,37 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 3.2 绿灯验证已执行：同一 `BackgroundTaskHostTests` 过滤命令通过，3 个测试通过，0 个失败；存在既有 analyzer 警告。
 - Task 3.2 Background 构建验证已执行：`dotnet build .\src\Launcher.Background\Launcher.Background.csproj --no-restore`，构建成功，0 警告，0 错误。
 - Task 3.2 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 3.2 代码提交已创建：`9fa1623 feat: 添加后台任务宿主`。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 3.2 已完成验证，待提交：新增 BackgroundTaskHost。
+- Task 3.2 已完成并提交：新增 BackgroundTaskHost。
+- 下一项候选任务为 Task 3.3：迁移 TokenRefreshBackgroundService；开始前必须读取 `src/Launcher.Background/Auth/TokenRefreshBackgroundService.cs`、`src/Launcher.Background/DependencyInjection.cs` 和相关测试。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
+
+---
+
+## 10. 本轮暂停记录（2026-04-30）
+
+本轮已从用户“继续推任务”后连续完成并提交：
+
+- `1e58ecf docs: 记录 Task 2.3 暂停上下文`
+- `508ff02 refactor: 移除 Installations UI 领域引用`
+- `4f76b58 docs: 记录 Task 2.4 完成上下文`
+- `39423c6 feat: 添加后台 Worker 生命周期契约`
+- `5e3312a docs: 记录 Task 3.1 完成上下文`
+- `9fa1623 feat: 添加后台任务宿主`
+
+当前还有本文件的完成上下文记录未提交。记录提交后应暂停，等待用户继续指令，避免在同一上下文中继续跨入 Task 3.3 导致恢复信息过长。
+
+恢复后的唯一正确动作：
+
+1. 读取本文件。
+2. 检查 `git status --short`。
+3. 若只剩 `docs/SessionContextRecord.md`，提交完成上下文，建议提交信息：`docs: 记录 Task 3.2 完成上下文`。
+4. 等待用户继续；若用户继续，从 Task 3.3 开始，不跳任务。
 
 ---
 
