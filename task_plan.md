@@ -16,7 +16,7 @@ Phase 6: Large-class split and performance convergence
 
 ### Phase 6: Large-Class Split
 - [x] Task 6.1: Extract owned-record loading from `EpicOwnedFabCatalogClient`
-- [ ] Task 6.2: Extract Fab summary mapping
+- [x] Task 6.2: Extract Fab summary mapping
 - [ ] Task 6.3: Extract Epic exchange-code login dialog service
 - **Status:** in_progress
 
@@ -37,6 +37,7 @@ Phase 6: Large-class split and performance convergence
 | Use root `task_plan.md`, `findings.md`, and `progress.md` for planning-with-files state | User invoked the planning-with-files skill and the skill requires project-root planning files. |
 | Start from Task 6.1 only | Implementation document says one task at a time, and SessionContextRecord identifies Task 6.1 as the next task. |
 | Stop Task 6.1 at owned-record extraction | Task 6.2 owns mapping extraction, so mapping remains in `EpicOwnedFabCatalogClient` for now. |
+| Keep Task 6.2 limited to pure mapping | `MapToDetailAsync` still performs async preview metadata resolution, so only pure helpers moved into `EpicFabSummaryMapper`. |
 
 ## Errors Encountered
 | Error | Attempt | Resolution |

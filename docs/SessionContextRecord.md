@@ -63,11 +63,11 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `dd77406`（Task 6.1 代码提交） |
+| 当前基线提交 | `955ff02`（Task 6.2 代码提交） |
 | 当前阶段 | Phase 6：大类拆分 |
-| 当前任务 | Task 6.1：拆分 EpicOwnedFabCatalogClient 的 owned records 加载 |
-| 当前状态 | 已完成代码实现、验证和代码提交；等待提交本上下文记录和 planning-with-files 文件 |
-| 下一步 | 提交本上下文记录后，若用户继续，从 Task 6.2：拆分 Fab summary mapping 开始；只迁移纯映射逻辑，不做 HTTP/文件/进程操作 |
+| 当前任务 | Task 6.2：拆分 Fab summary mapping |
+| 当前状态 | 已完成代码实现、验证和代码提交；正在提交上下文记录 |
+| 下一步 | 上下文提交完成后，下一项候选任务是 Task 6.3：拆分 `DialogService` 的 Epic 登录窗口；开始前必须先读取相关 Shell 文档、`DialogService.cs`、`IDialogService.cs` 和 `EpicLoginWebViewBridgeTests.cs` |
 | 阻塞项 | 无 |
 
 ---
@@ -182,6 +182,12 @@
 | `docs/SessionContextRecord.md` | 修改中 | Task 6.1：修正当前基线到 `1093e58` 并标记 Task 6.1 开始 |
 | `src/Launcher.Infrastructure/FabLibrary/EpicOwnedRecordsClient.cs` | 新增 | Task 6.1：承接 Epic library owned records 拉取、预览流解析、cursor 分页、curl fallback 和短期缓存 |
 | `src/Launcher.Infrastructure/FabLibrary/EpicOwnedFabCatalogClient.cs` | 修改 | Task 6.1：移除 owned-record 加载细节，改为委托 `EpicOwnedRecordsClient`；summary/detail mapping 保留在原类 |
+| `docs/SessionContextRecord.md` | 修改中 | Task 6.2：标记 Fab summary mapping 拆分任务开始 |
+| `src/Launcher.Infrastructure/FabLibrary/EpicFabSummaryMapper.cs` | 新增 | Task 6.2：承接 `MapToSummary`、缩略图选择、listing id、分类规范化、截图 URL 和格式提取等纯映射逻辑 |
+| `src/Launcher.Infrastructure/FabLibrary/EpicOwnedFabCatalogClient.cs` | 修改 | Task 6.2：删除本地纯映射 helper，summary/detail 组装改为调用 `EpicFabSummaryMapper`；保留 catalog cache、HTTP 和 preview metadata enrichment |
+| `task_plan.md` | 修改 | Task 6.2：标记 mapping 拆分完成并记录边界决策 |
+| `findings.md` | 修改 | Task 6.2：记录 mapper 边界、DTO internal 化和副作用扫描结果 |
+| `progress.md` | 修改 | Task 6.2：记录验证命令、结果和代码提交 |
 
 ---
 
@@ -357,14 +363,21 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
 - Task 6.1 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
 - Task 6.1 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
 - Task 6.1 代码提交已创建：`dd77406 refactor: 拆分 Epic owned records 客户端`。
+- Task 6.2 副作用扫描已执行：`rg -n "HttpClient|\.SendAsync|File\.|Directory\.|Process|StartInfo|curl|ReadAll|WriteAll" .\src\Launcher.Infrastructure\FabLibrary\EpicFabSummaryMapper.cs`，无匹配；退出码 1 表示没有找到副作用 API。
+- Task 6.2 目标验证已执行：`dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~EpicOwnedFabCatalogClientTests"`，5 个测试通过，0 个失败。
+- Task 6.2 Infrastructure 构建验证已执行：`dotnet build .\src\Launcher.Infrastructure\Launcher.Infrastructure.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 6.2 App 构建验证已执行：`dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore`，构建成功，0 警告，0 错误。
+- Task 6.2 补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
+- Task 6.2 代码提交已创建：`955ff02 refactor: 拆分 Epic Fab summary mapper`。
 
 ---
 
 ## 7. 未完成事项
 
-- Task 6.1 已完成：`EpicOwnedRecordsClient` 已承接 owned records 拉取、分页、cursor 和缓存；`EpicOwnedFabCatalogClient` 保留公共行为和 summary/detail mapping。
-- 下一项候选任务为 Phase 6 Task 6.2：拆分 Fab summary mapping。
-- Task 6.2 开始前必须读取 `src/Launcher.Infrastructure/FabLibrary/EpicOwnedFabCatalogClient.cs`、`tests/Launcher.Tests.Unit/EpicOwnedFabCatalogClientTests.cs`；只迁移 `MapToSummary`、分类规范化、图片选择、格式提取等纯映射逻辑，Mapper 不做 HTTP、不读文件、不启动进程。
+- Task 6.1 已完成：`EpicOwnedRecordsClient` 已承接 owned records 拉取、分页、cursor 和缓存。
+- Task 6.2 已完成：`EpicFabSummaryMapper` 已承接 summary/category/image/format/listing 等纯映射逻辑；`EpicOwnedFabCatalogClient` 保留 HTTP catalog 获取、catalog cache、detail preview metadata enrichment 和公共接口。
+- 下一项候选任务为 Phase 6 Task 6.3：拆分 `DialogService` 的 Epic exchange-code 登录窗口。
+- Task 6.3 开始前必须读取 `src/Launcher.Presentation/Shell/DialogService.cs`、`src/Launcher.Presentation/Shell/IDialogService.cs`、`tests/Launcher.Tests.Unit/EpicLoginWebViewBridgeTests.cs`，并搜索 Shell/ViewModel 中登录窗口调用点；普通 Confirm/Info/Error/TextInput 仍归 `DialogService`，WebView2 登录窗口迁到独立服务。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---

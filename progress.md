@@ -3,7 +3,7 @@
 ## Session: 2026-05-01
 
 ### Phase 6: Task 6.1 Preparation
-- **Status:** in_progress
+- **Status:** complete
 - **Started:** 2026-05-01
 - Actions taken:
   - Read `docs/SessionContextRecord.md` first, per iron rule.
@@ -49,8 +49,41 @@
 ## 5-Question Reboot Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Phase 6, Task 6.1 preparation. |
-| Where am I going? | Task 6.2: extract pure Fab summary mapping without HTTP/file/process work. |
+| Where am I? | Phase 6, Task 6.2 complete; context recording is being committed. |
+| Where am I going? | Task 6.3: extract the Epic exchange-code login dialog service from `DialogService`. |
 | What's the goal? | Continue architecture optimization through small, verified, recoverable tasks. |
 | What have I learned? | See `findings.md`. |
 | What have I done? | See above. |
+
+### Phase 6: Task 6.2 Mapping Extraction
+- **Status:** complete
+- **Started:** 2026-05-01
+- Actions taken:
+  - Re-read `task_plan.md`, `findings.md`, and `progress.md`.
+  - Updated `docs/SessionContextRecord.md` to mark Task 6.2 in progress.
+  - Read current `EpicOwnedFabCatalogClient` mapping section and `EpicOwnedFabCatalogClientTests`.
+  - Identified pure mapping methods to move to `EpicFabSummaryMapper`.
+  - Created `EpicFabSummaryMapper` for pure summary/category/image/format/listing mapping.
+  - Moved Epic catalog DTOs to namespace-level internal types so the catalog client and mapper share one deserialization model.
+  - Kept `MapToDetailAsync` in `EpicOwnedFabCatalogClient` because it still performs async preview metadata enrichment.
+  - Verified `EpicFabSummaryMapper` has no HTTP, file IO, process, or curl references by side-effect scan.
+  - Ran Task 6.2 target tests: 5 passed, 0 failed.
+  - Ran Infrastructure build: 0 warnings, 0 errors.
+  - Ran App build: 0 warnings, 0 errors.
+  - Ran `git diff --check`: no whitespace errors.
+  - Created code commit `955ff02 refactor: 拆分 Epic Fab summary mapper`.
+- Files created/modified:
+  - `docs/SessionContextRecord.md` (updated to Task 6.2 start)
+  - `findings.md` (updated with Task 6.2 mapping boundary)
+  - `progress.md` (updated with Task 6.2 progress)
+  - `src/Launcher.Infrastructure/FabLibrary/EpicFabSummaryMapper.cs` (created)
+  - `src/Launcher.Infrastructure/FabLibrary/EpicOwnedFabCatalogClient.cs` (delegates pure mapping to the mapper)
+
+## Test Results: Task 6.2
+| Test | Input | Expected | Actual | Status |
+|------|-------|----------|--------|--------|
+| Mapper side-effect scan | `rg -n "HttpClient|\\.SendAsync|File\\.|Directory\\.|Process|StartInfo|curl|ReadAll|WriteAll" .\src\Launcher.Infrastructure\FabLibrary\EpicFabSummaryMapper.cs` | No matches | No matches; rg exit code 1 | PASS |
+| Task 6.2 target tests | `dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore --filter "FullyQualifiedName~EpicOwnedFabCatalogClientTests"` | Existing tests pass after mapper extraction | 5 passed, 0 failed | PASS |
+| Task 6.2 Infrastructure build | `dotnet build .\src\Launcher.Infrastructure\Launcher.Infrastructure.csproj --no-restore` | Build succeeds | 0 warnings, 0 errors | PASS |
+| Task 6.2 App build | `dotnet build .\src\Launcher.App\Launcher.App.csproj --no-restore` | Build succeeds | 0 warnings, 0 errors | PASS |
+| Task 6.2 whitespace check | `git diff --check` | No whitespace errors | No whitespace errors | PASS |

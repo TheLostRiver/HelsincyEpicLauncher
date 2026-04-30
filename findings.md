@@ -19,6 +19,12 @@
 - After Task 6.1, `OwnedRecord`, `OwnedRecordWindow`, `OwnedRecordSnapshot`, and `OwnedRecordRequirement` are internal namespace-level records in `EpicOwnedRecordsClient.cs` so both the records client and catalog client can use them.
 - `EpicOwnedFabCatalogClient` no longer contains curl, preview stream parsing, cursor pagination, or records cache fields; it delegates these to `EpicOwnedRecordsClient`.
 - `MapToSummary`, `MapToDetailAsync`, thumbnail/category/format/listing extraction, catalog item loading, and catalog cache remain in `EpicOwnedFabCatalogClient`.
+- Task 6.2 mapping boundary: move `MapToSummary`, thumbnail selection, listing identifier extraction, category normalization, screenshot URL extraction, and format extraction into `EpicFabSummaryMapper`.
+- `MapToDetailAsync` should remain in `EpicOwnedFabCatalogClient` because it invokes `IFabPreviewMetadataResolver`; it may call pure mapper helpers after extraction.
+- `EpicCatalogItem` and related catalog response DTOs need to become namespace-level internal types so both catalog loading and the mapper can share them.
+- Task 6.2 completed: `EpicFabSummaryMapper` now owns `MapToSummary`, screenshot URL extraction, listing identifier extraction, category normalization, thumbnail selection, and format extraction.
+- `EpicOwnedFabCatalogClient` now delegates summary/detail pure mapping helpers to `EpicFabSummaryMapper`; catalog loading, catalog cache, and preview metadata enrichment remain in the catalog client.
+- A side-effect scan of `EpicFabSummaryMapper.cs` for `HttpClient`, send calls, file/directory APIs, process start APIs, and curl found no matches.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -27,6 +33,8 @@
 | Treat Task 6.1 as a refactor protected by existing tests | The implementation plan names existing `EpicOwnedFabCatalogClientTests` as the verification target. |
 | Keep summary/detail mapping in `EpicOwnedFabCatalogClient` for Task 6.1 | Task 6.1 explicitly says not to migrate summary mapping; Task 6.2 handles mapping extraction. |
 | Use internal namespace-level owned-record records | They preserve the existing internal boundary while allowing the extracted records client and original catalog client to share the record model. |
+| Keep `MapToDetailAsync` in the catalog client for Task 6.2 | It performs async preview metadata resolution, while Task 6.2 is limited to pure mapping logic. |
+| Move Epic catalog DTOs to internal namespace-level types | Both `EpicOwnedFabCatalogClient` and `EpicFabSummaryMapper` need the same deserialization model without widening it outside Infrastructure. |
 
 ## Issues Encountered
 | Issue | Resolution |
