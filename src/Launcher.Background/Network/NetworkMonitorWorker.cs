@@ -2,6 +2,7 @@
 
 using Launcher.Application.Modules.Downloads.Contracts;
 using Launcher.Application.Modules.Network.Contracts;
+using Launcher.Background.Hosting;
 using Serilog;
 
 namespace Launcher.Background.Network;
@@ -10,11 +11,12 @@ namespace Launcher.Background.Network;
 /// 网络监视后台服务。订阅 INetworkMonitor 事件，网络断联时暂停所有下载，网络恢复后自动续传。
 /// 不持有 Infrastructure 引用，仅依赖 Application 层契约。
 /// </summary>
-public sealed class NetworkMonitorWorker : IDisposable
+public sealed class NetworkMonitorWorker : IBackgroundWorker, IDisposable
 {
     private readonly INetworkMonitor _networkMonitor;
     private readonly IDownloadCommandService _downloadCommandService;
     private readonly ILogger _logger = Log.ForContext<NetworkMonitorWorker>();
+    private bool _isStarted;
     private bool _disposed;
 
     public NetworkMonitorWorker(
@@ -25,18 +27,44 @@ public sealed class NetworkMonitorWorker : IDisposable
         _downloadCommandService = downloadCommandService;
     }
 
+    public string Name => nameof(NetworkMonitorWorker);
+
+    public WorkerStatus State { get; private set; } = WorkerStatus.Idle;
+
     /// <summary>启动监听</summary>
     public void Start()
+        => StartAsync(CancellationToken.None).GetAwaiter().GetResult();
+
+    public Task StartAsync(CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
+
+        if (_isStarted)
+        {
+            State = WorkerStatus.Running;
+            return Task.CompletedTask;
+        }
+
         _networkMonitor.NetworkStatusChanged += OnNetworkStatusChanged;
+        _isStarted = true;
+        State = WorkerStatus.Running;
         _logger.Information("网络监视服务已启动 | 当前网络状态={IsAvailable}", _networkMonitor.IsNetworkAvailable);
+        return Task.CompletedTask;
     }
 
     /// <summary>停止监听</summary>
     public void Stop()
+        => StopAsync(CancellationToken.None).GetAwaiter().GetResult();
+
+    public Task StopAsync(CancellationToken ct = default)
     {
-        _networkMonitor.NetworkStatusChanged -= OnNetworkStatusChanged;
+        ct.ThrowIfCancellationRequested();
+
+        State = WorkerStatus.Stopping;
+        StopCore();
+        State = WorkerStatus.Stopped;
         _logger.Information("网络监视服务已停止");
+        return Task.CompletedTask;
     }
 
     private async void OnNetworkStatusChanged(bool isAvailable)
@@ -69,6 +97,16 @@ public sealed class NetworkMonitorWorker : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
-        Stop();
+        StopCore();
+        State = WorkerStatus.Stopped;
+    }
+
+    private void StopCore()
+    {
+        if (!_isStarted)
+            return;
+
+        _networkMonitor.NetworkStatusChanged -= OnNetworkStatusChanged;
+        _isStarted = false;
     }
 }

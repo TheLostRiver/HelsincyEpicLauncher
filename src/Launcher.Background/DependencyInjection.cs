@@ -22,12 +22,18 @@ public static class DependencyInjection
 
         // 下载完成后自动安装
         services.AddSingleton<AutoInstallWorker>();
+        services.AddSingleton<IBackgroundWorker>(sp => sp.GetRequiredService<AutoInstallWorker>());
 
         // 自动更新检查
         services.AddSingleton<AppUpdateWorker>();
+        services.AddSingleton<IBackgroundWorker>(sp => sp.GetRequiredService<AppUpdateWorker>());
 
         // 网络监视
         services.AddSingleton<NetworkMonitorWorker>();
+        services.AddSingleton<IBackgroundWorker>(sp => sp.GetRequiredService<NetworkMonitorWorker>());
+
+        // 统一后台任务宿主
+        services.AddSingleton<IBackgroundTaskHost, BackgroundTaskHost>();
 
         return services;
     }

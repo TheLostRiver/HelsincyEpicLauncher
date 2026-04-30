@@ -1,6 +1,7 @@
 // Copyright (c) Helsincy. All rights reserved.
 
 using Launcher.Application.Modules.Updates.Contracts;
+using Launcher.Background.Hosting;
 using Serilog;
 
 namespace Launcher.Background.Updates;
@@ -11,7 +12,7 @@ namespace Launcher.Background.Updates;
 /// 订阅方（如 ShellViewModel）无需了解 Worker 实现。
 /// 该 Worker 仅负责定时触发检查——不持有 UI 引用，不跨模块耦合。
 /// </summary>
-public sealed class AppUpdateWorker : IDisposable
+public sealed class AppUpdateWorker : IBackgroundWorker, IDisposable
 {
     // 文档规格：默认 24 小时检查一次
     private static readonly TimeSpan CheckInterval = TimeSpan.FromHours(24);
@@ -29,22 +30,44 @@ public sealed class AppUpdateWorker : IDisposable
         _updateService = updateService;
     }
 
+    public string Name => nameof(AppUpdateWorker);
+
+    public WorkerStatus State { get; private set; } = WorkerStatus.Idle;
+
     /// <summary>启动定时检查</summary>
     public void Start()
+        => StartAsync(CancellationToken.None).GetAwaiter().GetResult();
+
+    public Task StartAsync(CancellationToken ct = default)
     {
+        ct.ThrowIfCancellationRequested();
+
         if (_timer is not null)
-            return;
+        {
+            State = WorkerStatus.Running;
+            return Task.CompletedTask;
+        }
 
         _timer = new Timer(OnTimerTickAsync, null, InitialDelay, CheckInterval);
+        State = WorkerStatus.Running;
         _logger.Information("自动更新检查服务已启动 | 首次检查延迟={Delay}分钟 | 间隔={Interval}小时",
             InitialDelay.TotalMinutes, CheckInterval.TotalHours);
+        return Task.CompletedTask;
     }
 
     /// <summary>停止定时检查</summary>
     public void Stop()
+        => StopAsync(CancellationToken.None).GetAwaiter().GetResult();
+
+    public Task StopAsync(CancellationToken ct = default)
     {
-        _timer?.Change(Timeout.Infinite, Timeout.Infinite);
+        ct.ThrowIfCancellationRequested();
+
+        State = WorkerStatus.Stopping;
+        StopCore();
+        State = WorkerStatus.Stopped;
         _logger.Information("自动更新检查服务已停止");
+        return Task.CompletedTask;
     }
 
     /// <summary>立即触发一次检查（供外部主动调用）</summary>
@@ -96,6 +119,13 @@ public sealed class AppUpdateWorker : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+        StopCore();
+        State = WorkerStatus.Stopped;
+    }
+
+    private void StopCore()
+    {
+        _timer?.Change(Timeout.Infinite, Timeout.Infinite);
         _timer?.Dispose();
         _timer = null;
     }
