@@ -51,6 +51,8 @@
 - Task 7.2a working reference: `BackgroundTaskHostTests.RegisterBackgroundDependencies` registers all Application Contracts dependencies needed by the four background workers.
 - Task 7.2a completed: only the failing unit test setup was changed; production DI remained unchanged.
 - Final Task 7.2 verification passed after Task 7.2a: solution build 0 warnings/0 errors, unit tests 308 passed, integration tests 7 passed.
+- Branch finishing decision: user selected option 2, meaning push `codex/architecture-optimization-implementation` and create a Pull Request targeting `main`.
+- Context-risk pause before push/PR: user explicitly requested recording task information locally before context compression. Push and PR creation are still pending.
 
 ## Technical Decisions
 | Decision | Rationale |
@@ -76,6 +78,7 @@
 | Task 7.2 full unit test failure | Recorded the Background DI dependency-resolution failure and stopped without ad-hoc fixes, as required by Task 7.2. |
 | Task 7.2a fix scope | Fix the stale unit test setup rather than production DI, because production `AddBackground()` correctly registers all background workers and the failing test is missing required substitutes for those workers. |
 | Phase 7 completion | Treat Phase 7 as complete after final build/unit/integration verification passes and context files are committed. |
+| Pause before push/PR due context risk | Respect the user iron rule: record exact next action to disk and stop; after resume, continue with push and PR creation only. |
 
 ## Resources
 - `docs/17-ArchitectureOptimizationPlan.md`

@@ -63,12 +63,12 @@
 | 当前执行者 | GPT-5 Codex |
 | 执行 worktree | `C:\tmp\superpowers\worktrees\MyEpicLauncher\architecture-optimization-implementation` |
 | 执行分支 | `codex/architecture-optimization-implementation` |
-| 当前基线提交 | `1bdda6e`（Task 7.2a 测试修复提交；本文件记录提交后 HEAD 会继续前进） |
+| 当前基线提交 | `af9cd35`（Task 7.2 验证通过上下文提交；本文件记录提交后 HEAD 会继续前进） |
 | 当前阶段 | Phase 7：最终一致性收口 |
-| 当前任务 | Task 7.2：全量验证 |
-| 当前状态 | 已完成：Task 7.2a 修复后，全量 build、unit test、integration test 均通过 |
-| 下一步 | 提交本完成上下文；之后等待用户指示是否 push、合并、继续新一轮优化或收尾 |
-| 阻塞项 | 无 |
+| 当前任务 | 分支收尾 Option 2：push 并创建 Pull Request |
+| 当前状态 | 用户已选择 Option 2，但触发上下文风险暂停；已记录 push/PR 前状态，尚未 push，尚未创建 PR |
+| 下一步 | 压缩/恢复后只执行 Option 2：push 当前分支 `codex/architecture-optimization-implementation` 到 `origin`，然后基于 `main` 创建 PR |
+| 阻塞项 | 无；仅因上下文风险主动暂停 |
 
 ---
 
@@ -434,7 +434,18 @@ Select-String -Path .\docs\17-ArchitectureOptimizationPlan.md,.\docs\18-Architec
   - `dotnet test .\tests\Launcher.Tests.Unit\Launcher.Tests.Unit.csproj --no-restore`，308 通过，0 失败，0 跳过。
   - `dotnet test .\tests\Launcher.Tests.Integration\Launcher.Tests.Integration.csproj --no-restore`，7 通过，0 失败，0 跳过。
 - Task 7.2 完成上下文补丁检查已执行：`git diff --check` 无空白错误；仅有 Git 的 LF/CRLF 提示。
-- Phase 7 已完成；当前待提交：本完成上下文与 planning 文件。
+- Task 7.2 完成上下文提交已创建：`af9cd35 docs: 记录 Task 7.2 验证通过`。
+- Phase 7 已完成；当前分支：`codex/architecture-optimization-implementation`；当前 HEAD：`af9cd35`。
+- 用户在分支收尾选项中选择 Option 2：push 并创建 Pull Request。
+- 上下文风险暂停记录（2026-05-01）：用户明确要求“现在上下文快满了，先记录任务信息，然后主动压缩上下文”。AI 无法手动触发平台上下文压缩，只能完整记录恢复信息并停止；如平台自动压缩，恢复后必须先读本文件。
+- push/PR 尚未执行；不要误以为已经 push 或已有 PR。
+- 恢复后的唯一正确动作：
+  1. 读取本文件。
+  2. 检查 `git status --short`，应为空或只剩本次上下文记录提交前文件。
+  3. 确认当前分支为 `codex/architecture-optimization-implementation`，HEAD 至少包含 `af9cd35` 及本次上下文暂停提交。
+  4. 执行 `git push -u origin codex/architecture-optimization-implementation`。
+  5. 创建基于 `main` 的 Pull Request；PR 摘要应提到架构优化 Phase 0-7、Background/Downloads/Options/Fab/Dialog 拆分、文档同步和最终验证。
+  6. 不要在 push/PR 前继续新的代码任务。
 - 主工作区 `Q:\MyEpicLauncher` 存在既有未提交改动，不属于本轮实现 worktree。
 
 ---

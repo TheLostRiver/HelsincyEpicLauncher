@@ -54,3 +54,5 @@ Phase 7: Final consistency closure
 - Do not touch `Q:\MyEpicLauncher` main workspace except reading the requested skill file.
 - Do not delete files unless the user explicitly requests it.
 - Before code changes, read the relevant module documentation and target tests.
+- Branch finishing option selected by user: Option 2, push `codex/architecture-optimization-implementation` and create a Pull Request targeting `main`.
+- Context-risk pause before push/PR: push and PR creation have not happened yet; resume by reading `docs/SessionContextRecord.md`, then execute Option 2 only.
