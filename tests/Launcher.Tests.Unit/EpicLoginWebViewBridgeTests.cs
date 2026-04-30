@@ -71,4 +71,24 @@ public sealed class EpicLoginWebViewBridgeTests
         message!.Type.Should().Be("exchange_code");
         message.ExchangeCode.Should().Be("exchange-code-123");
     }
+
+    [Fact]
+    public void IDialogService_ShouldNotExposeEpicExchangeCodeLogin()
+    {
+        // Act
+        var method = typeof(IDialogService).GetMethod("ShowEpicExchangeCodeLoginAsync");
+
+        // Assert
+        method.Should().BeNull();
+    }
+
+    [Fact]
+    public void IEpicExchangeCodeLoginDialogService_ShouldExposeEpicExchangeCodeLogin()
+    {
+        // Act
+        var method = typeof(IEpicExchangeCodeLoginDialogService).GetMethod("ShowEpicExchangeCodeLoginAsync");
+
+        // Assert
+        method.Should().NotBeNull();
+    }
 }

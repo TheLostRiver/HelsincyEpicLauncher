@@ -21,6 +21,7 @@ public partial class ShellViewModel : ObservableObject, IDisposable
     private readonly INavigationService _navigationService;
     private readonly IAuthService _authService;
     private readonly IDialogService _dialogService;
+    private readonly IEpicExchangeCodeLoginDialogService _epicLoginDialogService;
     private readonly IDownloadRuntimeStore _runtimeStore;
     private readonly IAppUpdateService _appUpdateService;
     private readonly INetworkMonitor _networkMonitor;
@@ -80,6 +81,7 @@ public partial class ShellViewModel : ObservableObject, IDisposable
         INavigationService navigationService,
         IAuthService authService,
         IDialogService dialogService,
+        IEpicExchangeCodeLoginDialogService epicLoginDialogService,
         IDownloadRuntimeStore runtimeStore,
         IAppUpdateService appUpdateService,
         INetworkMonitor networkMonitor)
@@ -87,6 +89,7 @@ public partial class ShellViewModel : ObservableObject, IDisposable
         _navigationService = navigationService;
         _authService = authService;
         _dialogService = dialogService;
+        _epicLoginDialogService = epicLoginDialogService;
         _runtimeStore = runtimeStore;
         _appUpdateService = appUpdateService;
         _networkMonitor = networkMonitor;
@@ -149,7 +152,7 @@ public partial class ShellViewModel : ObservableObject, IDisposable
                 return;
             }
 
-            var embeddedResult = await _dialogService.ShowEpicExchangeCodeLoginAsync(startResult.Value!);
+            var embeddedResult = await _epicLoginDialogService.ShowEpicExchangeCodeLoginAsync(startResult.Value!);
             if (embeddedResult.IsSuccess)
             {
                 var completionResult = await _authService.CompleteLoginAsync(new AuthLoginCompletionInput

@@ -32,6 +32,8 @@ public static class DependencyInjection
         // 对话框（注册具体类型 + 接口，ShellPage 需要具体类型调用 SetXamlRoot）
         services.AddSingleton<DialogService>();
         services.AddSingleton<IDialogService>(sp => sp.GetRequiredService<DialogService>());
+        services.AddSingleton<EpicExchangeCodeLoginDialogService>();
+        services.AddSingleton<IEpicExchangeCodeLoginDialogService>(sp => sp.GetRequiredService<EpicExchangeCodeLoginDialogService>());
 
         // 原生文件夹选择器（由 App 组合根提供窗口句柄）
         services.AddSingleton<IFolderPickerService, FolderPickerService>();
