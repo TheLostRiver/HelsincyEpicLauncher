@@ -195,7 +195,7 @@ internal sealed class EpicOwnedFabCatalogClient
             try
             {
                 var catalogItem = await GetCatalogItemAsync(record, ct);
-                summaries[index] = MapToSummary(record, catalogItem, ExtractListingIdentifier(catalogItem), SelectThumbnailUrl(catalogItem));
+                summaries[index] = EpicFabSummaryMapper.MapToSummary(record, catalogItem);
             }
             finally
             {
@@ -303,36 +303,10 @@ internal sealed class EpicOwnedFabCatalogClient
             || !string.IsNullOrWhiteSpace(query.EngineVersion);
     }
 
-    private static FabAssetSummary MapToSummary(
-        OwnedRecord record,
-        EpicCatalogItem? item,
-        string previewListingId,
-        string thumbnailUrl)
-    {
-        return new FabAssetSummary
-        {
-            AssetId = record.CatalogItemId,
-            Title = item?.Title ?? record.AppName,
-            ThumbnailUrl = thumbnailUrl,
-            PreviewListingId = previewListingId,
-            PreviewProductId = record.ProductId,
-            Category = SelectCategory(item),
-            Author = item?.Developer ?? string.Empty,
-            Price = 0,
-            Rating = 0,
-            IsOwned = true,
-            IsInstalled = false,
-            SupportedEngineVersions = item?.ReleaseInfo?
-                .SelectMany(r => r.CompatibleApps ?? [])
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList() ?? [],
-        };
-    }
-
     private async Task<FabAssetDetail> MapToDetailAsync(OwnedRecord record, EpicCatalogItem? item, CancellationToken ct)
     {
-        var screenshots = ExtractScreenshotUrls(item);
-        var previewListingId = ExtractListingIdentifier(item);
+        var screenshots = EpicFabSummaryMapper.ExtractScreenshotUrls(item);
+        var previewListingId = EpicFabSummaryMapper.ExtractListingIdentifier(item);
 
         if (screenshots.Count == 0)
         {
@@ -347,12 +321,12 @@ internal sealed class EpicOwnedFabCatalogClient
         }
 
         var tags = item?.Categories?
-            .Select(c => NormalizeCategory(c.Path ?? string.Empty))
+            .Select(c => EpicFabSummaryMapper.NormalizeCategory(c.Path ?? string.Empty))
             .Where(tag => !string.IsNullOrWhiteSpace(tag))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList() ?? [];
 
-        var formats = ExtractFormats(item);
+        var formats = EpicFabSummaryMapper.ExtractFormats(item);
 
         var supportedVersions = item?.ReleaseInfo?
             .SelectMany(r => r.CompatibleApps ?? [])
@@ -392,144 +366,6 @@ internal sealed class EpicOwnedFabCatalogClient
         };
     }
 
-    private static List<string> ExtractScreenshotUrls(EpicCatalogItem? item)
-    {
-        return item?.KeyImages?
-            .Select(i => i.Url ?? string.Empty)
-            .Where(url => !string.IsNullOrWhiteSpace(url))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList() ?? [];
-    }
-
-    private static List<string> ExtractFormats(EpicCatalogItem? item)
-    {
-        if (item?.Categories is null || item.Categories.Count == 0)
-        {
-            return [];
-        }
-
-        return item.Categories
-            .SelectMany(c => ExtractFormatCandidates(c.Path ?? string.Empty))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-    }
-
-    private static IEnumerable<string> ExtractFormatCandidates(string path)
-    {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            yield break;
-        }
-
-        var segments = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        if (segments.Length < 2)
-        {
-            yield break;
-        }
-
-        for (var index = 0; index < segments.Length - 1; index++)
-        {
-            if (!string.Equals(segments[index], "asset-format", StringComparison.OrdinalIgnoreCase)
-                && !string.Equals(segments[index], "format-item", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            var normalized = NormalizeFacetValue(segments[^1]);
-            if (!string.IsNullOrWhiteSpace(normalized))
-            {
-                yield return normalized;
-            }
-
-            yield break;
-        }
-    }
-
-    private static string SelectThumbnailUrl(EpicCatalogItem? item)
-    {
-        if (item?.KeyImages is null || item.KeyImages.Count == 0)
-        {
-            return string.Empty;
-        }
-
-        var preferred = item.KeyImages.FirstOrDefault(i =>
-            !string.IsNullOrWhiteSpace(i.Url)
-            && !string.IsNullOrWhiteSpace(i.Type)
-            && i.Type.Contains("thumbnail", StringComparison.OrdinalIgnoreCase));
-
-        return preferred?.Url
-            ?? item.KeyImages.FirstOrDefault(i => !string.IsNullOrWhiteSpace(i.Url))?.Url
-            ?? string.Empty;
-    }
-
-    private static string ExtractListingIdentifier(EpicCatalogItem? item)
-    {
-        if (item?.CustomAttributes is null)
-        {
-            return string.Empty;
-        }
-
-        foreach (var pair in item.CustomAttributes)
-        {
-            if (string.Equals(pair.Key, "ListingIdentifier", StringComparison.OrdinalIgnoreCase)
-                && !string.IsNullOrWhiteSpace(pair.Value?.Value))
-            {
-                return pair.Value.Value;
-            }
-        }
-
-        return string.Empty;
-    }
-
-    private static string SelectCategory(EpicCatalogItem? item)
-    {
-        if (item?.Categories is null)
-        {
-            return string.Empty;
-        }
-
-        foreach (var category in item.Categories)
-        {
-            var normalized = NormalizeCategory(category.Path ?? string.Empty);
-            if (!string.IsNullOrWhiteSpace(normalized))
-            {
-                return normalized;
-            }
-        }
-
-        return string.Empty;
-    }
-
-    private static string NormalizeCategory(string path)
-    {
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            return string.Empty;
-        }
-
-        var candidate = path.Split('/', StringSplitOptions.RemoveEmptyEntries).LastOrDefault() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(candidate)
-            || string.Equals(candidate, "type", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(candidate, "asset-format", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(candidate, "format-item", StringComparison.OrdinalIgnoreCase))
-        {
-            return string.Empty;
-        }
-
-        return NormalizeFacetValue(candidate);
-    }
-
-    private static string NormalizeFacetValue(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return string.Empty;
-        }
-
-        return CultureInfo.InvariantCulture.TextInfo.ToTitleCase(
-            value.Replace('-', ' ').Replace('_', ' '));
-    }
-
     private static string ResolveLocale()
     {
         return string.IsNullOrWhiteSpace(CultureInfo.CurrentUICulture.Name)
@@ -554,57 +390,6 @@ internal sealed class EpicOwnedFabCatalogClient
         public required EpicCatalogItem Item { get; init; }
 
         public DateTime CachedAt { get; init; }
-    }
-
-    private sealed class EpicCatalogItem
-    {
-        public string? Id { get; init; }
-
-        public string? Title { get; init; }
-
-        public string? Description { get; init; }
-
-        public string? Developer { get; init; }
-
-        public DateTimeOffset LastModifiedDate { get; init; }
-
-        public Dictionary<string, EpicCatalogCustomAttribute> CustomAttributes { get; init; } = [];
-
-        public List<EpicCatalogImage> KeyImages { get; init; } = [];
-
-        public List<EpicCatalogCategory> Categories { get; init; } = [];
-
-        public List<EpicCatalogReleaseInfo> ReleaseInfo { get; init; } = [];
-    }
-
-    private sealed class EpicCatalogCustomAttribute
-    {
-        public string? Type { get; init; }
-
-        public string? Value { get; init; }
-    }
-
-    private sealed class EpicCatalogImage
-    {
-        public string? Type { get; init; }
-
-        public string? Url { get; init; }
-    }
-
-    private sealed class EpicCatalogCategory
-    {
-        public string? Path { get; init; }
-    }
-
-    private sealed class EpicCatalogReleaseInfo
-    {
-        public DateTimeOffset DateAdded { get; init; }
-
-        public string? VersionTitle { get; init; }
-
-        public string? ReleaseNote { get; init; }
-
-        public List<string> CompatibleApps { get; init; } = [];
     }
 
     public void Dispose()
