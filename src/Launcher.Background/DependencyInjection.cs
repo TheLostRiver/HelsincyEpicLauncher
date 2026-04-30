@@ -1,6 +1,7 @@
 // Copyright (c) Helsincy. All rights reserved.
 
 using Launcher.Background.Auth;
+using Launcher.Background.Hosting;
 using Launcher.Background.Installations;
 using Launcher.Background.Network;
 using Launcher.Background.Updates;
@@ -17,6 +18,7 @@ public static class DependencyInjection
     {
         // Token 自动刷新
         services.AddSingleton<TokenRefreshBackgroundService>();
+        services.AddSingleton<IBackgroundWorker>(sp => sp.GetRequiredService<TokenRefreshBackgroundService>());
 
         // 下载完成后自动安装
         services.AddSingleton<AutoInstallWorker>();
