@@ -1,5 +1,7 @@
 // Copyright (c) Helsincy. All rights reserved.
 
+using Launcher.Application.Modules.Downloads.Contracts;
+using Launcher.Shared.Configuration;
 using Microsoft.Extensions.Configuration;
 
 namespace Launcher.Infrastructure.Configuration;
@@ -7,7 +9,7 @@ namespace Launcher.Infrastructure.Configuration;
 /// <summary>
 /// 配置提供器实现。从 IConfiguration 读取强类型配置。
 /// </summary>
-internal sealed class AppConfigProvider : Shared.Configuration.IAppConfigProvider
+internal sealed class AppConfigProvider : IAppConfigProvider, IDownloadOptionsProvider
 {
     private readonly IConfiguration _configuration;
     private readonly string _localAppData;
@@ -38,11 +40,28 @@ internal sealed class AppConfigProvider : Shared.Configuration.IAppConfigProvide
     public string InstallPath =>
         EnsureDirectory(GetConfiguredPathOrDefault("Paths:Installs", Path.Combine(_localAppData, "Installs")));
 
-    public int MaxConcurrentDownloads =>
-        int.TryParse(_configuration["Downloads:MaxConcurrent"], out int val) ? val : 3;
+    public DownloadOptions DownloadOptions => new()
+    {
+        MaxConcurrentTasks = GetPositiveInt(
+            "Downloads:MaxConcurrentTasks",
+            GetPositiveInt("Downloads:MaxConcurrent", DownloadOptions.DefaultMaxConcurrentTasks)),
+        MaxConcurrentChunksPerTask = GetPositiveInt(
+            "Downloads:MaxConcurrentChunksPerTask",
+            GetPositiveInt("Downloads:MaxChunksPerTask", DownloadOptions.DefaultMaxConcurrentChunksPerTask)),
+        ChunkSizeBytes = GetPositiveLong(
+            "Downloads:ChunkSizeBytes",
+            GetPositiveInt("Downloads:ChunkSizeMb", 10) * 1024L * 1024L),
+        MaxRetryAttempts = GetNonNegativeInt(
+            "Downloads:MaxRetryAttempts",
+            GetNonNegativeInt("Downloads:MaxRetryCount", DownloadOptions.DefaultMaxRetryAttempts)),
+        CheckpointInterval = TimeSpan.FromSeconds(GetPositiveInt(
+            "Downloads:CheckpointIntervalSeconds",
+            (int)DownloadOptions.DefaultCheckpointInterval.TotalSeconds)),
+    };
 
-    public int MaxChunksPerDownload =>
-        int.TryParse(_configuration["Downloads:MaxChunksPerTask"], out int val) ? val : 4;
+    public int MaxConcurrentDownloads => DownloadOptions.MaxConcurrentTasks;
+
+    public int MaxChunksPerDownload => DownloadOptions.MaxConcurrentChunksPerTask;
 
     /// <summary>
     /// 确保目录存在，返回路径
@@ -63,4 +82,19 @@ internal sealed class AppConfigProvider : Shared.Configuration.IAppConfigProvide
             ? fallbackPath
             : configuredPath;
     }
+
+    private int GetPositiveInt(string key, int fallback) =>
+        int.TryParse(_configuration[key], out int value) && value > 0
+            ? value
+            : fallback;
+
+    private int GetNonNegativeInt(string key, int fallback) =>
+        int.TryParse(_configuration[key], out int value) && value >= 0
+            ? value
+            : fallback;
+
+    private long GetPositiveLong(string key, long fallback) =>
+        long.TryParse(_configuration[key], out long value) && value > 0
+            ? value
+            : fallback;
 }

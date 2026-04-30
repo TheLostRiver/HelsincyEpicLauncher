@@ -38,7 +38,9 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
         // 配置
-        services.AddSingleton<IAppConfigProvider, AppConfigProvider>();
+        services.AddSingleton<AppConfigProvider>();
+        services.AddSingleton<IAppConfigProvider>(sp => sp.GetRequiredService<AppConfigProvider>());
+        services.AddSingleton<IDownloadOptionsProvider>(sp => sp.GetRequiredService<AppConfigProvider>());
 
         // 用户设置（注册具体类型 + 双接口）
         services.AddSingleton<SettingsService>();
